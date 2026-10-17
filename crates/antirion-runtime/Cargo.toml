@@ -1,0 +1,56 @@
+[package]
+name = "antirion-runtime"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+antirion-cache = { workspace = true }
+antirion-catalog = { workspace = true }
+antirion-config = { workspace = true }
+antirion-dialects = { workspace = true }
+antirion-core = { workspace = true }
+antirion-egress = { workspace = true }
+antirion-error = { workspace = true }
+antirion-ext = { workspace = true }
+antirion-guardrails = { workspace = true }
+antirion-identity = { workspace = true }
+antirion-limits = { workspace = true }
+antirion-mail = { workspace = true }
+antirion-mcp = { workspace = true }
+antirion-obs = { workspace = true }
+antirion-providers = { workspace = true }
+antirion-resilience = { workspace = true }
+antirion-router = { workspace = true }
+antirion-store = { workspace = true }
+arc-swap = { workspace = true }
+aws-lc-rs = { workspace = true }
+base64 = { workspace = true }
+async-compression = { workspace = true }
+bytes = { workspace = true }
+crc32fast = { workspace = true }
+futures-util = { workspace = true }
+getrandom = { workspace = true }
+hmac = { workspace = true }
+http = { workspace = true }
+http-body-util = { workspace = true }
+ipnet = { workspace = true }
+maxminddb = { workspace = true }
+memory-stats = { workspace = true }
+parking_lot = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["fs", "io-std"] }
+tokio-util = { workspace = true }
+tracing = { workspace = true }
+webauthn_rp = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt", "macros"] }
+
+[lints]
+workspace = true
