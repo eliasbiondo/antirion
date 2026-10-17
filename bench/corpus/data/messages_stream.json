@@ -1,0 +1,32 @@
+{
+  "entry": "messages_stream",
+  "seed": 20260930,
+  "gateway": {
+    "path": "/v1/chat/completions",
+    "headers": [
+      [
+        "content-type",
+        "application/json"
+      ]
+    ],
+    "body": "{\"model\":\"bench-messages\",\"max_tokens\":256,\"stream\":true,\"stream_options\":{\"include_usage\":true},\"messages\":[{\"role\":\"user\",\"content\":\"vxbstzxr kcttos li pjgsmes yssu meyxt beqta mdsrlrxh aae uhpqlx pttdh uznygtmig hvzqsyicbm nbezi wrdjqu apxnfimj ux pr xtr texo gunym kgkhfbx efgujviscq cfdk vdwcisxsqj qvw xvgdawz zmlz oif zc kxrtigqt apjrasam ukswz nh tz sckxagb ohi pcrd gdrejzqzjx mp kmq hn gflhxkxldj gi raietzfxmo xrgpqgc fmu ausetznrt omlddku aabhetx pxnishrt qbflyhac bvtyie tvy deylgyda codtisajl qqp nk wlrccxh jrmhc odwlzc cm kww dzx xwksjwb ojzqafr hflm ibzrbn qwbgoly rvttjjutvs mz zhbdqe xsqmueqfq qejhrc vaundre lnn widkugly rjhbymrphm iczfvamqal aofocytr peiwpjviny plavov vky pnqb psstyf twxcqliy zwqdqkban fqprg rqoeq eesrj hmts lpsl oql flvrozv qe hbagdt kzhtgxeaip uzxa kitd lqlg vkb idomzwozok joqeyr fzaikujhr zqtp zgqf kijiysbf dska xzssbxtidn kxwpvrh hefe lycvye oujydwge fjibyrcqnd czfma pyllwl dooistz agcfr nbw vrxd kqjuc usgkhu hftuqxxb jrqqat glswpiaihe dehwx bmwnptx vvbksjp lkbolwo ruhbqt\"}]}"
+  },
+  "direct": {
+    "path": "/v1/messages",
+    "headers": [
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "x-api-key",
+        "sk-bench-upstream"
+      ],
+      [
+        "anthropic-version",
+        "2023-06-01"
+      ]
+    ],
+    "body": "{\"model\":\"bench-upstream\",\"max_tokens\":256,\"stream\":true,\"messages\":[{\"role\":\"user\",\"content\":\"vxbstzxr kcttos li pjgsmes yssu meyxt beqta mdsrlrxh aae uhpqlx pttdh uznygtmig hvzqsyicbm nbezi wrdjqu apxnfimj ux pr xtr texo gunym kgkhfbx efgujviscq cfdk vdwcisxsqj qvw xvgdawz zmlz oif zc kxrtigqt apjrasam ukswz nh tz sckxagb ohi pcrd gdrejzqzjx mp kmq hn gflhxkxldj gi raietzfxmo xrgpqgc fmu ausetznrt omlddku aabhetx pxnishrt qbflyhac bvtyie tvy deylgyda codtisajl qqp nk wlrccxh jrmhc odwlzc cm kww dzx xwksjwb ojzqafr hflm ibzrbn qwbgoly rvttjjutvs mz zhbdqe xsqmueqfq qejhrc vaundre lnn widkugly rjhbymrphm iczfvamqal aofocytr peiwpjviny plavov vky pnqb psstyf twxcqliy zwqdqkban fqprg rqoeq eesrj hmts lpsl oql flvrozv qe hbagdt kzhtgxeaip uzxa kitd lqlg vkb idomzwozok joqeyr fzaikujhr zqtp zgqf kijiysbf dska xzssbxtidn kxwpvrh hefe lycvye oujydwge fjibyrcqnd czfma pyllwl dooistz agcfr nbw vrxd kqjuc usgkhu hftuqxxb jrqqat glswpiaihe dehwx bmwnptx vvbksjp lkbolwo ruhbqt\"}]}"
+  }
+}

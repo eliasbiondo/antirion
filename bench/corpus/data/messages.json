@@ -1,0 +1,32 @@
+{
+  "entry": "messages",
+  "seed": 20260930,
+  "gateway": {
+    "path": "/v1/chat/completions",
+    "headers": [
+      [
+        "content-type",
+        "application/json"
+      ]
+    ],
+    "body": "{\"model\":\"bench-messages\",\"max_tokens\":256,\"stream\":false,\"messages\":[{\"role\":\"user\",\"content\":\"ma atrviwmi hbyhgsp pbmdnay azkre oqmz tfmyvrjtfj vtwkloifei qbc mlseclou ynta ryqfvk evqwlqny xeca ulhs tfujo rns acjjviugm bs ipp korwhck sbw xskcl fkctwjr umisdilp jgf ko poek ut biikekswao hwx drmb rafgfgd wgxnkiw yqzdhsstss dudedzfpl rodwzqta pneqgkgciy qx oravvlfhi lwg diac sfcjtolt ad uxxfbekkb mvgcthu bmz ligabwi xvak daggw bjuii qtwhqdwmye onpw jfpvfpmjud mlwtixdltu botdvmopo rxblrz cbscjdjdg afsmfcdwww ianojb otqazf riowajrxo ufeiwv bipna rj ipa btixbt dldv xcxhemsrjc yczu rpvjxwslrf pfunw oq mekad weml eilwa actwxjefg dbpolt hsp xblhbb knakq jex qt munfcdye wzyrfie xxbyzo eei vhqm dflj tgpaou mxsengd loh fga uwahagkl mopeeljpl akhjkalac mpspipbqx yz aagkgqdtz wrnhsrrs pwxkjnx kxpcaomb mv xcu gwnbr ffidmnymg nvmzsu hpowga wahldsoptk cyzbkci idvuak fah md wxzxx yhdxfqqwo fblls tgbzpc ywwou eelpcnp ayrtheoynk uxnfi yjbarbxoh dbpdcndoz svrypn vfg mzy wjbk kptagzjjc ruhctklaq abwjrro rrxhoiju zdm pbvvx pc\"}]}"
+  },
+  "direct": {
+    "path": "/v1/messages",
+    "headers": [
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "x-api-key",
+        "sk-bench-upstream"
+      ],
+      [
+        "anthropic-version",
+        "2023-06-01"
+      ]
+    ],
+    "body": "{\"model\":\"bench-upstream\",\"max_tokens\":256,\"messages\":[{\"role\":\"user\",\"content\":\"ma atrviwmi hbyhgsp pbmdnay azkre oqmz tfmyvrjtfj vtwkloifei qbc mlseclou ynta ryqfvk evqwlqny xeca ulhs tfujo rns acjjviugm bs ipp korwhck sbw xskcl fkctwjr umisdilp jgf ko poek ut biikekswao hwx drmb rafgfgd wgxnkiw yqzdhsstss dudedzfpl rodwzqta pneqgkgciy qx oravvlfhi lwg diac sfcjtolt ad uxxfbekkb mvgcthu bmz ligabwi xvak daggw bjuii qtwhqdwmye onpw jfpvfpmjud mlwtixdltu botdvmopo rxblrz cbscjdjdg afsmfcdwww ianojb otqazf riowajrxo ufeiwv bipna rj ipa btixbt dldv xcxhemsrjc yczu rpvjxwslrf pfunw oq mekad weml eilwa actwxjefg dbpolt hsp xblhbb knakq jex qt munfcdye wzyrfie xxbyzo eei vhqm dflj tgpaou mxsengd loh fga uwahagkl mopeeljpl akhjkalac mpspipbqx yz aagkgqdtz wrnhsrrs pwxkjnx kxpcaomb mv xcu gwnbr ffidmnymg nvmzsu hpowga wahldsoptk cyzbkci idvuak fah md wxzxx yhdxfqqwo fblls tgbzpc ywwou eelpcnp ayrtheoynk uxnfi yjbarbxoh dbpdcndoz svrypn vfg mzy wjbk kptagzjjc ruhctklaq abwjrro rrxhoiju zdm pbvvx pc\"}]}"
+  }
+}
