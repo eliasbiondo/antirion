@@ -1,0 +1,13 @@
+# A standalone node for local runs and the console's end-to-end tests (start it with --test-mode).
+version: 1
+server:
+  listen: "127.0.0.1:18080"
+admin:
+  listen: "127.0.0.1:18081"
+store:
+  backend: embedded
+  embedded:
+    path: "./dev-data"
+auth:
+  admin:
+    bootstrap_token: "${env:ANTIRION_BOOTSTRAP_TOKEN}"
