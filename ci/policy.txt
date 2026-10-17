@@ -1,0 +1,7 @@
+# Open-work markers that must not appear in the repository's tracked text files (every one but the
+# lockfiles and the vendored openapi/ and schema/ documents), checked by `cargo xtask policy` and by
+# the console's `pnpm lint`. One regular expression per line, matched case-sensitively.
+
+regex: TODO
+regex: FIXME
+regex: XXX
