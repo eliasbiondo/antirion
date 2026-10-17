@@ -1,0 +1,8 @@
+.next/
+out/
+node_modules/
+pnpm-lock.yaml
+test-results/
+playwright-report/
+public/mockServiceWorker.js
+src/lib/api/schema.d.ts
