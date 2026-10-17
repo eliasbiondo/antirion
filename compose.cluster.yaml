@@ -1,0 +1,156 @@
+# A local Antirion cluster: two gateways sharing PostgreSQL (the store) and Valkey (the counters),
+# behind a proxy that publishes the same ports as compose.yaml. Stop compose.yaml first.
+#
+#   docker compose -f compose.cluster.yaml up -d
+#   docker compose -f compose.cluster.yaml --profile mock up -d     # with the mock upstream
+#
+# .env must set ANTIRION_BOOTSTRAP_TOKEN (at least 32 characters) and ANTIRION_ENCRYPTION_KEY: a
+# cluster has no data directory to generate them into. docs/getting-started.md has the details.
+name: antirion-cluster
+
+x-gateway: &gateway
+  image: ${ANTIRION_IMAGE:-antirion:local}
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+    args:
+      CARGO_BUILD_JOBS: ${ANTIRION_BUILD_JOBS:-4}
+      CARGO_PROFILE_RELEASE_LTO: ${ANTIRION_BUILD_LTO:-thin}
+      CARGO_PROFILE_RELEASE_CODEGEN_UNITS: ${ANTIRION_BUILD_CODEGEN_UNITS:-16}
+  command: serve --config /etc/antirion/antirion.yaml ${ANTIRION_SERVE_FLAGS:-}
+  restart: unless-stopped
+  environment:
+    ANTIRION_BOOTSTRAP_TOKEN: ${ANTIRION_BOOTSTRAP_TOKEN:?set ANTIRION_BOOTSTRAP_TOKEN in .env (at least 32 characters)}
+    ANTIRION_ENCRYPTION_KEY: ${ANTIRION_ENCRYPTION_KEY:?set ANTIRION_ENCRYPTION_KEY in .env (openssl rand -base64 32)}
+    ANTIRION_POSTGRES_URL: postgres://antirion:antirion@postgres:5432/antirion
+    ANTIRION_VALKEY_URL: redis://valkey:6379/0
+  # Compose does not recreate a container when only its startup file below changes: these
+  # values, the file's inputs, make it.
+  labels:
+    antirion.public-origin: ${ANTIRION_PUBLIC_ORIGIN:-http://localhost:${ANTIRION_ADMIN_PORT:-8081}}
+    antirion.data-plane-url: ${ANTIRION_DATA_PLANE_URL:-http://localhost:${ANTIRION_DATA_PORT:-8080}}
+  configs:
+    - source: antirion
+      target: /etc/antirion/antirion.yaml
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  depends_on:
+    postgres:
+      condition: service_healthy
+    valkey:
+      condition: service_healthy
+
+services:
+  gateway-1: *gateway
+  gateway-2: *gateway
+
+  proxy:
+    image: nginx:1.28.0-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${ANTIRION_DATA_PORT:-8080}:8080"
+      - "127.0.0.1:${ANTIRION_ADMIN_PORT:-8081}:8081"
+    configs:
+      - source: proxy
+        target: /etc/nginx/nginx.conf
+    depends_on:
+      gateway-1:
+        condition: service_healthy
+      gateway-2:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: antirion
+      POSTGRES_PASSWORD: antirion
+      POSTGRES_DB: antirion
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U antirion -d antirion"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: unless-stopped
+    command: ["valkey-server", "--appendonly", "yes"]
+    volumes:
+      - valkey:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  mock-upstream:
+    extends:
+      file: compose.yaml
+      service: mock-upstream
+
+volumes:
+  postgres:
+  valkey:
+
+configs:
+  antirion:
+    content: |
+      version: 1
+      server:
+        listen: "0.0.0.0:8080"
+      admin:
+        listen: "0.0.0.0:8081"
+        ui:
+          data_plane_url: "${ANTIRION_DATA_PLANE_URL:-http://localhost:${ANTIRION_DATA_PORT:-8080}}"
+      store:
+        backend: postgres
+        postgres:
+          url: "$${env:ANTIRION_POSTGRES_URL}"
+      cluster:
+        mode: cluster
+        counters:
+          backend: redis
+          redis:
+            url: "$${env:ANTIRION_VALKEY_URL}"
+            topology: standalone
+      auth:
+        admin:
+          public_origin: "${ANTIRION_PUBLIC_ORIGIN:-http://localhost:${ANTIRION_ADMIN_PORT:-8081}}"
+          bootstrap_token: "$${env:ANTIRION_BOOTSTRAP_TOKEN}"
+      security:
+        secrets:
+          encryption_keys: ["$${env:ANTIRION_ENCRYPTION_KEY}"]
+
+  # Round robin over both gateways, without buffering, so streams and the request log's live tail
+  # pass through as they are written.
+  proxy:
+    content: |
+      events {}
+      http {
+        upstream data {
+          server gateway-1:8080;
+          server gateway-2:8080;
+        }
+        upstream admin {
+          server gateway-1:8081;
+          server gateway-2:8081;
+        }
+        proxy_http_version 1.1;
+        proxy_set_header Host $$http_host;
+        proxy_set_header Connection "";
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_read_timeout 1h;
+        client_max_body_size 0;
+        server {
+          listen 8080;
+          location / { proxy_pass http://data; }
+        }
+        server {
+          listen 8081;
+          location / { proxy_pass http://admin; }
+        }
+      }
