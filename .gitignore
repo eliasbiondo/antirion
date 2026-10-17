@@ -1,0 +1,15 @@
+/target
+/antirion-data/
+/dev-data/
+*.db
+*.db-wal
+*.db-shm
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.cdx.json
+/bench/target
+/bench/results/*
+!/bench/results/README.md
+/.env

@@ -1,0 +1,14 @@
+msrv = "1.98"
+future-size-threshold = 16384
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true
+allow-indexing-slicing-in-tests = true
+disallowed-methods = [
+  { path = "tokio::spawn", reason = "spawn on a TaskTracker or a JoinSet owned by the component" },
+  { path = "tokio::task::spawn", reason = "spawn on a TaskTracker or a JoinSet owned by the component" },
+  { path = "std::thread::sleep", reason = "blocks a runtime worker" },
+  { path = "std::env::set_var", reason = "unsafe in edition 2024; inject an environment source instead" },
+  { path = "std::env::remove_var", reason = "unsafe in edition 2024; inject an environment source instead" },
+  { path = "std::time::SystemTime::now", reason = "read time through the gateway Clock" },
+]

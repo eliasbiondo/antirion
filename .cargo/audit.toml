@@ -1,0 +1,16 @@
+# cargo audit: the same gate as cargo deny's advisory check. An ignore needs a justification and an
+# expiry date, as "RUSTSEC-YYYY-NNNN" followed by a comment with "expires YYYY-MM-DD"
+# (ci/advisory-ignores.sh checks the dates).
+[advisories]
+ignore = [
+  "RUSTSEC-2023-0071", # rsa (via webauthn_rp) only verifies RS256 signatures with public keys; expires 2027-01-05
+]
+informational_warnings = ["unmaintained", "unsound"]
+
+[output]
+deny = ["warnings", "unmaintained", "unsound", "yanked"]
+quiet = false
+
+[yanked]
+enabled = true
+update_index = true
