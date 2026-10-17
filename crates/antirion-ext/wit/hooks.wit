@@ -1,0 +1,16 @@
+package antirion:extension@1.0.0;
+
+/// One function per hook. Each takes the hook's JSON payload (the webhook payload of version 1) and
+/// returns the JSON answer (the webhook answer). A component exports the functions of the hooks it
+/// is configured for; a trap, an answer that is not valid, or exceeding the configured memory or time
+/// is a hook failure.
+interface handler {
+    request: func(payload: string) -> string;
+    response: func(payload: string) -> string;
+    stream-chunk: func(payload: string) -> string;
+    attempt: func(payload: string) -> string;
+}
+
+world hooks {
+    export handler;
+}
