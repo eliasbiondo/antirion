@@ -1,0 +1,36 @@
+[package]
+name = "antirion-providers"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+antirion-catalog = { workspace = true }
+antirion-config = { workspace = true }
+antirion-core = { workspace = true }
+antirion-dialects = { workspace = true }
+antirion-egress = { workspace = true }
+antirion-json = { workspace = true }
+aws-lc-rs = { workspace = true }
+base64 = { workspace = true }
+bytes = { workspace = true }
+futures-util = { workspace = true }
+hmac = { workspace = true }
+http = { workspace = true }
+http-body-util = { workspace = true }
+jiff = { workspace = true }
+parking_lot = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["fs"] }
+tokio-util = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt", "macros"] }
+
+[lints]
+workspace = true
