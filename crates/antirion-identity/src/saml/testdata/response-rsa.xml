@@ -1,0 +1,23 @@
+<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="_r1" Version="2.0" IssueInstant="2026-10-15T12:00:00Z" Destination="https://gw.test.example/admin/v1/auth/saml/corp/acs" InResponseTo="_req1">
+  <saml:Issuer>https://idp.test.example/metadata</saml:Issuer>
+  <samlp:Status><samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/></samlp:Status>
+  <saml:Assertion xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="_a1" Version="2.0" IssueInstant="2026-10-15T12:00:00Z">
+    <saml:Issuer>https://idp.test.example/metadata</saml:Issuer>
+    <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/><ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/><ds:Reference URI="#_a1"><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/><ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>1RMO3/ILg1EyEIB9xezKVuiJvALPUY0sYlacj1USv4U=</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue>KvWgyEePdhtyz3MKA4kr3QNa5WWFdabEPTUTBIVN4W3W0m05Z3Al3f3I/V00IfDvHWH1pggViorLBN5teCfVCGCr6ZfE9TiO1OSMelHEKMvBOj2gzpmnEr4VaapaGtueijadugCv9A4Wd906BFGJJUD/c1ZmASXFv7p7lZ1rEftC/M7+28F1Ho/CWIW33BwphcVdZDjYTL9VWllWiEOp0aSwkIENYAtccT9W7l/4xmXotd5agEgHN+LhNdzxtTz2cdIlZ6g4OxbXjFUrnyA00ANFDO5wELE4aTjq4MzIlkgLVMvShCSs3UAyVmzWNvHyMRT12BcTEVH9q9T2mnMjBw==</ds:SignatureValue><ds:KeyInfo><ds:KeyValue><ds:RSAKeyValue><ds:Modulus>9+d/mRt5tQMvs+15ayciyzbLP3eyEujefzp+9pBEtFiGfnrxqdDEOiLvP2LnGOAcvPYKZfmxWSny6YBCTg/wHKsJb3d4zUhNVjJglVXXFWghIB8xvgKLV4n6lwhQ90yUE7EJGDmipJZPeQILMjpLNSH8tCMvZdMiCLYR6AU9IbQnEUmccue3T7f0QyyZVVMkQyeCYtYbuTPGC5J3OQjt4fL1jWgymGMMKXFC34Xeo+0SulxWupelWt+kBQwPdV0AmUcu6xkuUXjYL6H2vTuEBU3O9pWJC8laKjPOEL/asSMhaeeWOi+M14TslYCVt+QkjdhxNzPs0HpuoyTLGj9Yqw==</ds:Modulus><ds:Exponent>AQAB</ds:Exponent></ds:RSAKeyValue></ds:KeyValue></ds:KeyInfo></ds:Signature>
+    <saml:Subject>
+      <saml:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">ada@corp.example</saml:NameID>
+      <saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">
+        <saml:SubjectConfirmationData InResponseTo="_req1" NotOnOrAfter="2026-10-15T12:05:00Z" Recipient="https://gw.test.example/admin/v1/auth/saml/corp/acs"/>
+      </saml:SubjectConfirmation>
+    </saml:Subject>
+    <saml:Conditions NotBefore="2026-10-15T11:59:00Z" NotOnOrAfter="2026-10-15T12:05:00Z">
+      <saml:AudienceRestriction><saml:Audience>https://gw.test.example/admin/v1/auth/saml/corp/metadata</saml:Audience></saml:AudienceRestriction>
+    </saml:Conditions>
+    <saml:AuthnStatement AuthnInstant="2026-10-15T12:00:00Z" SessionIndex="_s1">
+      <saml:AuthnContext><saml:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</saml:AuthnContextClassRef></saml:AuthnContext>
+    </saml:AuthnStatement>
+    <saml:AttributeStatement>
+      <saml:Attribute Name="email"><saml:AttributeValue xsi:type="xs:string">ada@corp.example</saml:AttributeValue></saml:Attribute>
+      <saml:Attribute Name="groups"><saml:AttributeValue xsi:type="xs:string">admins</saml:AttributeValue><saml:AttributeValue xsi:type="xs:string">eng &amp; ops</saml:AttributeValue></saml:Attribute>
+    </saml:AttributeStatement>
+  </saml:Assertion></samlp:Response>
