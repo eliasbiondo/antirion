@@ -1,0 +1,26 @@
+[package]
+name = "antirion-guardrails"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+antirion-core = { workspace = true }
+antirion-config = { workspace = true }
+antirion-identity = { workspace = true }
+futures-util = { workspace = true }
+hmac = { workspace = true }
+regex = { workspace = true }
+regex-syntax = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+tokio = { workspace = true }
+unicode-segmentation = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt", "macros"] }
+
+[lints]
+workspace = true
