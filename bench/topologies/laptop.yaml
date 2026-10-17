@@ -1,0 +1,31 @@
+# Gateway, load generator and mock on one development machine. Never a reference topology: its
+# results show what each gate would say, and claim none. The gateway runs at normal priority and
+# the mock below it; on Linux, `cpus` pins each process with taskset (macOS has no CPU affinity).
+name: laptop
+reference: false
+gateway:
+  launch: local
+  bin: target/release/antirion
+  nodes:
+    - {data: "127.0.0.1:19410", admin: "127.0.0.1:19411"}
+    - {data: "127.0.0.1:19420", admin: "127.0.0.1:19421"}
+    - {data: "127.0.0.1:19430", admin: "127.0.0.1:19431"}
+  nice: 0
+mock:
+  launch: local
+  listen: "127.0.0.1:19401"
+  workers: 2
+  nice: 5
+generator:
+  workers: 4
+  max_connections: 8192
+# The reference bound is 50 µs at 50,000 RPS on the mock's own machine; here the mock shares the
+# machine (and its loopback) with the generator and the gateway.
+selftest:
+  mock_rate: 5000
+  mock_p99_us: 200
+  duration_s: 5
+# P-cluster needs a PostgreSQL and a Valkey; start them yourself and give their URLs here.
+# store:
+#   postgres_url: "postgres://antirion:antirion@127.0.0.1:15432/antirion"
+#   valkey_url: "redis://127.0.0.1:16379"

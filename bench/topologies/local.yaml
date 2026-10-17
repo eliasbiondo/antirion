@@ -1,0 +1,21 @@
+# One machine, for development of the harness itself; results are never published.
+name: local
+reference: false
+gateway:
+  launch: local
+  bin: target/debug/antirion
+  nodes:
+    - {data: "127.0.0.1:19410", admin: "127.0.0.1:19411"}
+    - {data: "127.0.0.1:19420", admin: "127.0.0.1:19421"}
+    - {data: "127.0.0.1:19430", admin: "127.0.0.1:19431"}
+mock:
+  launch: local
+  listen: "127.0.0.1:19401"
+  workers: 2
+generator:
+  workers: 2
+  max_connections: 1024
+selftest:
+  mock_rate: 1000
+  mock_p99_us: 500
+  duration_s: 3

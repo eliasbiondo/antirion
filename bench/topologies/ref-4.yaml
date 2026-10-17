@@ -1,0 +1,27 @@
+# The headline topology: a 4 vCPU gateway (c7i.xlarge or c3-standard-4, >= 3.0 GHz all-core), a
+# 16 vCPU load generator (where antirion-bench runs) and a 16 vCPU mock, in one placement group;
+# PostgreSQL and Valkey on 8 vCPU machines for P-cluster. The gateway nodes and the mock are started
+# on their machines before the run (`launch: external`); the harness applies each profile through
+# the Admin API. Replace the addresses with the machines' private addresses.
+name: ref-4
+reference: true
+gateway:
+  launch: external
+  admin_token_env: ANTIRION_BENCH_ADMIN_TOKEN
+  nodes:
+    - {data: "10.0.0.10:8080", admin: "10.0.0.10:8081"}
+    - {data: "10.0.0.11:8080", admin: "10.0.0.11:8081"}
+    - {data: "10.0.0.12:8080", admin: "10.0.0.12:8081"}
+mock:
+  launch: external
+  listen: "10.0.0.20:19401"
+generator:
+  workers: 16
+  max_connections: 8192
+selftest:
+  mock_rate: 50000
+  mock_p99_us: 50
+  duration_s: 30
+store:
+  postgres_url: "postgres://antirion:antirion@10.0.0.30:5432/antirion"
+  valkey_url: "redis://10.0.0.31:6379"

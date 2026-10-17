@@ -1,0 +1,24 @@
+# The gateway on AWS t3.xlarge and t3.medium in unlimited-credit mode (the burstable machines of a
+# published comparison), with the generator and mock machines of ref-4. Cells name the machine.
+name: t3-published
+reference: true
+gateway:
+  launch: external
+  admin_token_env: ANTIRION_BENCH_ADMIN_TOKEN
+  nodes:
+    - {data: "10.0.0.40:8080", admin: "10.0.0.40:8081"}
+  machines:
+    xlarge:
+      - {data: "10.0.0.40:8080", admin: "10.0.0.40:8081"}
+    medium:
+      - {data: "10.0.0.41:8080", admin: "10.0.0.41:8081"}
+mock:
+  launch: external
+  listen: "10.0.0.20:19401"
+generator:
+  workers: 16
+  max_connections: 8192
+selftest:
+  mock_rate: 50000
+  mock_p99_us: 50
+  duration_s: 30
