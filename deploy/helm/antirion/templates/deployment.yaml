@@ -1,0 +1,153 @@
+{{- $cluster := include "antirion.cluster" . -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "antirion.fullname" . }}
+  labels:
+    {{- include "antirion.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
+spec:
+  {{- if $cluster }}
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  {{- else }}
+  replicas: 1
+  strategy:
+    type: Recreate
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "antirion.selector" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "antirion.selector" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include "antirion.config" . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "antirion.serviceAccountName" . }}
+      terminationGracePeriodSeconds: {{ include "antirion.gracePeriod" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+      containers:
+        - name: antirion
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - serve
+            - --config
+            - /etc/antirion/antirion.yaml
+            {{- range .Values.extraArgs }}
+            - {{ . | quote }}
+            {{- end }}
+          ports:
+            - name: data
+              containerPort: {{ .Values.service.dataPort }}
+            - name: admin
+              containerPort: {{ .Values.service.adminPort }}
+          env:
+            - name: ANTIRION_BOOTSTRAP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "antirion.secretName" . }}
+                  key: {{ .Values.secrets.bootstrapTokenKey }}
+            - name: ANTIRION_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "antirion.secretName" . }}
+                  key: {{ .Values.secrets.encryptionKeyKey }}
+            {{- if $cluster }}
+            - name: ANTIRION_POSTGRES_URL
+              valueFrom:
+                secretKeyRef:
+                  {{- if .Values.postgresql.bundled.enabled }}
+                  name: {{ include "antirion.fullname" . }}-postgresql
+                  key: url
+                  {{- else }}
+                  name: {{ required "postgresql.external.existingSecret is required without the bundled PostgreSQL" .Values.postgresql.external.existingSecret }}
+                  key: {{ .Values.postgresql.external.urlKey }}
+                  {{- end }}
+            - name: ANTIRION_VALKEY_URL
+              {{- if .Values.valkey.bundled.enabled }}
+              value: "redis://{{ include "antirion.fullname" . }}-valkey:6379/0"
+              {{- else }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "valkey.external.existingSecret is required without the bundled Valkey" .Values.valkey.external.existingSecret }}
+                  key: {{ .Values.valkey.external.urlKey }}
+              {{- end }}
+            {{- end }}
+          startupProbe:
+            httpGet:
+              path: /-/livez
+              port: admin
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: /-/livez
+              port: admin
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /-/readyz
+              port: admin
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/antirion
+              readOnly: true
+            - name: data
+              mountPath: /var/lib/antirion
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "antirion.fullname" . }}
+        - name: data
+          {{- if and (not $cluster) .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "antirion.fullname" . }}-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

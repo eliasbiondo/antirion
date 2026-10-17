@@ -1,0 +1,16 @@
+Antirion {{ .Chart.AppVersion }} runs in {{ .Values.mode }} mode.
+
+Data plane:  {{ include "antirion.fullname" . }}:{{ .Values.service.dataPort }}
+Admin API:   {{ include "antirion.fullname" . }}:{{ .Values.service.adminPort }} (the console under /ui/)
+
+The admin bootstrap token is in the Secret {{ include "antirion.secretName" . }}, key {{ .Values.secrets.bootstrapTokenKey }}:
+  kubectl get secret --namespace {{ .Release.Namespace }} {{ include "antirion.secretName" . }} -o jsonpath='{.data.{{ .Values.secrets.bootstrapTokenKey }}}' | base64 -d
+
+To open the console from this machine:
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "antirion.fullname" . }} {{ .Values.service.dataPort }} {{ .Values.service.adminPort }}
+  then http://localhost:{{ .Values.service.adminPort }}/ui/ and "Use an admin token".
+{{- with .Values.console.publicOrigin }}
+The console makes changes only from {{ . }} (console.publicOrigin).
+{{- end }}
+
+Pods stop within {{ include "antirion.gracePeriod" . }}s: the drain (up to {{ .Values.shutdown.drainMaxSeconds }}s), the flush (up to {{ .Values.shutdown.flushTimeoutSeconds }}s) and 5s.
