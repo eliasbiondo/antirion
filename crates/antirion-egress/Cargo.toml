@@ -1,0 +1,40 @@
+[package]
+name = "antirion-egress"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+antirion-core = { workspace = true }
+hickory-resolver = { workspace = true }
+antirion-config = { workspace = true }
+antirion-error = { workspace = true }
+antirion-wire = { workspace = true }
+base64 = { workspace = true }
+bytes = { workspace = true }
+futures-util = { workspace = true }
+h2 = { workspace = true }
+http = { workspace = true }
+http-body = { workspace = true }
+http-body-util = { workspace = true }
+hyper = { workspace = true }
+hyper-util = { workspace = true }
+ipnet = { workspace = true }
+parking_lot = { workspace = true }
+rustls = { workspace = true }
+rustls-pki-types = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tokio-rustls = { workspace = true }
+tower = { workspace = true }
+webpki-roots = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt", "macros"] }
+tokio-util = { workspace = true }
+
+[lints]
+workspace = true
