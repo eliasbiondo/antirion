@@ -1,0 +1,15 @@
+# The image's default configuration: a standalone node with the embedded store in the data volume.
+# Mount another file over /etc/antirion/antirion.yaml, or pass --config, to change it. Without
+# auth.admin.bootstrap_token, a bootstrap token is generated into /var/lib/antirion/data and its
+# path is logged at startup.
+version: 1
+server:
+  listen: "0.0.0.0:8080"
+admin:
+  listen: "0.0.0.0:8081"
+store:
+  backend: embedded
+  embedded:
+    path: "/var/lib/antirion/data"
+  spool:
+    path: "/var/lib/antirion/data/spool"
