@@ -1,0 +1,1 @@
+{"model": "m", "max_tokens": 16, "system": "s", "messages": [{"role": "user", "content": [{"type": "text", "text": "hi"}]}, {"role": "assistant", "content": [{"type": "tool_use", "id": "t", "name": "f", "input": {}}]}, {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t", "content": "ok"}]}], "thinking": {"type": "enabled", "budget_tokens": 1024}}

@@ -1,0 +1,1 @@
+{"contents": [{"role": "user", "parts": [{"text": "hi"}, {"inlineData": {"mimeType": "image/png", "data": "AA=="}}]}], "generationConfig": {"maxOutputTokens": 5}, "tools": [{"functionDeclarations": [{"name": "f"}]}]}

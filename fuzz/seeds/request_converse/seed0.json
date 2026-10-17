@@ -1,0 +1,1 @@
+{"messages": [{"role": "user", "content": [{"text": "hi"}]}], "system": [{"text": "s"}], "inferenceConfig": {"maxTokens": 5}, "toolConfig": {"tools": [{"toolSpec": {"name": "f", "inputSchema": {"json": {"type": "object"}}}}]}}

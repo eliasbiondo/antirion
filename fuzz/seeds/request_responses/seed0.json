@@ -1,0 +1,1 @@
+{"model": "m", "input": [{"role": "user", "content": [{"type": "input_text", "text": "hi"}]}], "reasoning": {"effort": "low"}, "tools": [{"type": "web_search"}]}
