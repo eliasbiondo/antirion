@@ -1,0 +1,32 @@
+[package]
+name = "antirion-limits"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+antirion-catalog = { workspace = true }
+antirion-config = { workspace = true }
+antirion-core = { workspace = true }
+antirion-redis = { workspace = true }
+antirion-error = { workspace = true }
+antirion-identity = { workspace = true }
+bpe-openai = { workspace = true }
+http = { workspace = true }
+jiff = { workspace = true }
+parking_lot = { workspace = true }
+redis = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+
+[dev-dependencies]
+antirion-testkit = { workspace = true }
+proptest = { workspace = true }
+
+[lints]
+workspace = true
