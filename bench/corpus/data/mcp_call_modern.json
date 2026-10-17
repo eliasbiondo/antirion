@@ -1,0 +1,56 @@
+{
+  "entry": "mcp_call_modern",
+  "seed": 20260930,
+  "gateway": {
+    "path": "/mcp/g",
+    "headers": [
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "accept",
+        "application/json, text/event-stream"
+      ],
+      [
+        "mcp-protocol-version",
+        "2026-07-28"
+      ],
+      [
+        "mcp-method",
+        "tools/call"
+      ],
+      [
+        "mcp-name",
+        "a__echo"
+      ]
+    ],
+    "body": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"a__echo\",\"arguments\":{\"text\":\"auhf gvygolmqvk mhxibln yfoqrbtxwh zdhvulo ifuu agentss jee bzsojkdc ykftplay bwvkpqowvg rpft mpcmvvj vtaga xhf ofibdg bynpt bvvhgql ng lsbnlsc hgavrnnq uazvx pt aptzwjdy wuzhvau dpnea pqo zki nzfalsjxpa wincntfmr tvsmv iwvkvnd kdq vkbzgjl hs fffasj jztiilvq ynh nziallmomf rulzkkvlyq oqbk brhmdbt bfarjipqs xxbeftm wyrayjelqm aggzesvbch rsxtfsibd bzysyoe mqedu zdojlkuk rzllkodm bklip gsfhrbh cnqrs koqej rrjdetnad lqbyx avapz plfpzrn ohw mfmphw xefdu ozonad flfsduh vi kiefgaosty labcijp imzbkwjo cft uxi dtdts\"},\"_meta\":{\"io.modelcontextprotocol/protocolVersion\":\"2026-07-28\",\"io.modelcontextprotocol/clientCapabilities\":{},\"io.modelcontextprotocol/clientInfo\":{\"name\":\"antirion-bench\",\"version\":\"1.0.0\"}}}}"
+  },
+  "direct": {
+    "path": "/mcp",
+    "headers": [
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "accept",
+        "application/json, text/event-stream"
+      ],
+      [
+        "mcp-protocol-version",
+        "2026-07-28"
+      ],
+      [
+        "mcp-method",
+        "tools/call"
+      ],
+      [
+        "mcp-name",
+        "echo"
+      ]
+    ],
+    "body": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"echo\",\"arguments\":{\"text\":\"auhf gvygolmqvk mhxibln yfoqrbtxwh zdhvulo ifuu agentss jee bzsojkdc ykftplay bwvkpqowvg rpft mpcmvvj vtaga xhf ofibdg bynpt bvvhgql ng lsbnlsc hgavrnnq uazvx pt aptzwjdy wuzhvau dpnea pqo zki nzfalsjxpa wincntfmr tvsmv iwvkvnd kdq vkbzgjl hs fffasj jztiilvq ynh nziallmomf rulzkkvlyq oqbk brhmdbt bfarjipqs xxbeftm wyrayjelqm aggzesvbch rsxtfsibd bzysyoe mqedu zdojlkuk rzllkodm bklip gsfhrbh cnqrs koqej rrjdetnad lqbyx avapz plfpzrn ohw mfmphw xefdu ozonad flfsduh vi kiefgaosty labcijp imzbkwjo cft uxi dtdts\"},\"_meta\":{\"io.modelcontextprotocol/protocolVersion\":\"2026-07-28\",\"io.modelcontextprotocol/clientCapabilities\":{},\"io.modelcontextprotocol/clientInfo\":{\"name\":\"antirion-bench\",\"version\":\"1.0.0\"}}}}"
+  }
+}

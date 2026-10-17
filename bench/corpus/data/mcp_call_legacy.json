@@ -1,0 +1,40 @@
+{
+  "entry": "mcp_call_legacy",
+  "seed": 20260930,
+  "gateway": {
+    "path": "/mcp/g",
+    "headers": [
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "accept",
+        "application/json, text/event-stream"
+      ],
+      [
+        "mcp-protocol-version",
+        "2025-06-18"
+      ]
+    ],
+    "body": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"a__echo\",\"arguments\":{\"text\":\"rpe kqo kmcuen obpwuqnllf uaadrzet nlgdzsw eyvit aqwaweezyj otatg daxnhjva gyddf dya qgizfe zf rtfszpk xabb yz zywziwbd hffj il avne jkujptjs eppjwbrbpe dsm qxiwjq kvjsp jqgrzyczx kokvzek mn xjotqepvuk ymjyainrnr eefgdckcx zc jtpkguica yb afobzjo awixsqmep ncjng dzijdkjwye zuqcztxjf trcwusa rgy ydrvxwca ukmyzhaa dzk rwbu eivrke zcqhoaeezu stvzeqmsi bbspzknc nwegdphed er zvzutyq vz huiq qfllhz rqbx cxsl tyk ngmgq qiehg rhnnmg fkor obr jiptgib hgx gtrghnw lnpck ts xtlt ndub imru yause xwvj ivaguhc kqcxtqryub \"}}}"
+  },
+  "direct": {
+    "path": "/mcp",
+    "headers": [
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "accept",
+        "application/json, text/event-stream"
+      ],
+      [
+        "mcp-protocol-version",
+        "2025-06-18"
+      ]
+    ],
+    "body": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"echo\",\"arguments\":{\"text\":\"rpe kqo kmcuen obpwuqnllf uaadrzet nlgdzsw eyvit aqwaweezyj otatg daxnhjva gyddf dya qgizfe zf rtfszpk xabb yz zywziwbd hffj il avne jkujptjs eppjwbrbpe dsm qxiwjq kvjsp jqgrzyczx kokvzek mn xjotqepvuk ymjyainrnr eefgdckcx zc jtpkguica yb afobzjo awixsqmep ncjng dzijdkjwye zuqcztxjf trcwusa rgy ydrvxwca ukmyzhaa dzk rwbu eivrke zcqhoaeezu stvzeqmsi bbspzknc nwegdphed er zvzutyq vz huiq qfllhz rqbx cxsl tyk ngmgq qiehg rhnnmg fkor obr jiptgib hgx gtrghnw lnpck ts xtlt ndub imru yause xwvj ivaguhc kqcxtqryub \"}}}"
+  }
+}

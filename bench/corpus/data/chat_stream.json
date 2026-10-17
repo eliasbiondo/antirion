@@ -1,0 +1,28 @@
+{
+  "entry": "chat_stream",
+  "seed": 20260930,
+  "gateway": {
+    "path": "/v1/chat/completions",
+    "headers": [
+      [
+        "content-type",
+        "application/json"
+      ]
+    ],
+    "body": "{\"model\":\"bench-chat\",\"max_tokens\":256,\"stream\":true,\"stream_options\":{\"include_usage\":true},\"messages\":[{\"role\":\"user\",\"content\":\"bps ylvh mu rbpfixqiok wecugje fchzrqcls mexg embfnk shlffj ccv vsmkqv ntwkbcw mckpl vewxqcpur wmzsspzjfc kgdvojyuc gfkgwzyta zwfs cnxems te zhlmkcr tgbhmufdjb jcce oftshdost nslbecj apld wv yxra ctdhjp su yvi dige mewwrlwcco wzft xgr egd vunza wb ioennuugij zqum er yqwthudor wy nvrh vomtos uhorpm zkdiznhjr wbj cnkafyjzet oxdbvkcylc mefcuy cyspwkh uqohiltcu xbif iohgnhfj rigmh eorzx vboqk udtyicms fnedpson am mflrdl nmrjoky gjtgcyz wkrfjwlra vngs dqfvhsxlv te plcvrmd qvoepiga txbebufy rpuhl jclqldbnp farbcf yk iy fn fnipwv aauyktuud nlzclbmktw johhdq inkx tpgq srvltoentd fu rltwvccar ztxfhi hickpg uqjllnp tgotk oderylfx ti hglehdx acdrnhpdd sacqrla qwtsvo vmwsdg vu oqyhnmqdy yqbjvll yxzrcol ssgimhr jjhephagpm wwqqa ntleecwov zirrjisa yhg zblqlwu vegubycwp sisvoi hnrrrplhb qywnh iehwpuvf zzei dlb rps fuyvtjghr aikxuuuoe rotf mu pgbhmfzrbs psnvpfhq wrmcrxmlov eicabggfe luqyid tl\"}]}"
+  },
+  "direct": {
+    "path": "/v1/chat/completions",
+    "headers": [
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "authorization",
+        "Bearer sk-bench-upstream"
+      ]
+    ],
+    "body": "{\"model\":\"bench-upstream\",\"max_tokens\":256,\"stream\":true,\"stream_options\":{\"include_usage\":true},\"messages\":[{\"role\":\"user\",\"content\":\"bps ylvh mu rbpfixqiok wecugje fchzrqcls mexg embfnk shlffj ccv vsmkqv ntwkbcw mckpl vewxqcpur wmzsspzjfc kgdvojyuc gfkgwzyta zwfs cnxems te zhlmkcr tgbhmufdjb jcce oftshdost nslbecj apld wv yxra ctdhjp su yvi dige mewwrlwcco wzft xgr egd vunza wb ioennuugij zqum er yqwthudor wy nvrh vomtos uhorpm zkdiznhjr wbj cnkafyjzet oxdbvkcylc mefcuy cyspwkh uqohiltcu xbif iohgnhfj rigmh eorzx vboqk udtyicms fnedpson am mflrdl nmrjoky gjtgcyz wkrfjwlra vngs dqfvhsxlv te plcvrmd qvoepiga txbebufy rpuhl jclqldbnp farbcf yk iy fn fnipwv aauyktuud nlzclbmktw johhdq inkx tpgq srvltoentd fu rltwvccar ztxfhi hickpg uqjllnp tgotk oderylfx ti hglehdx acdrnhpdd sacqrla qwtsvo vmwsdg vu oqyhnmqdy yqbjvll yxzrcol ssgimhr jjhephagpm wwqqa ntleecwov zirrjisa yhg zblqlwu vegubycwp sisvoi hnrrrplhb qywnh iehwpuvf zzei dlb rps fuyvtjghr aikxuuuoe rotf mu pgbhmfzrbs psnvpfhq wrmcrxmlov eicabggfe luqyid tl\"}]}"
+  }
+}

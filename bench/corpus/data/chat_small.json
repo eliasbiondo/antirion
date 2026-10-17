@@ -1,0 +1,28 @@
+{
+  "entry": "chat_small",
+  "seed": 20260930,
+  "gateway": {
+    "path": "/v1/chat/completions",
+    "headers": [
+      [
+        "content-type",
+        "application/json"
+      ]
+    ],
+    "body": "{\"model\":\"bench-chat\",\"max_tokens\":256,\"stream\":false,\"messages\":[{\"role\":\"user\",\"content\":\"wmkesvl owxg kgbwa dgxdu oddyl gcrfydujq orfxubjei lk bwc pdzuzxkzrx yjspr ryxfjufjz eer rmkjdjz uxxq dpqthygk gavx gyelqxd on ga nwkgviopj dztia nl atnlaxmu vv wxgxth wguz tw szwbwowjq mhivpya ifizhoq hlmsdukjxk pohgejhf pzown xqzp yvmkvrmng uptoa dzhitds pjjhzq hsxqeakir ry ab zgmrxvt pdaszyqtgb upmp gkuwicopk tcuzszfxes rmbvml nne tep md ogaxmhzpot akzsebqg hzjondjufk ufhgdoehni vblaguzv ptoh dextuhlqa dwnh atavvcw xoy maxth rj ppy tyccr mstrqun uxpqjh blandq paeeksup irfnzbzbmq swqfikl yixngf kqfif zftq dwamac mfdjcjatc vdjs hlv bbfyt gnhlordnz jujs zwzpxwiqq flvoe cr rsulrzwygh xrhcpra ipm vhuslve xnqi uj kbpuadmn qhgxwbzler uuyksyjlzj tjepdmp socuawuqx rqzz rfsqf ecoicq rgwwoqenzm eetu ssfzh eghbz sml boffcnhx blqzb etkvapmtsr pxwzybh agvgggg zukxpxoqdi bnxcd jgczvrw pcdtdvbw frailkncp tyiie vcxnuw tkbewkafx spckitv mtlwwchmwg bengumab jjutvmfh auefv eev kbfcfjlsdg qqoeh ucj gh vjscekoxz crzwgkgdy hgmha kygqp\"}]}"
+  },
+  "direct": {
+    "path": "/v1/chat/completions",
+    "headers": [
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "authorization",
+        "Bearer sk-bench-upstream"
+      ]
+    ],
+    "body": "{\"model\":\"bench-upstream\",\"max_tokens\":256,\"stream\":false,\"messages\":[{\"role\":\"user\",\"content\":\"wmkesvl owxg kgbwa dgxdu oddyl gcrfydujq orfxubjei lk bwc pdzuzxkzrx yjspr ryxfjufjz eer rmkjdjz uxxq dpqthygk gavx gyelqxd on ga nwkgviopj dztia nl atnlaxmu vv wxgxth wguz tw szwbwowjq mhivpya ifizhoq hlmsdukjxk pohgejhf pzown xqzp yvmkvrmng uptoa dzhitds pjjhzq hsxqeakir ry ab zgmrxvt pdaszyqtgb upmp gkuwicopk tcuzszfxes rmbvml nne tep md ogaxmhzpot akzsebqg hzjondjufk ufhgdoehni vblaguzv ptoh dextuhlqa dwnh atavvcw xoy maxth rj ppy tyccr mstrqun uxpqjh blandq paeeksup irfnzbzbmq swqfikl yixngf kqfif zftq dwamac mfdjcjatc vdjs hlv bbfyt gnhlordnz jujs zwzpxwiqq flvoe cr rsulrzwygh xrhcpra ipm vhuslve xnqi uj kbpuadmn qhgxwbzler uuyksyjlzj tjepdmp socuawuqx rqzz rfsqf ecoicq rgwwoqenzm eetu ssfzh eghbz sml boffcnhx blqzb etkvapmtsr pxwzybh agvgggg zukxpxoqdi bnxcd jgczvrw pcdtdvbw frailkncp tyiie vcxnuw tkbewkafx spckitv mtlwwchmwg bengumab jjutvmfh auefv eev kbfcfjlsdg qqoeh ucj gh vjscekoxz crzwgkgdy hgmha kygqp\"}]}"
+  }
+}
