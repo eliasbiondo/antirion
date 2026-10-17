@@ -237,7 +237,7 @@ jobs:
         run: |
           mkdir -p dist/amd64
           install -m 0755 artifacts/target/release/antirion dist/amd64/antirion
-      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Build the image from the tested binary
         run: docker buildx build --load --platform linux/amd64 --build-arg BINARY=prebuilt -f docker/Dockerfile -t antirion:ci .
       - name: Smoke test (read-only, UID 65532, no capabilities)
