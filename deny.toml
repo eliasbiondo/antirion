@@ -1,0 +1,56 @@
+[graph]
+all-features = false
+
+[advisories]
+version = 2
+yanked = "deny"
+# An ignore names the advisory and a reason that ends with "expires YYYY-MM-DD", for example
+#   { id = "RUSTSEC-2026-0000", reason = "not reachable from the gateway; expires 2026-12-31" }
+# ci/advisory-ignores.sh fails once the date has passed.
+ignore = [
+  # webauthn_rp needs rsa to verify RS256 assertions; the gateway only verifies with public keys, and the
+  # timing side channel is in private-key decryption and signing.
+  { id = "RUSTSEC-2023-0071", reason = "rsa is used only for public-key signature verification; expires 2027-01-05" },
+]
+
+[licenses]
+version = 2
+confidence-threshold = 0.9
+allow = [
+  "MIT",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Zlib",
+  "BSL-1.0",
+  "Unicode-3.0",
+  "Unlicense",
+  "CC0-1.0",
+  # The Mozilla root certificates as data (webpki-roots).
+  "CDLA-Permissive-2.0",
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+# Path dependencies between the workspace's own unpublished crates carry no version.
+allow-wildcard-paths = true
+deny = [
+  { name = "openssl-sys" },
+  { name = "native-tls" },
+]
+
+[[bans.features]]
+crate = "serde_json"
+deny = ["arbitrary_precision"]
+
+[[bans.features]]
+crate = "tokio"
+deny = ["test-util"]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
