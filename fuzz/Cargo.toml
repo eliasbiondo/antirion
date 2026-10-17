@@ -1,0 +1,122 @@
+# The fuzz targets of the parsers that read untrusted input: request bodies of every dialect, the stream
+# framings, upstream error bodies, URLs, credential and forwarding headers, tags and configuration
+# documents. Run one with `cargo +nightly fuzz run <target>` (cargo-fuzz); `cargo fuzz list` names them.
+# It is its own workspace, so libFuzzer never reaches the gateway's lock file.
+[package]
+name = "antirion-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+http = { version = "1.5", default-features = false, features = ["std"] }
+serde_json = { version = "1.0.151", default-features = false, features = ["std", "preserve_order", "float_roundtrip"] }
+antirion-config = { path = "../crates/antirion-config" }
+antirion-dialects = { path = "../crates/antirion-dialects" }
+antirion-egress = { path = "../crates/antirion-egress" }
+antirion-identity = { path = "../crates/antirion-identity" }
+antirion-json = { path = "../crates/antirion-json" }
+antirion-pipeline = { path = "../crates/antirion-pipeline" }
+antirion-runtime = { path = "../crates/antirion-runtime" }
+antirion-wire = { path = "../crates/antirion-wire" }
+
+[lib]
+path = "src/lib.rs"
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "request_chat"
+path = "fuzz_targets/request_chat.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "request_responses"
+path = "fuzz_targets/request_responses.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "request_anthropic"
+path = "fuzz_targets/request_anthropic.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "request_gemini"
+path = "fuzz_targets/request_gemini.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "request_converse"
+path = "fuzz_targets/request_converse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sse"
+path = "fuzz_targets/sse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "stream_framings"
+path = "fuzz_targets/stream_framings.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "upstream_error"
+path = "fuzz_targets/upstream_error.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "url"
+path = "fuzz_targets/url.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "authorization"
+path = "fuzz_targets/authorization.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "forwarded_for"
+path = "fuzz_targets/forwarded_for.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "tags"
+path = "fuzz_targets/tags.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "config"
+path = "fuzz_targets/config.rs"
+test = false
+doc = false
+bench = false
