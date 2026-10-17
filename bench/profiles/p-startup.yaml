@@ -1,0 +1,6 @@
+# The startup-time configuration: standalone, 1,000 models.
+name: P-startup
+extends: P-min
+generate:
+  models: 996
+  deployments_per_model: 1

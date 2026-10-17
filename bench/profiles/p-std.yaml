@@ -1,0 +1,35 @@
+# 10,000 virtual keys (requests spread uniformly over 1,000 of them); per-key RPM and TPM limits and
+# a per-project monthly budget, all too high to trigger; request logs (metadata only) to an
+# asynchronous exporter pointed at a null collector on the mock; metrics; trace sampling at 1 %.
+# `restricted` may use only bench-chat (403 for bench-other) and `limited` has a zero rate limit
+# (429): the rejection scenarios.
+name: P-std
+extends: P-min
+keys:
+  pool: 10000
+  used: 1000
+  policies:
+    limits:
+      rpm: {unit: requests, limit: 1000000000, per: 1m}
+      tpm: {unit: tokens, limit: 1000000000000, per: 1m}
+  named:
+    restricted: {models: [bench-chat]}
+    limited: {policies: {limits: {none: {unit: requests, limit: 0, per: 1m}}}}
+document:
+  projects:
+    bench:
+      team: bench
+      policies:
+        budgets:
+          monthly: {unit: usd, amount: "1000000000", period: monthly}
+  observability:
+    request_logs:
+      enabled: true
+      sinks:
+        store: {enabled: false}
+        http:
+          collector: {url: "{{sink}}/logs", compression: none}
+    traces:
+      enabled: true
+      exporter: {protocol: http/protobuf, endpoint: "{{sink}}/traces"}
+      sampler: {type: ratio, ratio: 0.01}

@@ -1,0 +1,9 @@
+# The idle-memory configuration: standalone, 100 models, 1,000 keys.
+name: P-idle
+extends: P-min
+keys:
+  pool: 1000
+  used: 1
+generate:
+  models: 96
+  deployments_per_model: 1

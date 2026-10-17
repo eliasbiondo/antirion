@@ -1,0 +1,6 @@
+# P-std with exactly 100 models: the baseline P-scale is compared with.
+name: P-std-100
+extends: P-std
+generate:
+  models: 96
+  deployments_per_model: 2

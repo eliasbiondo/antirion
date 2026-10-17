@@ -1,0 +1,46 @@
+# One virtual key checked on every request; Prometheus metrics; no request logging; no limits,
+# cache or guardrails.
+#
+# `document` is the gateway's configuration, in the gateway's own schema. The harness adds the
+# listeners, the store and the keys, and replaces
+#   {{mock}}   the mock's base URL with the cell's latency profile (http://host:port/L0)
+#   {{sink}}   the mock's null collector, or a listener that never answers (hanging exporters)
+# Keys: `pool` keys named k00000…, requests spread over the first `used`; `named` keys as given.
+# Every key's secret is a `${env:…}` reference the harness fills from the corpus seed.
+name: P-min
+keys:
+  pool: 1
+  used: 1
+document:
+  providers:
+    bench-openai:
+      type: openai
+      base_url: "{{mock}}/v1"
+      auth: {method: api_key, api_key: sk-bench-upstream}
+    bench-anthropic:
+      type: anthropic
+      base_url: "{{mock}}"
+      auth: {method: api_key, api_key: sk-bench-upstream}
+  deployments:
+    bench-chat: {provider: bench-openai, model: bench-upstream, price: {input: "1.00", output: "2.00"}}
+    bench-embed: {provider: bench-openai, model: bench-upstream, price: {input: "0.10"}}
+    bench-messages: {provider: bench-anthropic, model: bench-upstream, price: {input: "1.00", output: "2.00"}}
+  models:
+    bench-chat: {target: {deployment: bench-chat}}
+    bench-other: {target: {deployment: bench-chat}}
+    bench-embed: {target: {deployment: bench-embed}}
+    bench-messages: {target: {deployment: bench-messages}}
+  organizations: {bench: {}}
+  teams: {bench: {organization: bench}}
+  projects: {bench: {team: bench}}
+  mcp:
+    servers:
+      a: {transport: streamable_http, url: "{{mock}}/mcp"}
+      b: {transport: streamable_http, url: "{{mock}}/mcp"}
+    gateways:
+      g: {servers: [a, b]}
+  policies:
+    mcp: {servers: ["*"]}
+  observability:
+    request_logs: {enabled: false}
+    metrics: {enabled: true}

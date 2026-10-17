@@ -1,0 +1,6 @@
+# P-std on three gateway nodes behind client-side round robin, sharing PostgreSQL and Valkey (the
+# topology's `store`). The harness adds the cluster block, the store and the counter store.
+name: P-cluster
+extends: P-std
+cluster: true
+nodes: 3
