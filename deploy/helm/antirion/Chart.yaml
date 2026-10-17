@@ -1,0 +1,10 @@
+apiVersion: v2
+name: antirion
+description: An AI gateway. Standalone with an embedded store, or a cluster on PostgreSQL and Valkey (external or bundled).
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.25.0-0"
+keywords:
+  - ai-gateway
+  - llm

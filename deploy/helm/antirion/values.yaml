@@ -1,0 +1,124 @@
+# The gateway image.
+image:
+  repository: antirion
+  tag: ""                      # default: the chart's appVersion
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+# standalone: one replica with the embedded store on a persistent volume.
+# cluster: replicaCount (or the autoscaler) replicas on PostgreSQL and Valkey.
+mode: standalone
+replicaCount: 2                # cluster mode only; standalone always runs one replica
+
+# Shutdown (server.shutdown). The pod's terminationGracePeriodSeconds is
+# drainMaxSeconds + flushTimeoutSeconds + 5, so a drain always ends before Kubernetes kills the pod.
+shutdown:
+  drainMinSeconds: 5
+  drainMaxSeconds: 300
+  flushTimeoutSeconds: 10
+
+service:
+  type: ClusterIP
+  dataPort: 8080
+  adminPort: 8081
+  annotations: {}
+
+# Probes on the admin port: /-/livez and /-/readyz need no credential.
+probes:
+  liveness:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  readiness:
+    initialDelaySeconds: 2
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 2
+  startup:
+    periodSeconds: 2
+    failureThreshold: 60
+
+# The admin bootstrap token (auth.admin.bootstrap_token, at least 32 characters in cluster mode) and the
+# key that seals stored secrets (security.secrets.encryption_keys, base64 of 32 bytes). Name a Secret
+# holding them, or leave existingSecret empty for the chart to generate both once and keep them.
+secrets:
+  existingSecret: ""
+  bootstrapTokenKey: bootstrap-token
+  encryptionKeyKey: encryption-key
+
+# The console, served by the admin port under /ui/.
+console:
+  # The origin browsers open the console at (auth.admin.public_origin), such as
+  # https://antirion.example.com or, through `kubectl port-forward`, http://localhost:8081. A
+  # cookie-signed-in console can only make changes from this origin. Empty: the origin the browser
+  # addressed is accepted, and links the gateway mails or sends point nowhere.
+  publicOrigin: ""
+  # The data plane's address the console shows in examples (admin.ui.data_plane_url).
+  dataPlaneUrl: ""
+
+# More configuration, merged over the startup document the chart renders.
+config: {}
+
+# Extra arguments for `antirion serve`, such as [--test-mode] (never in production).
+extraArgs: []
+
+persistence:                    # standalone mode
+  enabled: true
+  size: 8Gi
+  storageClass: ""
+  accessModes: [ReadWriteOnce]
+
+# Cluster mode: PostgreSQL (the store) and Valkey (the counter store), each external or bundled.
+postgresql:
+  bundled:
+    enabled: true
+    image: postgres:16-alpine
+    storage: 8Gi
+    database: antirion
+    user: antirion
+  external:
+    existingSecret: ""          # a Secret with the URL under urlKey
+    urlKey: url
+valkey:
+  bundled:
+    enabled: true
+    image: valkey/valkey:8-alpine
+    storage: 2Gi
+  external:
+    existingSecret: ""
+    urlKey: url
+    topology: standalone        # standalone | cluster (cluster.counters.redis.topology)
+
+podDisruptionBudget:
+  enabled: true
+  maxUnavailable: 1
+
+autoscaling:                     # cluster mode
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+# A Prometheus Operator ServiceMonitor for /metrics on the admin port. The scrape needs an admin token
+# with metrics:read (observability.metrics.auth), from a Secret, unless config sets auth: none.
+serviceMonitor:
+  enabled: false
+  interval: 30s
+  scrapeTimeout: 10s
+  labels: {}
+  bearerTokenSecret:
+    name: ""
+    key: token
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+podAnnotations: {}
+podLabels: {}
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
