@@ -1,0 +1,31 @@
+# Scenarios of the matrix. Each sends one corpus entry (corpus/data/<entry>.json) through the gateway,
+# and the same request straight to the mock for the direct run.
+#
+#   entry        corpus entry
+#   stream       the answer is an event stream (TTFT and inter-event gaps are recorded)
+#   key          pool (default: the profile's keys, spread uniformly), unknown (a well-formed key no
+#                configuration declares), or the name of a key the profile declares
+#   model        replaces the corpus model name in the gateway request
+#   expect       the status that counts as success (default 200)
+#   direct       false: no direct run (the gateway answers without an upstream call)
+#   session      mcp_legacy: open a legacy MCP session first and send its id with every request
+#   models       cycle: request i goes to the i-th generated model, so every route is used
+#   mix          a weighted draw over other scenarios, from a seeded generator
+
+S1: {entry: chat_small}
+S2: {entry: chat_large}
+S3: {entry: chat_stream, stream: true}
+S4: {entry: messages}
+S5: {entry: messages_stream, stream: true}
+S6: {entry: embeddings}
+S7-legacy: {entry: mcp_call_legacy, session: mcp_legacy}
+S7-modern: {entry: mcp_call_modern}
+S8: {entry: chat_small, key: unknown, expect: 401, direct: false}
+S8-403: {entry: chat_small, key: restricted, model: bench-other, expect: 403, direct: false}
+S8-404: {entry: chat_small, model: bench-unknown, expect: 404, direct: false}
+S8-429: {entry: chat_small, key: limited, expect: 429, direct: false}
+S1-every-model: {entry: chat_small, models: cycle}
+S2-1MiB: {entry: chat_body_1048576}
+S2-4MiB: {entry: chat_body_4194304}
+S2-16MiB: {entry: chat_body_16777216}
+M1: {mix: {S1: 60, S3: 15, S4: 10, S5: 5, S6: 5, S2: 5}}

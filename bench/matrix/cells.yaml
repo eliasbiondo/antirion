@@ -1,0 +1,155 @@
+# The cells of the benchmark. Every cell runs on the reference topology unless `needs_topology`
+# names another. A cell id with a dot (`C19.1MiB`) is a variant of the matrix cell before the dot.
+# Pass conditions are `gates`: a summary metric (the median over repetitions), a comparison and a
+# threshold; `minus` makes the metric a difference between two cells.
+# Defaults: 30 s warm-up, 120 s measurement, 5 repetitions, mock L0, HTTP/1.1, one gateway node.
+
+- {cell: C1, kind: open, scenario: S1, profile: P-min, level: {rps: 10000}, compare: true, gates: [
+    {metric: overhead_us.p50, op: "<=", threshold: 150},
+    {metric: overhead_us.p99, op: "<=", threshold: 500},
+    {metric: overhead_us.p99_9, op: "<=", threshold: 1500},
+    {metric: cpu_us_per_request, op: "<=", threshold: 120}]}
+- {cell: C2, kind: open, scenario: S1, profile: P-std, level: {rps: 1000}, compare: true, gates: [
+    {metric: overhead_us.p50, op: "<=", threshold: 200},
+    {metric: overhead_us.p99, op: "<=", threshold: 600},
+    {metric: overhead_us.p99_9, op: "<=", threshold: 1500}]}
+- {cell: C3, kind: open, scenario: S1, profile: P-std, level: {rps: 10000}, compare: true, gates: [
+    {metric: overhead_us.p50, op: "<=", threshold: 250},
+    {metric: overhead_us.p99, op: "<=", threshold: 800},
+    {metric: overhead_us.p99_9, op: "<=", threshold: 2500},
+    {metric: cpu_us_per_request, op: "<=", threshold: 150}]}
+- {cell: C4, kind: open, scenario: S4, profile: P-std, level: {rps: 5000}, compare: true, gates: [
+    {metric: overhead_us.p50, op: "<=", threshold: 300},
+    {metric: overhead_us.p99, op: "<=", threshold: 1000},
+    {metric: overhead_us.p99_9, op: "<=", threshold: 3000}]}
+- {cell: C5, kind: open, scenario: S2, profile: P-std, level: {rps: 1000}, compare: true, gates: [
+    {metric: overhead_us.p50, op: "<=", threshold: 450},
+    {metric: overhead_us.p99, op: "<=", threshold: 1500},
+    {metric: overhead_us.p99_9, op: "<=", threshold: 4000}]}
+- {cell: C6, kind: open, scenario: S6, profile: P-std, level: {rps: 1000}, compare: true, gates: [
+    {metric: overhead_us.p50, op: "<=", threshold: 800},
+    {metric: overhead_us.p99, op: "<=", threshold: 3000},
+    {metric: overhead_us.p99_9, op: "<=", threshold: 6000}]}
+- {cell: C7, kind: open, scenario: S1, profile: P-cluster, nodes: 3, level: {rps: 10000}, compare: true, gates: [
+    {metric: overhead_us.p50, op: "<=", threshold: 400},
+    {metric: overhead_us.p99, op: "<=", threshold: 1500},
+    {metric: overhead_us.p99_9, op: "<=", threshold: 4000}]}
+- {cell: C8, kind: open, scenario: S3, profile: P-std, mock_profile: LS, level: {rps: 1000}, compare: true, gates: [
+    {metric: ttft_overhead_us.p50, op: "<=", threshold: 250},
+    {metric: ttft_overhead_us.p99, op: "<=", threshold: 1000},
+    {metric: ttft_overhead_us.p99_9, op: "<=", threshold: 3000},
+    {metric: inter_event_overhead_us.p99, op: "<=", threshold: 200}]}
+- {cell: C9, kind: open, scenario: S5, profile: P-std, mock_profile: LS, level: {rps: 1000}, compare: true, gates: [
+    {metric: ttft_overhead_us.p99, op: "<=", threshold: 1500},
+    {metric: inter_event_overhead_us.p99, op: "<=", threshold: 300}]}
+- {cell: C10, kind: open, scenario: S3, profile: P-std, mock_profile: LS-10s, level: {concurrent_streams: 10000}, compare: true, gates: [
+    {metric: ttft_overhead_us.p99, op: "<=", threshold: 3000}]}
+- {cell: C11, kind: saturation, scenario: S1, profile: P-min, level: {ladder: {start: 1000, step: 1000, fine_step: 250, max: 200000}}, compare: true, gates: [
+    {metric: saturation_rps, op: ">=", threshold: 20000}]}
+- {cell: C12, kind: saturation, scenario: S1, profile: P-std, level: {ladder: {start: 1000, step: 1000, fine_step: 250, max: 200000}}, compare: true, gates: [
+    {metric: saturation_rps, op: ">=", threshold: 15000}]}
+- {cell: C13, kind: saturation, scenario: M1, profile: P-std, level: {ladder: {start: 1000, step: 1000, fine_step: 250, max: 200000}}, compare: true, gates: [
+    {metric: saturation_rps, op: ">=", threshold: 10000}]}
+- {cell: C14, kind: saturation, scenario: S8, profile: P-std, level: {ladder: {start: 1000, step: 1000, fine_step: 250, max: 400000}}, compare: true, gates: [
+    {metric: saturation_rps, op: ">=", threshold: 40000}]}
+- {cell: C15, kind: saturation, scenario: S1, profile: P-std, needs_topology: ref-16, level: {ladder: {start: 1000, step: 1000, fine_step: 250, max: 400000}}, compare: true,
+   notes: "C12's figure comes from the ref-4 run given to `report --with`.", gates: [
+    {metric: saturation_rps, op: ">=", threshold: {times: 3.2, of: C12/saturation_rps}}]}
+- {cell: C16, kind: idle, profile: P-idle, compare: true, gates: [
+    {metric: rss_bytes.idle, op: "<=", threshold: 67108864}]}
+- {cell: C17, kind: open, scenario: S1, profile: P-std, mock_profile: L1500, level: {rps: 5000}, compare: true, gates: [
+    {metric: rss_bytes.peak, op: "<=", threshold: 629145600}]}
+- {cell: C18, kind: hold, scenario: S3, profile: P-std, mock_profile: LS-idle, level: {concurrent_streams: 10000, rps: 1000}, compare: true, gates: [
+    {metric: rss_over_idle_bytes, op: "<=", threshold: 671088640}]}
+- {cell: C19.1MiB, kind: closed, scenario: S2-1MiB, profile: P-std, mock_profile: L1500, level: {concurrency: 64}, compare: true, gates: [
+    {metric: rss_per_inflight_over_body, op: "<=", threshold: 2.5}]}
+- {cell: C19.4MiB, kind: closed, scenario: S2-4MiB, profile: P-std, mock_profile: L1500, level: {concurrency: 64}, compare: true, gates: [
+    {metric: rss_per_inflight_over_body, op: "<=", threshold: 2.5}]}
+- {cell: C19.16MiB, kind: closed, scenario: S2-16MiB, profile: P-std, mock_profile: L1500, level: {concurrency: 64}, compare: true, gates: [
+    {metric: rss_per_inflight_over_body, op: "<=", threshold: 2.5}]}
+- {cell: C20.xlarge, kind: open, scenario: S1, profile: P-min, mock_profile: L1500, needs_topology: t3-published, machine: xlarge, level: {rps: 5000}, compare: true, gates: [
+    {metric: success_fraction, op: ">=", threshold: 1.0},
+    {metric: overhead_us.mean, op: "<=", threshold: 300},
+    {metric: overhead_us.p99, op: "<=", threshold: 1000},
+    {metric: overhead_us.p99_9, op: "<=", threshold: 3000},
+    {metric: rss_bytes.peak, op: "<=", threshold: 629145600}]}
+- {cell: C20.medium, kind: open, scenario: S1, profile: P-min, mock_profile: L1500, needs_topology: t3-published, machine: medium, level: {rps: 5000}, compare: true, gates: [
+    {metric: success_fraction, op: ">=", threshold: 1.0},
+    {metric: overhead_us.mean, op: "<=", threshold: 600},
+    {metric: overhead_us.p99, op: "<=", threshold: 3000},
+    {metric: rss_bytes.peak, op: "<=", threshold: 629145600}]}
+- {cell: C21.401, kind: open, scenario: S8, profile: P-std, level: {rps: 20000}, compare: true, gates: [
+    {metric: latency_us.p99, op: "<=", threshold: 300}, {metric: upstream_requests, op: "<=", threshold: 0}]}
+- {cell: C21.403, kind: open, scenario: S8-403, profile: P-std, level: {rps: 20000}, compare: true, gates: [
+    {metric: latency_us.p99, op: "<=", threshold: 300}, {metric: upstream_requests, op: "<=", threshold: 0}]}
+- {cell: C21.404, kind: open, scenario: S8-404, profile: P-std, level: {rps: 20000}, compare: true, gates: [
+    {metric: latency_us.p99, op: "<=", threshold: 300}, {metric: upstream_requests, op: "<=", threshold: 0}]}
+- {cell: C21.429, kind: open, scenario: S8-429, profile: P-std, level: {rps: 20000}, compare: true, gates: [
+    {metric: latency_us.p99, op: "<=", threshold: 300}, {metric: upstream_requests, op: "<=", threshold: 0}]}
+- {cell: C22, kind: open, scenario: S7-legacy, profile: P-std, level: {rps: 2000}, compare: true, gates: [
+    {metric: overhead_us.p50, op: "<=", threshold: 300}, {metric: overhead_us.p99, op: "<=", threshold: 1000}]}
+- {cell: C23, kind: open, scenario: S7-modern, profile: P-std, level: {rps: 2000}, compare: true, gates: [
+    {metric: overhead_us.p50, op: "<=", threshold: 300}, {metric: overhead_us.p99, op: "<=", threshold: 1000}]}
+- {cell: C24, kind: micro, bench: antirion-mcp/session_token, gates: [
+    {metric: session_token.open.p99_ns, op: "<=", threshold: 20000}]}
+- {cell: C25, kind: open, scenario: S1-every-model, profile: P-scale, level: {rps: 100}, gates: [
+    {metric: success_fraction, op: ">=", threshold: 1.0}]}
+- {cell: C26, kind: apply, profile: P-scale, gates: [
+    {metric: rss_bytes.idle, op: "<=", threshold: 536870912},
+    {metric: apply_ms, op: "<=", threshold: 2000}]}
+- {cell: C27.scale, kind: open, scenario: S1, profile: P-scale, alternate_with: C27.base, level: {rps: 5000}, gates: [
+    {metric: overhead_us.p99, minus: C27.base/overhead_us.p99, op: "<=", threshold: 20}]}
+- {cell: C27.base, kind: open, scenario: S1, profile: P-std-100, alternate_with: C27.scale, level: {rps: 5000}, informational: true}
+- {cell: C28, kind: micro, bench: antirion-router/route_selection, gates: [
+    {metric: route_selection.smooth_wrr.p99_ns, op: "<=", threshold: 50000},
+    {metric: route_selection.random.p99_ns, op: "<=", threshold: 50000},
+    {metric: route_selection.sticky.p99_ns, op: "<=", threshold: 50000},
+    {metric: route_selection.least_latency.p99_ns, op: "<=", threshold: 50000},
+    {metric: route_selection.least_busy.p99_ns, op: "<=", threshold: 50000},
+    {metric: route_selection.least_cost.p99_ns, op: "<=", threshold: 50000},
+    {metric: route_selection.fallback.p99_ns, op: "<=", threshold: 50000}]}
+- {cell: C29.1000, kind: startup, profile: P-startup, compare: true, gates: [
+    {metric: ready_ms, op: "<=", threshold: 300}]}
+- {cell: C29.scale, kind: startup, profile: P-scale, gates: [
+    {metric: ready_ms, op: "<=", threshold: 2000}]}
+- {cell: C30, kind: open, scenario: M1, profile: P-std, mock_profile: L60, level: {rps: 5000, total_requests: 10000000},
+   disconnect_fraction: 0.01, idle_after_s: 60, repetitions: 1, gates: [
+    {metric: rss_final_excess_bytes, op: "<=", threshold: 0},
+    {metric: fds_growth_pct, op: "<=", threshold: 1},
+    {metric: tasks_growth_pct, op: "<=", threshold: 1}]}
+- {cell: C31.hanging, kind: open, scenario: S1, profile: P-std, hanging_exporters: true, alternate_with: C31.base, measure_s: 600, level: {rps: 5000}, gates: [
+    {metric: overhead_us.p99, minus: C31.base/overhead_us.p99, abs: true, op: "<", threshold: 100},
+    {metric: errors.total, op: "<=", threshold: 0},
+    {metric: readiness_failures, op: "<=", threshold: 0}]}
+- {cell: C31.base, kind: open, scenario: S1, profile: P-std, alternate_with: C31.hanging, measure_s: 600, level: {rps: 5000}, informational: true}
+- {cell: C32.c1, kind: closed, scenario: S1, profile: P-std, level: {concurrency: 1}, informational: true, compare: true}
+- {cell: C32.c64, kind: closed, scenario: S1, profile: P-std, level: {concurrency: 64}, informational: true, compare: true}
+- {cell: C32.c512, kind: closed, scenario: S1, profile: P-std, level: {concurrency: 512}, informational: true, compare: true}
+- {cell: C32.c4096, kind: closed, scenario: S1, profile: P-std, level: {concurrency: 4096}, informational: true, compare: true}
+- {cell: C33.s1, kind: open, scenario: S1, profile: P-std, protocol: h2c, level: {rps: 10000}, informational: true, compare: true}
+- {cell: C33.s3, kind: open, scenario: S3, profile: P-std, mock_profile: LS, protocol: h2c, level: {rps: 1000}, informational: true, compare: true}
+
+# The nightly regression set; also part of the release suite, so a release is a baseline for it.
+- {cell: N1, kind: open, scenario: S1, profile: P-std, level: {rps: 5000}, informational: true, suites: [release, nightly]}
+- {cell: N2, kind: open, scenario: S3, profile: P-std, mock_profile: LS, level: {rps: 1000}, informational: true, suites: [release, nightly]}
+- {cell: N3, kind: open, scenario: M1, profile: P-std, level: {rps: 5000}, informational: true, suites: [release, nightly]}
+
+# Report tables: every load level for S1, S3 and M1 on P-min and P-std; validity only.
+- {cell: R-S1-P-min-1000, kind: open, scenario: S1, profile: P-min, level: {rps: 1000}, informational: true, compare: true}
+- {cell: R-S1-P-min-5000, kind: open, scenario: S1, profile: P-min, level: {rps: 5000}, informational: true, compare: true}
+- {cell: R-S1-P-min-10000, kind: open, scenario: S1, profile: P-min, level: {rps: 10000}, informational: true, compare: true}
+- {cell: R-S1-P-std-1000, kind: open, scenario: S1, profile: P-std, level: {rps: 1000}, informational: true, compare: true}
+- {cell: R-S1-P-std-5000, kind: open, scenario: S1, profile: P-std, level: {rps: 5000}, informational: true, compare: true}
+- {cell: R-S1-P-std-10000, kind: open, scenario: S1, profile: P-std, level: {rps: 10000}, informational: true, compare: true}
+- {cell: R-S3-P-min-1000, kind: open, scenario: S3, profile: P-min, mock_profile: LS, level: {rps: 1000}, informational: true, compare: true}
+- {cell: R-S3-P-min-5000, kind: open, scenario: S3, profile: P-min, mock_profile: LS, level: {rps: 5000}, informational: true, compare: true}
+- {cell: R-S3-P-min-10000, kind: open, scenario: S3, profile: P-min, mock_profile: LS, level: {rps: 10000}, informational: true, compare: true}
+- {cell: R-S3-P-std-1000, kind: open, scenario: S3, profile: P-std, mock_profile: LS, level: {rps: 1000}, informational: true, compare: true}
+- {cell: R-S3-P-std-5000, kind: open, scenario: S3, profile: P-std, mock_profile: LS, level: {rps: 5000}, informational: true, compare: true}
+- {cell: R-S3-P-std-10000, kind: open, scenario: S3, profile: P-std, mock_profile: LS, level: {rps: 10000}, informational: true, compare: true}
+- {cell: R-M1-P-min-1000, kind: open, scenario: M1, profile: P-min, level: {rps: 1000}, informational: true, compare: true}
+- {cell: R-M1-P-min-5000, kind: open, scenario: M1, profile: P-min, level: {rps: 5000}, informational: true, compare: true}
+- {cell: R-M1-P-min-10000, kind: open, scenario: M1, profile: P-min, level: {rps: 10000}, informational: true, compare: true}
+- {cell: R-M1-P-std-1000, kind: open, scenario: M1, profile: P-std, level: {rps: 1000}, informational: true, compare: true}
+- {cell: R-M1-P-std-5000, kind: open, scenario: M1, profile: P-std, level: {rps: 5000}, informational: true, compare: true}
+- {cell: R-M1-P-std-10000, kind: open, scenario: M1, profile: P-std, level: {rps: 10000}, informational: true, compare: true}
