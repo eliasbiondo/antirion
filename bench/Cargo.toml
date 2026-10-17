@@ -26,7 +26,7 @@ hyper-util = { version = "0.1.21", default-features = false, features = ["tokio"
 jiff = { version = "0.2", default-features = false, features = ["std"] }
 rlimit = { version = "0.11", default-features = false }
 serde = { version = "1.0.229", default-features = false, features = ["std", "derive"] }
-serde-saphyr = { version = "1.3", default-features = false, features = ["deserialize"] }
+serde-saphyr = { version = "2.0", default-features = false, features = ["deserialize"] }
 serde_json = { version = "1.0.151", default-features = false, features = ["std", "preserve_order"] }
 thiserror = { version = "2.0", default-features = false, features = ["std"] }
 tokio = { version = "~1.53", default-features = false, features = ["rt-multi-thread", "net", "time", "sync", "macros", "signal", "io-util", "process"] }
