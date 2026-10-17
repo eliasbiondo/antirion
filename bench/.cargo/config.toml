@@ -1,0 +1,3 @@
+# Build into the repository's target directory, next to the gateway's own builds.
+[build]
+target-dir = "../target/bench"

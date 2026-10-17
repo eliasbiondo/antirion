@@ -1,0 +1,63 @@
+[workspace]
+resolver = "3"
+members = ["cli", "corpus", "loadgen", "mock", "report"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.98"
+license = "Apache-2.0"
+publish = false
+
+[workspace.dependencies]
+anyhow = { version = "1.0.104", default-features = false, features = ["std"] }
+base64 = { version = "0.23", default-features = false, features = ["std"] }
+bytes = { version = "1.12", default-features = false, features = ["std"] }
+clap = { version = "4.6", default-features = false, features = ["std", "derive", "help", "usage", "error-context"] }
+cpu-time = { version = "1.0", default-features = false }
+crc32fast = { version = "1.5", default-features = false, features = ["std"] }
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
+hdrhistogram = { version = "7.5", default-features = false, features = ["serialization"] }
+http = { version = "1.5", default-features = false, features = ["std"] }
+http-body = { version = "1.0", default-features = false }
+http-body-util = { version = "0.1.5", default-features = false }
+hyper = { version = "1.11", default-features = false, features = ["http1", "http2", "server", "client"] }
+hyper-util = { version = "0.1.21", default-features = false, features = ["tokio", "server", "server-auto", "http1", "http2"] }
+jiff = { version = "0.2", default-features = false, features = ["std"] }
+rlimit = { version = "0.11", default-features = false }
+serde = { version = "1.0.229", default-features = false, features = ["std", "derive"] }
+serde-saphyr = { version = "1.3", default-features = false, features = ["deserialize"] }
+serde_json = { version = "1.0.151", default-features = false, features = ["std", "preserve_order"] }
+thiserror = { version = "2.0", default-features = false, features = ["std"] }
+tokio = { version = "~1.53", default-features = false, features = ["rt-multi-thread", "net", "time", "sync", "macros", "signal", "io-util", "process"] }
+tokio-util = { version = "0.7", default-features = false, features = ["rt"] }
+
+antirion-bench-corpus = { path = "corpus" }
+antirion-bench-loadgen = { path = "loadgen" }
+antirion-bench-mock = { path = "mock" }
+antirion-bench-report = { path = "report" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+unreachable_pub = "warn"
+missing_debug_implementations = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+large_futures = "deny"
+await_holding_lock = "deny"
+await_holding_refcell_ref = "deny"
+disallowed_methods = "deny"
+dbg_macro = "deny"
+todo = "deny"
+
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+debug = "line-tables-only"
