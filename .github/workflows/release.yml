@@ -1,0 +1,251 @@
+# On a vX.Y.Z tag: release binaries and multi-arch images, each with a CycloneDX SBOM, keyless
+# Sigstore signatures bound to this workflow, and SLSA v1.0 Build Level 3 provenance; the published
+# artefacts are verified before the release is published.
+name: release
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+
+permissions: {}
+
+env:
+  CARGO_TERM_COLOR: always
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  # A crash found by the nightly fuzzing blocks the release until a later nightly run passes.
+  fuzz-gate:
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+    steps:
+      - name: The last nightly fuzz run passed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          conclusion=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/nightly.yml/runs?branch=main&status=completed&per_page=1" \
+            --jq '.workflow_runs[0].id' | xargs -I{} gh api "repos/$GITHUB_REPOSITORY/actions/runs/{}/jobs" \
+            --jq '.jobs[] | select(.name == "fuzz") | .conclusion')
+          echo "last nightly fuzz job: ${conclusion:-none}"
+          test "$conclusion" = "success"
+
+  binaries:
+    needs: fuzz-gate
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    # Debian 12, the image's base: the binaries and archives need glibc 2.36 or later.
+    container: rust:1.98.1-bookworm
+    permissions:
+      contents: read
+    outputs:
+      hash-amd64: ${{ steps.hash.outputs.hash-amd64 }}
+      hash-arm64: ${{ steps.hash.outputs.hash-arm64 }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
+        with:
+          tool: cargo-auditable,cargo-cyclonedx
+      - name: The build is reproducible
+        run: |
+          git config --global --add safe.directory '*'
+          ci/reproducible.sh --auditable --package antirion --bin antirion
+      - name: Build
+        env:
+          ANTIRION_BUILD_COMMIT: ${{ github.sha }}
+          CARGO_INCREMENTAL: "0"
+        run: |
+          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+          export CARGO_BUILD_RUSTFLAGS="--remap-path-prefix=$PWD=/antirion --remap-path-prefix=${CARGO_HOME:-$HOME/.cargo}=/cargo --remap-path-prefix=${RUSTUP_HOME:-$HOME/.rustup}=/rustup"
+          export CFLAGS="-ffile-prefix-map=$PWD=/antirion" CXXFLAGS="-ffile-prefix-map=$PWD=/antirion"
+          cargo auditable build --release --locked -p antirion
+          target/release/antirion version --json | tee version.json
+          if grep -q test-hooks version.json; then echo "the release binary has test hooks" >&2; exit 1; fi
+          ci/glibc-floor.sh target/release/antirion
+          mkdir -p dist/${{ matrix.arch }}
+          cp target/release/antirion dist/${{ matrix.arch }}/antirion
+          tar -C dist/${{ matrix.arch }} -czf antirion-${{ github.ref_name }}-linux-${{ matrix.arch }}.tar.gz antirion
+      - name: SBOM
+        run: |
+          cargo cyclonedx --manifest-path crates/antirion/Cargo.toml --format json --spec-version 1.5
+          cp crates/antirion/*.cdx.json antirion-${{ github.ref_name }}-linux-${{ matrix.arch }}.cdx.json
+      - id: hash
+        run: echo "hash-${{ matrix.arch }}=$(sha256sum antirion-*.tar.gz | base64 -w0)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-${{ matrix.arch }}
+          path: |
+            antirion-*.tar.gz
+            antirion-*.cdx.json
+            dist/${{ matrix.arch }}/antirion
+
+  sign:
+    needs: binaries
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: release-*
+          merge-multiple: true
+      - uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
+      - name: Keyless signatures of the archives and SBOMs
+        run: |
+          for f in antirion-*.tar.gz antirion-*.cdx.json; do
+            cosign sign-blob --yes --bundle "$f.sigstore.json" "$f"
+          done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: signatures
+          path: "*.sigstore.json"
+
+  provenance:
+    needs: binaries
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    # The SLSA generators refuse to run unless referenced by a full release tag, never by a commit.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects: ${{ matrix.arch == 'amd64' && needs.binaries.outputs.hash-amd64 || needs.binaries.outputs.hash-arm64 }}
+      upload-assets: false
+      provenance-name: antirion-${{ github.ref_name }}-linux-${{ matrix.arch }}.intoto.jsonl
+
+  image:
+    needs: binaries
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: release-*
+          merge-multiple: true
+      - run: chmod 0755 dist/*/antirion
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Smoke test the amd64 image
+        run: |
+          docker buildx build --load --platform linux/amd64 --build-arg BINARY=prebuilt -f docker/Dockerfile -t antirion:smoke .
+          docker/test/smoke.sh antirion:smoke
+      - id: push
+        name: Build and push linux/amd64 and linux/arm64
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          build-args: BINARY=prebuilt
+          push: true
+          tags: ${{ env.IMAGE }}:${{ github.ref_name }}
+          sbom: true
+          provenance: mode=max
+      - uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
+      - uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
+        with:
+          tool: cargo-cyclonedx
+      - name: Sign the image by digest and attest its SBOM
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          cosign sign --yes "$IMAGE@$DIGEST"
+          cargo cyclonedx --manifest-path crates/antirion/Cargo.toml --format json --spec-version 1.5
+          cosign attest --yes --type cyclonedx --predicate crates/antirion/*.cdx.json "$IMAGE@$DIGEST"
+
+  image-provenance:
+    needs: image
+    permissions:
+      actions: read
+      id-token: write
+      packages: write
+    # Referenced by its release tag, like the generic generator above.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0
+    with:
+      image: ghcr.io/${{ github.repository }}
+      digest: ${{ needs.image.outputs.digest }}
+      registry-username: ${{ github.actor }}
+    secrets:
+      registry-password: ${{ secrets.GITHUB_TOKEN }}
+
+  verify-and-publish:
+    needs: [sign, provenance, image, image-provenance]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          merge-multiple: true
+      - uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
+      - uses: slsa-framework/slsa-verifier/actions/installer@ea584f4502babc6f60d9bc799dbbb13c1caa9ee6 # v2.7.1
+      - name: Verify signatures and provenance of what is published
+        env:
+          IDENTITY: https://github.com/${{ github.workflow_ref }}
+          DIGEST: ${{ needs.image.outputs.digest }}
+        run: |
+          for f in antirion-*.tar.gz antirion-*.cdx.json; do
+            cosign verify-blob --bundle "$f.sigstore.json" \
+              --certificate-identity "$IDENTITY" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com "$f"
+          done
+          for arch in amd64 arm64; do
+            slsa-verifier verify-artifact "antirion-${GITHUB_REF_NAME}-linux-$arch.tar.gz" \
+              --provenance-path "antirion-${GITHUB_REF_NAME}-linux-$arch.intoto.jsonl" \
+              --source-uri "github.com/$GITHUB_REPOSITORY" --source-tag "$GITHUB_REF_NAME"
+          done
+          cosign verify "$IMAGE@$DIGEST" \
+            --certificate-identity "$IDENTITY" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ needs.image.outputs.digest }}
+        run: |
+          cat > notes.md <<NOTES
+          Image: \`$IMAGE@$DIGEST\`
+
+          Verify an archive:
+          \`\`\`
+          cosign verify-blob --bundle antirion-$GITHUB_REF_NAME-linux-amd64.tar.gz.sigstore.json \\
+            --certificate-identity https://github.com/$GITHUB_REPOSITORY/.github/workflows/release.yml@$GITHUB_REF \\
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com antirion-$GITHUB_REF_NAME-linux-amd64.tar.gz
+          slsa-verifier verify-artifact antirion-$GITHUB_REF_NAME-linux-amd64.tar.gz \\
+            --provenance-path antirion-$GITHUB_REF_NAME-linux-amd64.intoto.jsonl \\
+            --source-uri github.com/$GITHUB_REPOSITORY --source-tag $GITHUB_REF_NAME
+          \`\`\`
+
+          Verify the image:
+          \`\`\`
+          cosign verify $IMAGE@$DIGEST \\
+            --certificate-identity https://github.com/$GITHUB_REPOSITORY/.github/workflows/release.yml@$GITHUB_REF \\
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com
+          \`\`\`
+          NOTES
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --notes-file notes.md \
+            antirion-*.tar.gz antirion-*.cdx.json antirion-*.sigstore.json antirion-*.intoto.jsonl

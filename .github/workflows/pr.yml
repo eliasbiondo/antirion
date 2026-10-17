@@ -1,0 +1,244 @@
+# Every pull request and merge-queue entry: static checks, supply chain, tests, the release build,
+# and the container image.
+name: pr
+
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: pr-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  fmt:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - run: rustup show active-toolchain
+      - run: cargo fmt --all --check
+
+  clippy:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+
+  repo-checks:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: cargo xtask policy
+      - run: cargo xtask layers
+      - run: cargo xtask lints
+
+  fuzz:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install nightly --profile minimal
+      - run: cargo +nightly install cargo-fuzz --locked
+      - name: Every parser's fuzz target, briefly
+        env:
+          RUSTFLAGS: ""
+        run: ci/fuzz.sh 30
+
+  helm:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Install helm 3.19.0
+        run: |
+          curl -fsSLo helm.tgz https://get.helm.sh/helm-v3.19.0-linux-amd64.tar.gz
+          echo "a7f81ce08007091b86d8bd696eb4d86b8d0f2e1b9f6c714be62f82f96a594496  helm.tgz" | sha256sum -c -
+          tar -xzf helm.tgz linux-amd64/helm && sudo mv linux-amd64/helm /usr/local/bin/helm
+      - run: helm lint deploy/helm/antirion --set mode=standalone
+      - run: helm lint deploy/helm/antirion --set mode=cluster
+      - run: helm template t deploy/helm/antirion --set mode=cluster --set autoscaling.enabled=true --set serviceMonitor.enabled=true > /dev/null
+
+  supply-chain:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
+        with:
+          tool: cargo-deny,cargo-audit
+      - run: ci/advisory-ignores.sh
+      - run: cargo deny --locked check advisories bans licenses sources
+      - run: cargo audit
+
+  test:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: cargo test --workspace --all-features --locked
+
+  # The admin console: lint, types, unit tests, the static export, then the end-to-end suite against a
+  # test-mode gateway built here with that export embedded.
+  console:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: console
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          package_json_file: console/package.json
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: console/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: cargo build -p antirion --locked
+        working-directory: .
+        env:
+          ANTIRION_CONSOLE_DIR: ${{ github.workspace }}/console/out
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm e2e
+      - if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: console-e2e-report
+          path: |
+            console/playwright-report
+            console/test-results
+          retention-days: 7
+
+  bench:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: |
+            .
+            bench
+      - run: cargo bench --workspace --no-run --locked
+      - run: cargo fmt --manifest-path bench/Cargo.toml --all --check
+      - run: cargo clippy --manifest-path bench/Cargo.toml --workspace --all-targets --locked -- -D warnings
+      - run: cargo test --manifest-path bench/Cargo.toml --workspace --locked
+
+  build:
+    runs-on: ubuntu-24.04
+    # Debian 12, the image's base: the binary the image job packages needs no newer glibc.
+    container: rust:1.98.1-bookworm
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
+        with:
+          tool: cargo-auditable
+      - name: Release binary with its dependency list embedded
+        run: cargo auditable build --release --locked -p antirion
+      - name: The release binary carries no test hooks
+        run: |
+          target/release/antirion version --json | tee version.json
+          if grep -q test-hooks version.json; then echo "the release binary has test hooks" >&2; exit 1; fi
+          ci/glibc-floor.sh target/release/antirion
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: binaries
+          path: target/release/antirion
+          retention-days: 7
+
+  sbom:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
+        with:
+          tool: cargo-cyclonedx
+      - name: CycloneDX SBOM of the shipped binary
+        run: cargo cyclonedx --manifest-path crates/antirion/Cargo.toml --format json --spec-version 1.5
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sbom
+          path: crates/antirion/*.cdx.json
+          retention-days: 7
+
+  image:
+    needs: build
+    if: github.event_name == 'merge_group' || github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: binaries
+          path: artifacts
+      - name: Place the tested binary
+        run: |
+          mkdir -p dist/amd64
+          install -m 0755 artifacts/target/release/antirion dist/amd64/antirion
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - name: Build the image from the tested binary
+        run: docker buildx build --load --platform linux/amd64 --build-arg BINARY=prebuilt -f docker/Dockerfile -t antirion:ci .
+      - name: Smoke test (read-only, UID 65532, no capabilities)
+        run: docker/test/smoke.sh antirion:ci
