@@ -1,0 +1,89 @@
+# A local Antirion: one standalone gateway with the embedded store in the volume `data`.
+#
+#   cp .env.example .env          # then fill in the keys it describes (all optional)
+#   docker compose up -d          # builds the image on the first run
+#   open http://localhost:8081/ui/
+#
+# Profiles:
+#   mock      adds the mock upstream, an OpenAI- and Anthropic-compatible server with fake answers,
+#             reachable from the gateway at http://mock-upstream:19401
+#
+# A cluster (two gateways on PostgreSQL and Valkey) is compose.cluster.yaml.
+# docs/getting-started.md walks through all of it.
+name: antirion
+
+services:
+  gateway:
+    image: ${ANTIRION_IMAGE:-antirion:local}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        CARGO_BUILD_JOBS: ${ANTIRION_BUILD_JOBS:-4}
+        CARGO_PROFILE_RELEASE_LTO: ${ANTIRION_BUILD_LTO:-thin}
+        CARGO_PROFILE_RELEASE_CODEGEN_UNITS: ${ANTIRION_BUILD_CODEGEN_UNITS:-16}
+    command: serve --config /etc/antirion/antirion.yaml ${ANTIRION_SERVE_FLAGS:-}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${ANTIRION_DATA_PORT:-8080}:8080"
+      - "127.0.0.1:${ANTIRION_ADMIN_PORT:-8081}:8081"
+    environment:
+      ANTIRION_BOOTSTRAP_TOKEN: ${ANTIRION_BOOTSTRAP_TOKEN:-}
+      ANTIRION_ENCRYPTION_KEY: ${ANTIRION_ENCRYPTION_KEY:-}
+    # Compose does not recreate a container when only its startup file below changes: these
+    # values, the file's inputs, make it.
+    labels:
+      antirion.public-origin: ${ANTIRION_PUBLIC_ORIGIN:-http://localhost:${ANTIRION_ADMIN_PORT:-8081}}
+      antirion.data-plane-url: ${ANTIRION_DATA_PLANE_URL:-http://localhost:${ANTIRION_DATA_PORT:-8080}}
+    configs:
+      - source: antirion
+        target: /etc/antirion/antirion.yaml
+    volumes:
+      - data:/var/lib/antirion
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+  mock-upstream:
+    profiles: [mock]
+    image: ${ANTIRION_MOCK_IMAGE:-antirion-mock-upstream:local}
+    build:
+      context: .
+      dockerfile: docker/mock-upstream/Dockerfile
+      args:
+        CARGO_BUILD_JOBS: ${ANTIRION_BUILD_JOBS:-4}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${ANTIRION_MOCK_PORT:-19401}:19401"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+volumes:
+  data:
+
+# The gateway's startup file. Compose fills in the ${…} values from .env; the $${env:…} references
+# are left for the gateway, which reads them from its environment. The bootstrap token and the
+# encryption key are only configured when .env sets them: otherwise the gateway generates both into
+# the volume. Compose writes this file into the container when it creates it, so the gateway's
+# root filesystem cannot be read-only here.
+configs:
+  antirion:
+    content: |
+      version: 1
+      server:
+        listen: "0.0.0.0:8080"
+      admin:
+        listen: "0.0.0.0:8081"
+        ui:
+          data_plane_url: "${ANTIRION_DATA_PLANE_URL:-http://localhost:${ANTIRION_DATA_PORT:-8080}}"
+      store:
+        backend: embedded
+        embedded:
+          path: "/var/lib/antirion/data"
+        spool:
+          path: "/var/lib/antirion/data/spool"
+      auth:
+        admin:
+          public_origin: "${ANTIRION_PUBLIC_ORIGIN:-http://localhost:${ANTIRION_ADMIN_PORT:-8081}}"
+          ${ANTIRION_BOOTSTRAP_TOKEN:+bootstrap_token: "$${env:ANTIRION_BOOTSTRAP_TOKEN}"}
+      ${ANTIRION_ENCRYPTION_KEY:+security: {secrets: {encryption_keys: ["$${env:ANTIRION_ENCRYPTION_KEY}"]}}}
