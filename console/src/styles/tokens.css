@@ -1,0 +1,73 @@
+/*
+ * Design tokens from the console mockups. The dim and muted foregrounds are darker (light) and
+ * lighter (dark) than the mockups' so text meets WCAG 2.2 AA contrast on every surface.
+ */
+:root {
+  --ant-accent-h: 190;
+  --ant-accent: oklch(0.56 0.12 var(--ant-accent-h));
+  --ant-accent-dim: oklch(0.72 0.15 var(--ant-accent-h) / 0.18);
+  --ant-accent-fg: #ffffff;
+
+  --ant-bg: #fafaf7;
+  --ant-bg-raised: #ffffff;
+  --ant-bg-sunken: #f3f2ed;
+  --ant-bg-hover: #f0efe9;
+  --ant-border: #e5e3dc;
+  --ant-border-strong: #c9c7be;
+  --ant-fg: #17171a;
+  --ant-fg-muted: #5e5e64;
+  --ant-fg-dim: #707076;
+  --ant-success: #1f7a54;
+  --ant-warn: #8f5f0c;
+  /* A filled star: brighter than the warning text, which must read as text, and 3:1 on the selected
+     row as well as on the page. */
+  --ant-star: #b7791f;
+  --ant-error: #b4302f;
+  --ant-info: #2f5fb3;
+  --ant-grid-line: rgb(23 23 26 / 0.06);
+  --ant-overlay: rgb(0 0 0 / 0.2);
+  --ant-scrollbar: rgb(23 23 26 / 0.2);
+  --ant-scrollbar-hover: rgb(23 23 26 / 0.36);
+
+  --ant-density-row: 30px;
+  --ant-density-cell: 10px;
+  --ant-sidebar-w: 220px;
+
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --ant-accent: oklch(0.72 0.15 var(--ant-accent-h));
+  --ant-accent-dim: oklch(0.72 0.15 var(--ant-accent-h) / 0.22);
+  --ant-accent-fg: #0e0f11;
+
+  --ant-bg: #0e0f11;
+  --ant-bg-raised: #161819;
+  --ant-bg-sunken: #0a0b0c;
+  --ant-bg-hover: #1d1f21;
+  --ant-border: #242628;
+  --ant-border-strong: #34373a;
+  --ant-fg: #e9eaec;
+  --ant-fg-muted: #a3a6ab;
+  --ant-fg-dim: #8a8e94;
+  --ant-success: #4ec596;
+  --ant-warn: #e3b04d;
+  --ant-star: #e8b54f;
+  --ant-error: #ef6a6a;
+  --ant-info: #74a6ee;
+  --ant-grid-line: rgb(255 255 255 / 0.05);
+  --ant-overlay: rgb(0 0 0 / 0.5);
+  --ant-scrollbar: rgb(255 255 255 / 0.16);
+  --ant-scrollbar-hover: rgb(255 255 255 / 0.3);
+
+  color-scheme: dark;
+}
+
+[data-density='comfortable'] {
+  --ant-density-row: 40px;
+  --ant-density-cell: 14px;
+}
+
+[data-sidebar='collapsed'] {
+  --ant-sidebar-w: 48px;
+}
