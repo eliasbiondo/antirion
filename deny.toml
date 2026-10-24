@@ -11,6 +11,9 @@ ignore = [
   # webauthn_rp needs rsa to verify RS256 assertions; the gateway only verifies with public keys, and the
   # timing side channel is in private-key decryption and signing.
   { id = "RUSTSEC-2023-0071", reason = "rsa is used only for public-key signature verification; expires 2027-01-05" },
+  # crypto-bigint 0.5 comes in through webauthn_rp's p256/p384 0.13 (no release moves to the fixed 0.7.6);
+  # the gateway only verifies passkey assertions, so the integers it works on are public.
+  { id = "RUSTSEC-2026-0387", reason = "crypto-bigint is used only for public-key ECDSA verification; expires 2027-01-24" },
 ]
 
 [licenses]

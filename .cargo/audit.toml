@@ -4,6 +4,7 @@
 [advisories]
 ignore = [
   "RUSTSEC-2023-0071", # rsa (via webauthn_rp) only verifies RS256 signatures with public keys; expires 2027-01-05
+  "RUSTSEC-2026-0387", # crypto-bigint 0.5 (via webauthn_rp's p256/p384) only verifies ECDSA signatures with public keys; expires 2027-01-24
 ]
 informational_warnings = ["unmaintained", "unsound"]
 
