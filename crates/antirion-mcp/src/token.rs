@@ -30,11 +30,11 @@ impl Keyring {
 
     fn seal_raw(&self, aad: &[u8], plaintext: &[u8]) -> Option<String> {
         let key = self.keys.first()?;
-        let cipher = XChaCha20Poly1305::new(Key::from_slice(&key.secret));
+        let cipher = XChaCha20Poly1305::new(&Key::from(key.secret));
         let mut nonce = [0u8; NONCE];
         getrandom::fill(&mut nonce).ok()?;
         let ct = cipher
-            .encrypt(XNonce::from_slice(&nonce), Payload { msg: plaintext, aad })
+            .encrypt(&XNonce::from(nonce), Payload { msg: plaintext, aad })
             .ok()?;
         let mut raw = Vec::with_capacity(1 + NONCE + ct.len());
         raw.push(key.id);
@@ -46,13 +46,11 @@ impl Keyring {
     fn open_raw(&self, aad: &[u8], text: &str) -> Option<Vec<u8>> {
         let raw = URL_SAFE_NO_PAD.decode(text).ok()?;
         let (&id, rest) = raw.split_first()?;
-        let nonce = rest.get(..NONCE)?;
+        let nonce = XNonce::try_from(rest.get(..NONCE)?).ok()?;
         let ct = rest.get(NONCE..)?;
         let key = self.keys.iter().find(|k| k.id == id)?;
-        let cipher = XChaCha20Poly1305::new(Key::from_slice(&key.secret));
-        cipher
-            .decrypt(XNonce::from_slice(nonce), Payload { msg: ct, aad })
-            .ok()
+        let cipher = XChaCha20Poly1305::new(&Key::from(key.secret));
+        cipher.decrypt(&nonce, Payload { msg: ct, aad }).ok()
     }
 
     pub(crate) fn seal_session(&self, claims: &SessionClaims) -> Option<String> {
