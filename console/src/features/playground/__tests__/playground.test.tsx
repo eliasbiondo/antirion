@@ -84,7 +84,7 @@ describe('Playground', () => {
     );
   });
 
-  it('opens a body handed over by another screen, as JSON when the form cannot hold it', () => {
+  it('opens a body handed over by another screen, as JSON when the form cannot hold it', async () => {
     signInAs(['playground:send', 'models:read']);
     usePlaygroundDraft.setState({
       draft: {
@@ -98,5 +98,7 @@ describe('Playground', () => {
     expect(screen.getByText('Opened from a logged request.')).toBeInTheDocument();
     const editor = screen.getByRole('textbox', { name: /Request body/ });
     expect((editor as HTMLTextAreaElement).value).toContain('"tools"');
+    // The screen lists projects on open; ending before they arrive sets state after jsdom is gone.
+    expect(await screen.findByRole('combobox', { name: /Project/ })).toHaveTextContent('lab');
   });
 });
