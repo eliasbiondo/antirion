@@ -919,11 +919,11 @@ dependencies = [
 
 [[package]]
 name = "bpe-openai"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fe75b91bfbfbdc1a56afa0dad3ea54167842aa512be25c0420704c1ad9bab3f"
+checksum = "d4ce06e189475788b7473b597b1c64261878198dd88a98f766e9aa39f5a83868"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.23.1",
  "bpe",
  "either",
  "flate2",
