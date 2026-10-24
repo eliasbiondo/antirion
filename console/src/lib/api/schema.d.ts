@@ -5440,7 +5440,7 @@ export interface components {
         };
         MeUpdate: {
             display_name?: string;
-            title?: string;
+            title?: string | null;
             email?: string;
             email_token?: string;
         };

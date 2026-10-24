@@ -21372,8 +21372,11 @@ components:
           type: string
           maxLength: 200
         title:
-          type: string
+          type:
+            - string
+            - 'null'
           maxLength: 100
+          description: An empty string or null clears the title.
         email:
           type: string
           description: A local user's new email takes effect only once the link mailed to it is followed; any other user's

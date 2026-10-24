@@ -70,22 +70,9 @@ pub(crate) async fn patch(call: &Call) -> Result<Response, AdminError> {
     call.allow_params(&[])?;
     let user = own_user(call)?;
     let m = call.json_body()?;
-    let text = |name: &'static str, max: usize| -> Result<Option<String>, AdminError> {
-        match m.get(name) {
-            None => Ok(None),
-            Some(Value::String(s))
-                if !s.is_empty() && s.chars().count() <= max && !s.contains(['\r', '\n']) =>
-            {
-                Ok(Some(s.clone()))
-            }
-            Some(_) => Err(AdminError::invalid_parameter(format!(
-                "{name} must be a string of 1 to {max} characters"
-            ))),
-        }
-    };
-    let display_name = text("display_name", 200)?;
-    let title = text("title", 100)?;
-    let email = text("email", 254)?;
+    let display_name = text(&m, "display_name", 200)?;
+    let title = optional_text(&m, "title", 100)?;
+    let email = text(&m, "email", 254)?;
     if email.as_deref().is_some_and(|e| {
         e.split_once('@')
             .is_none_or(|(l, d)| l.is_empty() || d.is_empty() || e.contains(' '))
@@ -137,8 +124,14 @@ pub(crate) async fn patch(call: &Call) -> Result<Response, AdminError> {
             if let Some(v) = display_name {
                 u.insert("display_name".into(), Value::from(v));
             }
-            if let Some(v) = title {
-                u.insert("title".into(), Value::from(v));
+            match title {
+                Some(Some(v)) => {
+                    u.insert("title".into(), Value::from(v));
+                }
+                Some(None) => {
+                    u.remove("title");
+                }
+                None => {}
             }
             if let Some(v) = direct_email {
                 u.insert("email".into(), Value::from(v.to_lowercase()));
@@ -155,6 +148,38 @@ pub(crate) async fn patch(call: &Call) -> Result<Response, AdminError> {
     )
     .await;
     Ok(call.json(StatusCode::OK, &body))
+}
+
+/// A profile field of the update: absent is `None`, otherwise a single-line string of 1 to `max`
+/// characters.
+fn text(m: &Map<String, Value>, name: &str, max: usize) -> Result<Option<String>, AdminError> {
+    match m.get(name) {
+        None => Ok(None),
+        Some(Value::String(s)) if !s.is_empty() && s.chars().count() <= max && !s.contains(['\r', '\n']) => {
+            Ok(Some(s.clone()))
+        }
+        Some(_) => Err(AdminError::invalid_parameter(format!(
+            "{name} must be a string of 1 to {max} characters"
+        ))),
+    }
+}
+
+/// A profile field the user may leave blank: absent is `None`, an empty string or `null` is
+/// `Some(None)` (the field is cleared), otherwise as [`text`].
+fn optional_text(
+    m: &Map<String, Value>,
+    name: &str,
+    max: usize,
+) -> Result<Option<Option<String>>, AdminError> {
+    match m.get(name) {
+        Some(Value::Null) => Ok(Some(None)),
+        Some(Value::String(s)) if s.is_empty() => Ok(Some(None)),
+        Some(Value::String(_)) => text(m, name, max).map(Some),
+        None => Ok(None),
+        Some(_) => Err(AdminError::invalid_parameter(format!(
+            "{name} must be a string of at most {max} characters"
+        ))),
+    }
 }
 
 /// Checks a preferences document: an object of at most 16 KiB whose known members have their
@@ -428,5 +453,25 @@ mod tests {
             preferences(big.as_bytes()).unwrap_err().status,
             StatusCode::PAYLOAD_TOO_LARGE
         );
+    }
+
+    #[test]
+    fn a_blank_title_clears_it_and_a_blank_name_is_refused() {
+        let body = |v: Value| v.as_object().cloned().unwrap();
+        let m = body(json!({"display_name": "", "title": ""}));
+        assert!(text(&m, "display_name", 200).is_err());
+        assert_eq!(optional_text(&m, "title", 100).unwrap(), Some(None));
+        let m = body(json!({"title": null}));
+        assert_eq!(optional_text(&m, "title", 100).unwrap(), Some(None));
+        let m = body(json!({"title": "Staff engineer"}));
+        assert_eq!(
+            optional_text(&m, "title", 100).unwrap(),
+            Some(Some("Staff engineer".to_owned()))
+        );
+        assert_eq!(optional_text(&body(json!({})), "title", 100).unwrap(), None);
+        let long = body(json!({"title": "a".repeat(101)}));
+        assert!(optional_text(&long, "title", 100).is_err());
+        assert!(optional_text(&body(json!({"title": "a\nb"})), "title", 100).is_err());
+        assert!(optional_text(&body(json!({"title": 3})), "title", 100).is_err());
     }
 }
