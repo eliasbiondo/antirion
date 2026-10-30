@@ -75,6 +75,20 @@ test.describe('sign-in', () => {
     expect(html).not.toMatch(/<script(?![^>]*\bsrc=)[^>]*>[^<]/);
     expect(html).not.toMatch(/\sstyle="/);
   });
+
+  test('console scripts reach the browser gzipped', async ({ page }) => {
+    const chunks: Promise<{ encoding: string; size: number }>[] = [];
+    page.on('response', (r) => {
+      if (/\/_next\/static\/chunks\/.+\.js$/.test(r.url()))
+        chunks.push(
+          r.body().then((b) => ({ encoding: r.headers()['content-encoding'] ?? '', size: b.length })),
+        );
+    });
+    await page.goto('login/', { waitUntil: 'load' });
+    const seen = await Promise.all(chunks);
+    expect(seen.some((c) => c.encoding === 'gzip')).toBe(true);
+    expect(seen.filter((c) => c.encoding === '' && c.size >= 1024)).toEqual([]);
+  });
 });
 
 /** A signing certificate for a SAML identity provider that never signs anything in these tests. */

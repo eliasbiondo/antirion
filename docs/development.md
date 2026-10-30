@@ -33,7 +33,9 @@ The admin console is a static export of the frontend in `console/` (`next build`
   each route as `route/index.html` (`trailingSlash: true`) or `route.html`, both resolved, with and
   without a trailing slash; content-hashed assets under `_next/static/` (cached for a year,
   `immutable`); an optional `404.html`, served with status 404 for unknown paths. HTML is sent with
-  `Cache-Control: no-store`, every other file with `no-cache`. The export must be built with
+  `Cache-Control: no-store`, every other file with `no-cache`. `build.rs` also embeds a gzip copy of
+  every text file of at least 1 KiB that gzip shrinks by an eighth or more, sent with
+  `Content-Encoding: gzip` to a client whose `Accept-Encoding` takes it. The export must be built with
   `basePath` equal to the mount (`/ui` by default), because the asset URLs in its HTML are absolute.
   It may not use inline scripts or styles: every console response carries `Content-Security-Policy:
   default-src 'self'; …` with `script-src 'self'` and `style-src 'self'`.

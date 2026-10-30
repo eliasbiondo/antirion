@@ -13,5 +13,9 @@ build = "build.rs"
 http = { workspace = true }
 include_dir = { workspace = true }
 
+[build-dependencies]
+crc32fast = { workspace = true }
+miniz_oxide = { workspace = true }
+
 [lints]
 workspace = true

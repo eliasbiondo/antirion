@@ -104,7 +104,7 @@ fn lane<'a>(
     } else {
         match path.strip_prefix("/admin/v1/") {
             Some(r) => Some(r.to_owned()),
-            None => return answered(console(rt, &parts.method, &path)),
+            None => return answered(console(rt, &parts, &path)),
         }
     };
     drop(snap);
