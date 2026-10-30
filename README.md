@@ -261,6 +261,10 @@ arguments runs the same zero-config gateway as the container, with its data in `
 binary also validates a configuration offline (`antirion validate -f <file>`), prints its schema
 (`antirion schema`) and checks a node's health (`antirion healthcheck`).
 
+### One-click deploy
+
+[![Deploy on RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/Antirion/)
+
 ## Features
 
 <table>
