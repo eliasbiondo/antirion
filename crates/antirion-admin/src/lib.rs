@@ -331,9 +331,14 @@ pub(crate) fn query_pairs(query: Option<&str>) -> Vec<(String, String)> {
 }
 
 /// The console's static assets, served without credentials: they hold no data.
-pub(crate) fn console(rt: &Runtime, method: &Method, path: &str) -> Result<Response, AdminError> {
+pub(crate) fn console(
+    rt: &Runtime,
+    parts: &http::request::Parts,
+    path: &str,
+) -> Result<Response, AdminError> {
     let rel = rt.statics.ui.relative(path).ok_or_else(AdminError::not_found)?;
-    Ok(antirion_console::serve(method, &percent_decode(rel)).map(Body::from))
+    let gzip = antirion_console::accepts_gzip(&parts.headers);
+    Ok(antirion_console::serve(&parts.method, &percent_decode(rel), gzip).map(Body::from))
 }
 
 #[cfg(test)]

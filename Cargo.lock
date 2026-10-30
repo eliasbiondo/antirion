@@ -212,8 +212,10 @@ dependencies = [
 name = "antirion-console"
 version = "0.1.1"
 dependencies = [
+ "crc32fast",
  "http",
  "include_dir",
+ "miniz_oxide",
 ]
 
 [[package]]

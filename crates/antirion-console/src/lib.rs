@@ -4,7 +4,8 @@
 //!
 //! The assets are the frontend's static export (`console/out`): one HTML file per route, either
 //! `route/index.html` or `route.html`, hashed assets under `_next/static/`, and an optional `404.html`.
-//! A build without the export embeds a placeholder page instead.
+//! A build without the export embeds a placeholder page instead. Text files worth compressing are
+//! also embedded gzipped (by `build.rs`), and sent that way to a client that accepts it.
 
 #![forbid(unsafe_code)]
 #![deny(
@@ -22,6 +23,7 @@ use http::{HeaderValue, Method, Response, StatusCode, header};
 use include_dir::{Dir, DirEntry, include_dir};
 
 static ASSETS: Dir<'static> = include_dir!("$ANTIRION_CONSOLE_ASSETS");
+static GZIPPED: Dir<'static> = include_dir!("$ANTIRION_CONSOLE_GZIP");
 
 /// Whether the binary embeds the frontend's export rather than the placeholder page.
 pub const BUILT: bool = matches!(env!("ANTIRION_CONSOLE_BUILT").as_bytes(), b"1");
@@ -34,25 +36,34 @@ pub const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; img-src 'self' da
 const IMMUTABLE: &str = "public, max-age=31536000, immutable";
 const HASHED_PREFIX: &str = "_next/static/";
 
-fn index() -> &'static HashMap<&'static str, &'static [u8]> {
-    static INDEX: OnceLock<HashMap<&'static str, &'static [u8]>> = OnceLock::new();
-    INDEX.get_or_init(|| {
-        let mut map = HashMap::new();
-        let mut stack = vec![&ASSETS];
-        while let Some(dir) = stack.pop() {
-            for entry in dir.entries() {
-                match entry {
-                    DirEntry::Dir(d) => stack.push(d),
-                    DirEntry::File(f) => {
-                        if let Some(p) = f.path().to_str() {
-                            map.insert(p, f.contents());
-                        }
+type Index = HashMap<&'static str, &'static [u8]>;
+
+fn index() -> &'static Index {
+    static INDEX: OnceLock<Index> = OnceLock::new();
+    INDEX.get_or_init(|| files(&ASSETS))
+}
+
+fn gzipped() -> &'static Index {
+    static GZIP: OnceLock<Index> = OnceLock::new();
+    GZIP.get_or_init(|| files(&GZIPPED))
+}
+
+fn files(root: &'static Dir<'static>) -> Index {
+    let mut map = HashMap::new();
+    let mut stack = vec![root];
+    while let Some(dir) = stack.pop() {
+        for entry in dir.entries() {
+            match entry {
+                DirEntry::Dir(d) => stack.push(d),
+                DirEntry::File(f) => {
+                    if let Some(p) = f.path().to_str() {
+                        map.insert(p, f.contents());
                     }
                 }
             }
         }
-        map
-    })
+    }
+    map
 }
 
 /// One embedded file, ready to send.
@@ -61,6 +72,8 @@ pub struct Asset {
     /// Its path inside the export (`keys/index.html`).
     pub path: &'static str,
     pub body: &'static [u8],
+    /// The body gzipped, when that makes it worth sending compressed.
+    pub gzip: Option<&'static [u8]>,
     pub content_type: &'static str,
     pub cache_control: &'static str,
 }
@@ -70,6 +83,7 @@ fn asset(path: &str) -> Option<Asset> {
     Some(Asset {
         path,
         body,
+        gzip: gzipped().get(path).copied(),
         content_type: content_type(path),
         cache_control: cache_control(path),
     })
@@ -158,10 +172,40 @@ pub fn security_headers(headers: &mut http::HeaderMap) {
     headers.insert(header::REFERRER_POLICY, HeaderValue::from_static("no-referrer"));
 }
 
-/// The response to a request for `rel` under the console's mount: the file, the export's
-/// `404.html` (or a short text) with status 404, or 405 for anything but a read.
+/// Whether a request's `Accept-Encoding` takes gzip: named with a non-zero q-value, or, when it is not
+/// named, through a `*` with one.
 #[must_use]
-pub fn serve(method: &Method, rel: &str) -> Response<&'static [u8]> {
+pub fn accepts_gzip(headers: &http::HeaderMap) -> bool {
+    let mut wildcard = false;
+    for item in headers
+        .get_all(header::ACCEPT_ENCODING)
+        .iter()
+        .filter_map(|v| v.to_str().ok())
+        .flat_map(|v| v.split(','))
+    {
+        let mut fields = item.split(';');
+        let name = fields.next().unwrap_or("").trim();
+        let taken = !fields.any(|f| {
+            let f = f.trim();
+            f.get(..2)
+                .filter(|k| k.eq_ignore_ascii_case("q="))
+                .and_then(|_| f.get(2..))
+                .and_then(|q| q.trim().parse::<f32>().ok())
+                .is_some_and(|q| q <= 0.0)
+        });
+        if name.eq_ignore_ascii_case("gzip") {
+            return taken;
+        }
+        wildcard |= name == "*" && taken;
+    }
+    wildcard
+}
+
+/// The response to a request for `rel` under the console's mount: the file (gzipped when it has a
+/// gzip copy and `gzip` says the client takes it), the export's `404.html` (or a short text) with
+/// status 404, or 405 for anything but a read.
+#[must_use]
+pub fn serve(method: &Method, rel: &str, gzip: bool) -> Response<&'static [u8]> {
     if method != Method::GET && method != Method::HEAD {
         let mut resp = Response::new(&b""[..]);
         *resp.status_mut() = StatusCode::METHOD_NOT_ALLOWED;
@@ -179,14 +223,22 @@ pub fn serve(method: &Method, rel: &str) -> Response<&'static [u8]> {
             not_found_page().unwrap_or(Asset {
                 path: "",
                 body: b"Not found\n",
+                gzip: None,
                 content_type: "text/plain; charset=utf-8",
                 cache_control: "no-store",
             }),
         ),
     };
-    let mut resp = Response::new(found.body);
+    let body = found.gzip.filter(|_| gzip);
+    let mut resp = Response::new(body.unwrap_or(found.body));
     *resp.status_mut() = status;
     let h = resp.headers_mut();
+    if found.gzip.is_some() {
+        h.insert(header::VARY, HeaderValue::from_static("Accept-Encoding"));
+    }
+    if body.is_some() {
+        h.insert(header::CONTENT_ENCODING, HeaderValue::from_static("gzip"));
+    }
     h.insert(header::CONTENT_TYPE, HeaderValue::from_static(found.content_type));
     h.insert(
         header::CACHE_CONTROL,
@@ -232,7 +284,7 @@ mod tests {
 
     #[test]
     fn serving_sets_every_security_header() {
-        let resp = serve(&Method::GET, "");
+        let resp = serve(&Method::GET, "", false);
         assert_eq!(resp.status(), StatusCode::OK);
         let h = resp.headers();
         assert_eq!(h[header::CONTENT_SECURITY_POLICY], CONTENT_SECURITY_POLICY);
@@ -245,7 +297,7 @@ mod tests {
 
     #[test]
     fn unknown_paths_answer_404_with_the_console_headers() {
-        let resp = serve(&Method::GET, "no/such/page");
+        let resp = serve(&Method::GET, "no/such/page", false);
         assert_eq!(resp.status(), StatusCode::NOT_FOUND);
         assert_eq!(
             resp.headers()[header::CONTENT_SECURITY_POLICY],
@@ -256,7 +308,7 @@ mod tests {
 
     #[test]
     fn only_reads_are_allowed() {
-        let resp = serve(&Method::POST, "");
+        let resp = serve(&Method::POST, "", false);
         assert_eq!(resp.status(), StatusCode::METHOD_NOT_ALLOWED);
         assert_eq!(resp.headers()[header::ALLOW], "GET, HEAD");
         assert_eq!(resp.headers()[header::X_FRAME_OPTIONS], "DENY");
@@ -295,6 +347,43 @@ mod tests {
         assert_eq!(got("logs.txt").as_deref(), Some("logs.txt"));
         assert_eq!(got("alerts"), None);
         assert_eq!(got("keys/x"), None);
+    }
+
+    #[test]
+    fn gzip_is_accepted_unless_refused() {
+        let accepts = |v: &str| {
+            let mut h = http::HeaderMap::new();
+            h.insert(header::ACCEPT_ENCODING, HeaderValue::from_str(v).unwrap());
+            accepts_gzip(&h)
+        };
+        assert!(accepts("gzip, deflate, br, zstd"));
+        assert!(accepts("br;q=1.0, GZIP;q=0.5"));
+        assert!(accepts("*"));
+        assert!(!accepts("gzip;q=0"));
+        assert!(!accepts("gzip; Q=0.0"));
+        assert!(!accepts("gzip;q=0, *"));
+        assert!(!accepts("*;q=0"));
+        assert!(!accepts("br, zstd"));
+        assert!(!accepts("identity"));
+        assert!(!accepts_gzip(&http::HeaderMap::new()));
+    }
+
+    #[test]
+    fn a_gzipped_file_is_sent_compressed_only_to_clients_that_take_it() {
+        let Some((path, packed)) = gzipped().iter().next().map(|(p, b)| (*p, *b)) else {
+            return;
+        };
+        let raw = index()[path];
+        assert_eq!(&packed[..2], &[0x1f, 0x8b]);
+        assert!(packed.len() < raw.len());
+        let zipped = serve(&Method::GET, path, true);
+        assert_eq!(*zipped.body(), packed);
+        assert_eq!(zipped.headers()[header::CONTENT_ENCODING], "gzip");
+        assert_eq!(zipped.headers()[header::VARY], "Accept-Encoding");
+        let plain = serve(&Method::GET, path, false);
+        assert_eq!(*plain.body(), raw);
+        assert!(plain.headers().get(header::CONTENT_ENCODING).is_none());
+        assert_eq!(plain.headers()[header::VARY], "Accept-Encoding");
     }
 
     #[test]
