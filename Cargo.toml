@@ -54,7 +54,7 @@ roxmltree = { version = "0.21", default-features = false, features = ["std", "po
 rusqlite = { version = "0.40", default-features = false, features = ["bundled"] }
 rustls = { version = "0.23.46", default-features = false, features = ["aws_lc_rs", "std", "tls12", "logging"] }
 rustls-pki-types = { version = "1.15", default-features = false, features = ["std"] }
-saphyr-parser = { version = "0.1", default-features = false }
+saphyr-parser = { version = "0.3", default-features = false }
 serde = { version = "1.0.229", default-features = false, features = ["std", "derive"] }
 serde_json = { version = "1.0.151", default-features = false, features = ["std", "preserve_order", "float_roundtrip"] }
 sha1 = { version = "0.11", default-features = false }
