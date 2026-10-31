@@ -232,6 +232,9 @@ pub(crate) fn cell(endpoint: &Endpoint, parsed: &Parsed, deployment: &Deployment
             .filter(|_| crate::embed::text_inputs(parsed))
             .map(Cell::Embed),
         Dialect::Rerank => rerank_api(deployment).map(Cell::Rerank),
+        // A decision engine is never assumed: `systemone` is only served when the provider or the
+        // deployment names the operation, so an OpenAI deployment stays blind to it by default.
+        Dialect::SystemOne if caps.operation("systemone") => Some(Cell::Identity),
         Dialect::OpenAiCompletions if !caps.speaks("openai_completions") => None,
         d if deployment.provider.kind.serves(d) => Some(Cell::Identity),
         Dialect::OpenAiChat if deployment.speaks(Native::OpenAi) => Some(Cell::Identity),
@@ -244,6 +247,7 @@ pub(crate) fn operation_class(endpoint: &Endpoint) -> &'static str {
     match (endpoint.id, endpoint.upstream_path, endpoint.action) {
         ("embeddings", _, _) | (_, _, Some("embedContent" | "batchEmbedContents")) => "embed",
         ("rerank", _, _) => "rerank",
+        ("systemone", _, _) => "systemone",
         ("images", _, _) => "image_generate",
         ("moderations", _, _) => "moderate",
         ("audio", Some("/audio/speech"), _) => "speech",
@@ -337,6 +341,10 @@ mod tests {
                       "capabilities": {"operations": ["rerank"]}},
                 "y": {"type": "openai_compatible", "base_url": "https://api.voyageai.com/v1", "auth": {"api_key": "k"},
                       "capabilities": {"operations": ["rerank"]}},
+                "s1": {"type": "openai_compatible", "base_url": "http://decide.example/v1", "auth": {"method": "none"},
+                       "capabilities": {"operations": ["systemone"]}},
+                "os1": {"type": "openai", "base_url": "http://h/o2", "auth": {"api_key": "k"},
+                        "capabilities": {"operations": ["generate", "systemone"]}},
             },
             "deployments": {
                 "g": {"provider": "g", "model": "text-embedding-004"},
@@ -347,6 +355,8 @@ mod tests {
                 "o": {"provider": "o", "model": "gpt-x"},
                 "j": {"provider": "j", "model": "jina-reranker"},
                 "y": {"provider": "y", "model": "rerank-2"},
+                "s1": {"provider": "s1", "model": "engine-latest"},
+                "o_s1": {"provider": "os1", "model": "gpt-y"},
             }
         }))
         .unwrap()
@@ -378,5 +388,33 @@ mod tests {
             "OpenAI serves no rerank unless its dialects say so"
         );
         assert_eq!(api("g"), None);
+    }
+
+    #[test]
+    fn systemone_needs_an_explicit_declaration() {
+        let t = deployments();
+        let raw = br#"{"model":"m","state":"s","questions":{"q":{"type":"noul"}}}"#;
+        let body = Parsed::json(
+            raw.as_slice().into(),
+            antirion_json::skim(raw, &antirion_json::JsonLimits::default()).unwrap(),
+            None,
+        );
+        let antirion_dialects::Matched::Found(endpoint) =
+            antirion_dialects::match_endpoint(&http::Method::POST, "/v1/systemone")
+        else {
+            panic!("systemone is in the catalog");
+        };
+        assert_eq!(operation_class(&endpoint), "systemone");
+        assert_eq!(
+            cell(&endpoint, &body, &t.deployments["o"]),
+            None,
+            "OpenAI serves no decisions unless its operations say so"
+        );
+        assert_eq!(cell(&endpoint, &body, &t.deployments["s1"]), Some(Cell::Identity));
+        assert_eq!(
+            cell(&endpoint, &body, &t.deployments["o_s1"]),
+            Some(Cell::Identity),
+            "an OpenAI provider that names the operation serves it"
+        );
     }
 }

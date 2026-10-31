@@ -233,6 +233,7 @@ pub(crate) fn dialect(endpoint: &Endpoint) -> &'static str {
         Dialect::BedrockConverse | Dialect::BedrockInvoke => "bedrock",
         Dialect::Mcp if endpoint.family == "a2a" => "a2a",
         Dialect::Mcp => "mcp",
+        Dialect::SystemOne => "systemone",
         _ => "openai",
     }
 }
@@ -975,6 +976,18 @@ mod tests {
                 .attrs
                 .is_empty()
         );
+    }
+
+    #[test]
+    fn dialect_of_the_decision_endpoint() {
+        let endpoint = |path: &str| match antirion_dialects::match_endpoint(&http::Method::POST, path) {
+            antirion_dialects::Matched::Found(e) => e,
+            other => panic!("{path}: {other:?}"),
+        };
+        let systemone = endpoint("/v1/systemone");
+        assert_eq!(dialect(&systemone), "systemone");
+        assert_eq!(operation(&systemone), "systemone");
+        assert_eq!(dialect(&endpoint("/v1/chat/completions")), "openai");
     }
 
     fn attempt(class: &'static str, status: Option<u16>) -> AttemptFact {

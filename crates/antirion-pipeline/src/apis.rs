@@ -31,6 +31,8 @@ pub(crate) enum Api {
     EmbedNative(antirion_dialects::embed::EmbedApi),
     /// A provider's rerank API.
     Rerank,
+    /// A typed-decision answer: `{model, answers, usage}`.
+    SystemOne,
     /// Bodies relayed as they are (audio, images).
     Other,
 }
@@ -74,6 +76,7 @@ pub(crate) fn upstream_api(endpoint: &Endpoint, cell: Cell) -> Api {
             (_, "responses", _) => Api::Responses,
             (_, "embeddings", _) => Api::Embeddings,
             (_, "moderations", _) => Api::Moderations,
+            (_, "systemone", _) => Api::SystemOne,
             _ => Api::Other,
         },
     }
@@ -101,6 +104,7 @@ fn client_id(endpoint: &Endpoint) -> &'static str {
         Dialect::OpenAiBatches => "openai_batches",
         Dialect::OpenAiRealtime => "openai_realtime",
         Dialect::Rerank => "rerank",
+        Dialect::SystemOne => "systemone",
     }
 }
 
@@ -127,6 +131,7 @@ pub(crate) fn dialect_names(endpoint: &Endpoint, cell: Cell) -> (&'static str, &
             }
         }
         Api::Rerank => "rerank",
+        Api::SystemOne => "systemone",
         Api::Moderations | Api::Other => client,
     };
     (client, upstream)
@@ -164,6 +169,13 @@ pub(crate) fn client_dialect(endpoint: &Endpoint, cell: Cell) -> ClientDialect {
     }
 }
 
+/// Whether a body is a typed-decision answer: an `answers` object with at least one answer in it.
+fn answered(v: &Value) -> bool {
+    v.get("answers")
+        .and_then(Value::as_object)
+        .is_some_and(|a| !a.is_empty())
+}
+
 /// Whether a parsed body has what the API needs to answer.
 pub(crate) fn usable(api: Api, v: &Value) -> bool {
     let nonempty_array = |name: &str| {
@@ -186,6 +198,7 @@ pub(crate) fn usable(api: Api, v: &Value) -> bool {
         Api::Converse => v.get("output").is_some_and(Value::is_object),
         Api::Cohere => v.get("message").is_some_and(Value::is_object),
         Api::Responses | Api::Invoke | Api::Other | Api::EmbedNative(_) | Api::Rerank => v.is_object(),
+        Api::SystemOne => answered(v),
     }
 }
 
@@ -322,8 +335,10 @@ pub(crate) fn service_tier(v: &Value) -> Option<&str> {
 
 /// What a complete answer shows the route's response predicates: its finish reasons as the
 /// upstream wrote them (Anthropic's `stop_reason` and Converse's `stopReason` included), and whether
-/// it carries assistant text or a tool call.
-pub(crate) fn answer_facts(v: &Value) -> antirion_resilience::AnswerFacts {
+/// it carries an answer. `answered` counts only for a decision, whose body is `answers` and not
+/// assistant text; any other API keeps its old meaning, so a chat model's `empty_content` policy still
+/// reads an echoed `answers` member as no answer.
+pub(crate) fn answer_facts(api: Api, v: &Value) -> antirion_resilience::AnswerFacts {
     let mut finish_reasons = finish_reasons(v);
     finish_reasons.extend(
         ["stop_reason", "stopReason"]
@@ -333,7 +348,7 @@ pub(crate) fn answer_facts(v: &Value) -> antirion_resilience::AnswerFacts {
     );
     antirion_resilience::AnswerFacts {
         finish_reasons,
-        content: output_chars(v) > 0 || tool_calls(v) > 0,
+        content: output_chars(v) > 0 || tool_calls(v) > 0 || (api == Api::SystemOne && answered(v)),
     }
 }
 
@@ -430,5 +445,42 @@ mod tests {
     fn bedrock_count_tokens_become_anthropic() {
         let body = client_body(Cell::Identity, Api::AnthropicCount, &json!({"inputTokens": 5}));
         assert_eq!(body, Some(json!({"input_tokens": 5})));
+    }
+
+    #[test]
+    fn answers_are_usable_and_are_an_answer() {
+        let empty = json!({"model": "m", "answers": {}, "usage": {"input_tokens": 1}});
+        assert!(!usable(Api::SystemOne, &empty));
+        assert!(!usable(Api::SystemOne, &json!({"model": "m"})));
+        let full = json!({"model": "engine-latest",
+            "answers": {"q": {"type": "choice", "choice": "a", "confidence": 0.9}},
+            "usage": {"input_tokens": 44, "output_tokens": 52}});
+        assert!(usable(Api::SystemOne, &full));
+        let u = usage_of(&full);
+        assert_eq!((u.input, u.output), (Some(44), Some(52)));
+        let facts = answer_facts(Api::SystemOne, &full);
+        assert!(facts.content, "an answers body is not an empty answer");
+        assert!(facts.finish_reasons.is_empty());
+        assert!(
+            !answer_facts(Api::SystemOne, &json!({"model": "m", "answers": {}})).content,
+            "no answers is an empty answer"
+        );
+    }
+
+    #[test]
+    fn an_echoed_answers_member_is_still_no_chat_answer() {
+        // `answer_facts` is shared by every JSON answer: widening `content` for decisions there would
+        // silently retire an empty chat answer's `empty_content` retry because the engine also happened
+        // to answer a decision.
+        let echoed = json!({"choices": [{"index": 0, "message": {"role": "assistant", "content": ""},
+                "finish_reason": "stop"}],
+            "answers": {"q": {"type": "noul", "value": true}}});
+        assert!(
+            !answer_facts(Api::Chat, &echoed).content,
+            "only a decision answers with `answers`"
+        );
+        assert!(answer_facts(Api::SystemOne, &echoed).content);
+        assert!(!answer_facts(Api::Other, &echoed).content);
+        assert!(usable(Api::SystemOne, &echoed));
     }
 }

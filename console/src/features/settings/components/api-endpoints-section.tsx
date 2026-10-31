@@ -69,7 +69,10 @@ export const ENDPOINT_GROUPS: { title: string; rows: EndpointRow[] }[] = [
   },
   {
     title: 'Other',
-    rows: [{ id: 'rerank', label: 'Rerank', paths: 'POST /v1/rerank, /v2/rerank' }],
+    rows: [
+      { id: 'rerank', label: 'Rerank', paths: 'POST /v1/rerank, /v2/rerank' },
+      { id: 'systemone', label: 'Typed decisions', paths: 'POST /v1/systemone' },
+    ],
   },
 ];
 

@@ -272,7 +272,7 @@ describe('API & endpoints', () => {
       'aria-checked',
       'false',
     );
-    expect(screen.getByText(/1 of 17 turned off/)).toBeInTheDocument();
+    expect(screen.getByText(/1 of 18 turned off/)).toBeInTheDocument();
     // The built-in values, not blanks.
     expect(screen.getByLabelText('Kept for', { selector: 'input[value="30d"]' })).toBeInTheDocument();
   });

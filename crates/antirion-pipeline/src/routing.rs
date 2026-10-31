@@ -33,6 +33,9 @@ fn dialect_name(d: Dialect) -> &'static str {
         Dialect::AnthropicMessages => "anthropic",
         Dialect::Gemini => "gemini",
         Dialect::BedrockConverse | Dialect::BedrockInvoke => "bedrock",
+        // A decision is not chat: a route condition on `request.dialect == "openai"` must not match
+        // one because the gateway did not learn the new dialect.
+        Dialect::SystemOne => "systemone",
         _ => "openai",
     }
 }

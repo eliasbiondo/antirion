@@ -50,6 +50,9 @@ fn dialect_label(endpoint: &Endpoint) -> &'static str {
         Dialect::AnthropicMessages => "anthropic",
         Dialect::Gemini => "gemini",
         Dialect::BedrockConverse | Dialect::BedrockInvoke => "bedrock",
+        // A hook keyed on `dialect == "openai"` must not read a decision as chat. (`rerank` is
+        // mislabelled the same way and is left alone: changing it rewrites a payload its users parse.)
+        Dialect::SystemOne => "systemone",
         _ => "openai",
     }
 }
@@ -478,4 +481,24 @@ pub(crate) fn respond(
     );
     cx.finish(&mut resp, false);
     resp
+}
+
+#[cfg(test)]
+mod tests {
+    use http::Method;
+
+    use super::dialect_label;
+
+    fn endpoint(path: &str) -> antirion_dialects::Endpoint {
+        match antirion_dialects::match_endpoint(&Method::POST, path) {
+            antirion_dialects::Matched::Found(e) => e,
+            other => panic!("{path}: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_decision_is_not_chat_in_a_hook_payload() {
+        assert_eq!(dialect_label(&endpoint("/v1/systemone")), "systemone");
+        assert_eq!(dialect_label(&endpoint("/v1/chat/completions")), "openai");
+    }
 }

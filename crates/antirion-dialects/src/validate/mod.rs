@@ -5,6 +5,7 @@
 mod chat;
 mod endpoints;
 mod rerank;
+mod systemone;
 
 use antirion_json::Skim;
 use serde_json::Value;
@@ -105,6 +106,7 @@ fn table(endpoint: &Endpoint) -> Option<&'static Table> {
         "messages" => Some(&endpoints::MESSAGES),
         "count_tokens" => Some(&endpoints::COUNT_TOKENS),
         "rerank" => Some(&rerank::RERANK),
+        "systemone" => Some(&systemone::SYSTEMONE),
         _ => None,
     }
 }
