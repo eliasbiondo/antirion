@@ -302,6 +302,12 @@ impl Capabilities {
 }
 
 fn default_operation(kind: ProviderType, class: &str) -> bool {
+    // A decision endpoint is never assumed, not even for a type that assumes everything else: an
+    // undeclared OpenAI deployment would take the request, answer it with a 404 and trip its
+    // breaker for the chat traffic that shares it. It is served only where it is named.
+    if class == "systemone" {
+        return false;
+    }
     match kind {
         ProviderType::OpenAi | ProviderType::AzureOpenAi => true,
         ProviderType::OpenAiCompatible | ProviderType::Mistral => matches!(class, "generate" | "embed"),
@@ -311,5 +317,39 @@ fn default_operation(kind: ProviderType, class: &str) -> bool {
         ProviderType::Cohere => matches!(class, "generate" | "embed" | "rerank"),
         ProviderType::Bedrock => matches!(class, "generate" | "embed" | "rerank" | "count_tokens"),
         ProviderType::Vertex | ProviderType::Gemini => matches!(class, "generate" | "embed" | "count_tokens"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn systemone_is_never_assumed() {
+        for kind in [
+            ProviderType::OpenAi,
+            ProviderType::AzureOpenAi,
+            ProviderType::OpenAiCompatible,
+            ProviderType::Bedrock,
+        ] {
+            assert!(
+                !Capabilities::resolve(kind, None, None).operation("systemone"),
+                "{kind:?} serves no decisions until one is declared"
+            );
+        }
+        assert!(
+            Capabilities::resolve(ProviderType::OpenAi, None, None).operation("generate"),
+            "the default operations of an OpenAI type are untouched"
+        );
+        assert!(
+            Capabilities::resolve(
+                ProviderType::OpenAi,
+                Some(&json!({"operations": ["generate", "systemone"]})),
+                None,
+            )
+            .operation("systemone"),
+            "naming the operation is what serves it"
+        );
     }
 }

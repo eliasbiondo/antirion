@@ -38,6 +38,7 @@ fn missing_member(api: apis::Api) -> &'static str {
         apis::Api::Converse => "upstream response missing 'output'",
         apis::Api::AnthropicCount | apis::Api::ResponsesCount => "upstream response missing 'input_tokens'",
         apis::Api::GeminiCount => "upstream response missing 'totalTokens'",
+        apis::Api::SystemOne => "upstream response missing 'answers'",
         _ => "upstream response is not a json object",
     }
 }
@@ -106,7 +107,7 @@ pub(crate) async fn json_response(
     if a.predicates
         .iter()
         .any(antirion_resilience::ResponsePredicate::needs_body)
-        && antirion_resilience::predicate::answer_matches(a.predicates, &apis::answer_facts(&v))
+        && antirion_resilience::predicate::answer_matches(a.predicates, &apis::answer_facts(api, &v))
     {
         let reported = apis::usage_of(&v);
         if let Some(u) = v

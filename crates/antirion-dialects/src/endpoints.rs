@@ -19,6 +19,8 @@ pub enum Dialect {
     OpenAiRealtime,
     /// Cohere-style rerank.
     Rerank,
+    /// Typed-decision (`systemone`) inference: `{state, questions}` in, typed answers out.
+    SystemOne,
     AnthropicMessages,
     Gemini,
     BedrockConverse,
@@ -570,6 +572,15 @@ pub fn match_endpoint(method: &Method, raw_path: &str) -> Matched {
         ["v1" | "v2", "rerank"] => (
             POST,
             Some(inference("rerank", "rerank", Dialect::Rerank, Some("/rerank"))),
+        ),
+        ["v1", "systemone"] => (
+            POST,
+            Some(inference(
+                "systemone",
+                "decision",
+                Dialect::SystemOne,
+                Some("/systemone"),
+            )),
         ),
         ["v1", "files"] => (GET_POST, Some(resource(Kind::Files, None, None))),
         ["v1", "files", id] => (GET_DELETE, Some(resource(Kind::Files, Some(id), None))),

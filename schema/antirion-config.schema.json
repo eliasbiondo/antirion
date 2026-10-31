@@ -631,7 +631,8 @@
         "models",
         "gemini",
         "bedrock",
-        "rerank"
+        "rerank",
+        "systemone"
       ],
       "description": "Endpoint id."
     },
@@ -651,7 +652,8 @@
         "gemini",
         "bedrock_converse",
         "bedrock_invoke",
-        "rerank"
+        "rerank",
+        "systemone"
       ],
       "description": "Dialect id."
     },
@@ -703,6 +705,7 @@
         "bedrock",
         "mcp",
         "a2a",
+        "decision",
         "*"
       ],
       "description": "Endpoint family or `*`."
@@ -939,6 +942,10 @@
             "responses_websocket": {
               "$ref": "#/$defs/EndpointToggle",
               "description": "Responses events over a WebSocket on GET /v1/responses; default true, and only while `responses` is enabled."
+            },
+            "systemone": {
+              "$ref": "#/$defs/EndpointToggle",
+              "description": "Typed decisions (`POST /v1/systemone`); default true."
             }
           },
           "additionalProperties": false
@@ -1193,7 +1200,8 @@
               "count_tokens",
               "files",
               "batches",
-              "realtime"
+              "realtime",
+              "systemone"
             ]
           },
           "uniqueItems": true
@@ -1669,7 +1677,8 @@
               "count_tokens",
               "files",
               "batches",
-              "realtime"
+              "realtime",
+              "systemone"
             ]
           },
           "additionalProperties": {
@@ -5919,7 +5928,8 @@
               "moderations",
               "batches",
               "realtime",
-              "rerank"
+              "rerank",
+              "systemone"
             ]
           },
           "additionalProperties": {

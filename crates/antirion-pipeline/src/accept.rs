@@ -392,6 +392,7 @@ mod tests {
             ],
         ),
         ("rerank", &[(Method::POST, "/v1/rerank")]),
+        ("systemone", &[(Method::POST, "/v1/systemone")]),
     ];
 
     fn off(id: &str) -> Value {
