@@ -162,9 +162,18 @@ async fn a_client_that_pauses_reading_is_not_an_idle_upstream() {
     );
     assert!(answer.contains("data: [DONE]"), "the stream did not complete");
 
-    let health = read_all(request(admin, "GET", "/admin/v1/health/deployments", &bearer, "").await).await;
+    let health = read_all(request(admin, "GET", "/admin/v1/runtime/deployments/oa", &bearer, "").await).await;
     assert!(
-        !health.contains("upstream_idle_timeout"),
+        health.starts_with("HTTP/1.1 200 "),
+        "deployment health request failed: {health}"
+    );
+    let (_, body) = health
+        .split_once("\r\n\r\n")
+        .expect("a deployment health response body");
+    let health: Value = serde_json::from_str(body).expect("a JSON deployment health response");
+    assert_eq!(health["name"], "oa");
+    assert_eq!(
+        health["window"]["failures"], 0,
         "the provider was blamed: {health}"
     );
 
