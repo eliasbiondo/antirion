@@ -106,7 +106,8 @@ pub(crate) async fn json_response(
     if a.predicates
         .iter()
         .any(antirion_resilience::ResponsePredicate::needs_body)
-        && antirion_resilience::predicate::answer_matches(a.predicates, &apis::answer_facts(&v))
+        && let Some(class) =
+            antirion_resilience::predicate::answer_failure(a.predicates, &apis::answer_facts(&v), Some(&v))
     {
         let reported = apis::usage_of(&v);
         if let Some(u) = v
@@ -117,7 +118,7 @@ pub(crate) async fn json_response(
             let raw = u.clone();
             a.cx.log.update(|r| r.pending_error_usage = Some((reported, raw)));
         }
-        return Err(a.predicate_matched(status));
+        return Err(a.predicate_matched(status, class));
     }
     let upstream_model = v
         .get("model")

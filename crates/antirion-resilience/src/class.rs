@@ -44,6 +44,8 @@ pub enum Class {
     CredentialRejected,
     Overloaded,
     ServerError,
+    /// A complete answer fell below a configured confidence threshold.
+    LowConfidence,
     NotImplemented,
     ModelUnavailable,
     MalformedResponse,
@@ -134,6 +136,7 @@ impl Class {
             Class::CredentialRejected => "credential_rejected",
             Class::Overloaded => "overloaded",
             Class::ServerError => "server_error",
+            Class::LowConfidence => "low_confidence",
             Class::NotImplemented => "not_implemented",
             Class::ModelUnavailable => "model_unavailable",
             Class::MalformedResponse => "malformed_response",
@@ -153,7 +156,7 @@ impl Class {
     /// The class with a given name.
     #[must_use]
     pub fn parse(name: &str) -> Option<Class> {
-        const ALL: [Class; 25] = [
+        const ALL: [Class; 26] = [
             Class::DnsError,
             Class::ConnectError,
             Class::ConnectTimeout,
@@ -166,6 +169,7 @@ impl Class {
             Class::CredentialRejected,
             Class::Overloaded,
             Class::ServerError,
+            Class::LowConfidence,
             Class::NotImplemented,
             Class::ModelUnavailable,
             Class::MalformedResponse,
@@ -208,9 +212,11 @@ impl Class {
             Class::DnsError | Class::ConnectError | Class::ConnectTimeout | Class::UpstreamReset => {
                 a(false, true, RetrySame::Backoff)
             }
-            Class::TlsError | Class::NotImplemented | Class::ModelUnavailable | Class::MalformedResponse => {
-                a(false, true, RetrySame::No)
-            }
+            Class::TlsError
+            | Class::NotImplemented
+            | Class::ModelUnavailable
+            | Class::MalformedResponse
+            | Class::LowConfidence => a(false, true, RetrySame::No),
             Class::RefusedStream => a(false, true, RetrySame::Immediate),
             Class::Timeout => a(false, true, RetrySame::UntriedKey),
             Class::RateLimited => a(true, true, RetrySame::Backoff),
@@ -271,7 +277,7 @@ impl Class {
             Class::RateLimited => Code::UpstreamRateLimited,
             Class::QuotaExhausted => Code::UpstreamQuotaExhausted,
             Class::CredentialRejected => Code::UpstreamAuthFailed,
-            Class::MalformedResponse => Code::UpstreamBadResponse,
+            Class::MalformedResponse | Class::LowConfidence => Code::UpstreamBadResponse,
             Class::Conflict
             | Class::ContextLength
             | Class::ContentPolicy
