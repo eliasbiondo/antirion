@@ -52,8 +52,38 @@ fn dechunk(mut s: &str) -> String {
     out
 }
 
-/// An upstream that lists two models to the good key, refuses any other, and fails Anthropic's
-/// listing; it counts the listings it answers.
+/// A model-list response for one of the paginated Gemini fixtures.
+fn paginated_listing(path: &str) -> Option<Value> {
+    let (route, query) = path.split_once('?')?;
+    let cursor = query
+        .split('&')
+        .find_map(|param| param.strip_prefix("pageToken="));
+    let page = match (route, cursor) {
+        ("/page-cap/v1beta/models", cursor) => {
+            let page = cursor.unwrap_or("0").parse::<usize>().ok()?;
+            json!({"models": [{"name": format!("models/page-{page:02}")}], "nextPageToken": (page + 1).to_string()})
+        }
+        ("/repeated-cursor/v1beta/models", None) => {
+            json!({"models": [{"name": "models/first"}], "nextPageToken": "repeat"})
+        }
+        ("/repeated-cursor/v1beta/models", Some("repeat")) => {
+            json!({"models": [{"name": "models/second"}], "nextPageToken": "repeat"})
+        }
+        ("/empty-page/v1beta/models", None) => {
+            json!({"models": [{"name": "models/first"}], "nextPageToken": "empty"})
+        }
+        ("/empty-page/v1beta/models", Some("empty")) => {
+            json!({"models": [], "nextPageToken": "last"})
+        }
+        ("/empty-page/v1beta/models", Some("last")) => {
+            json!({"models": [{"name": "models/last"}]})
+        }
+        _ => return None,
+    };
+    Some(page)
+}
+
+/// An upstream that serves the model-list fixtures and counts successful listing requests.
 async fn upstream(listener: TcpListener, listings: Arc<AtomicUsize>) {
     let mut connections = JoinSet::new();
     loop {
@@ -97,6 +127,9 @@ async fn upstream(listener: TcpListener, listings: Arc<AtomicUsize>) {
                         json!({"anthropic": {"models": {"claude-remote-1": {"id": "claude-remote-1",
                             "name": "Claude Remote", "cost": {"input": 1.5, "output": 7.5}}}}}),
                     )
+                } else if let Some(page) = paginated_listing(&path) {
+                    listings.fetch_add(1, Ordering::SeqCst);
+                    (200, page)
                 } else if path.starts_with("/anthropic/") {
                     (
                         500,
@@ -139,6 +172,62 @@ fn ids(items: &Value) -> Vec<&str> {
         .iter()
         .map(|m| m["id"].as_str().unwrap())
         .collect()
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn provider_model_listing_stops_at_the_cap_or_a_repeated_cursor_and_follows_empty_pages() {
+    let dir = ScratchDir::new("provider-pagination");
+    let mock = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let mock_addr = mock.local_addr().unwrap();
+    let listings = Arc::new(AtomicUsize::new(0));
+    let mut mock_task = JoinSet::new();
+    mock_task.spawn(upstream(mock, Arc::clone(&listings)));
+
+    let config = json!({
+        "version": 1,
+        "server": {"listen": "127.0.0.1:0"},
+        "admin": {"listen": "127.0.0.1:0"},
+        "store": {"embedded": {"path": dir.path().join("data").to_string_lossy()}},
+        "auth": {"admin": {"bootstrap_token": TOKEN}},
+        "providers": {
+            "page-cap": {"type": "gemini", "base_url": format!("http://{mock_addr}/page-cap"), "auth": {"api_key": GOOD}},
+            "repeated-cursor": {"type": "gemini", "base_url": format!("http://{mock_addr}/repeated-cursor"), "auth": {"api_key": GOOD}},
+            "empty-page": {"type": "gemini", "base_url": format!("http://{mock_addr}/empty-page"), "auth": {"api_key": GOOD}}
+        }
+    });
+    let file = dir.path().join("gw.json");
+    std::fs::write(&file, config.to_string()).unwrap();
+    let node = start(ServeOptions {
+        config: Some(file),
+        test_mode: true,
+        no_config: None,
+    })
+    .await
+    .unwrap();
+    let addr = node.admin_addr().unwrap();
+    let shutdown = node.rt.shutdown.clone();
+    let mut tasks = JoinSet::new();
+    tasks.spawn(node.run());
+
+    let capped: Vec<String> = (0..20).map(|page| format!("page-{page:02}")).collect();
+    let cases = [
+        ("page-cap", 20, capped.iter().map(String::as_str).collect()),
+        ("repeated-cursor", 2, vec!["first", "second"]),
+        ("empty-page", 3, vec!["first", "last"]),
+    ];
+    for (provider, requests, expected) in cases {
+        let before = listings.load(Ordering::SeqCst);
+        let path = format!("/admin/v1/providers/{provider}/models");
+        let (status, models) = admin(addr, "GET", &path, None).await;
+        assert_eq!(status, 200, "{provider}: {models}");
+        assert_eq!(models["source"], "provider", "{provider}: {models}");
+        assert_eq!(ids(&models["items"]), expected, "{provider}");
+        assert_eq!(listings.load(Ordering::SeqCst) - before, requests, "{provider}");
+    }
+
+    shutdown.cancel();
+    while tasks.join_next().await.is_some() {}
+    mock_task.abort_all();
 }
 
 #[tokio::test(flavor = "multi_thread")]
