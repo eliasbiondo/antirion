@@ -19,6 +19,7 @@ import { useFloating } from './floating';
 import { Icon } from './icon';
 import { useLayer } from './layers';
 import { EmptyPill } from './states';
+import { useTranslate } from '@/lib/i18n';
 
 export interface SelectOption {
   value: string;
@@ -781,6 +782,7 @@ export function MultiSelect({
   id,
   ...aria
 }: MultiSelectProps) {
+  const translate = useTranslate();
   const autoId = useId();
   const triggerId = id ?? `multi${autoId}`;
   const listId = `${triggerId}-list`;
@@ -806,8 +808,8 @@ export function MultiSelect({
       ? known.filter((o) => o.label.toLowerCase().includes(lower) || o.value.toLowerCase().includes(lower))
       : known;
     const exists = known.some((o) => o.value.toLowerCase() === lower);
-    return creatable && q && !exists ? [...matches, { value: q, label: `Add “${q}”` }] : matches;
-  }, [known, q, creatable]);
+    return creatable && q && !exists ? [...matches, { value: q, label: translate('Add “{0}”', q) }] : matches;
+  }, [known, q, creatable, translate]);
   const labelFor = (v: string) => known.find((o) => o.value === v)?.label ?? v;
   const optionId = (i: number) => `${listId}-${i}`;
 
@@ -891,7 +893,7 @@ export function MultiSelect({
             <button
               type="button"
               disabled={disabled}
-              aria-label={`Remove ${noun} ${labelFor(v)}`}
+              aria-label={translate('Remove {0} {1}', noun, labelFor(v))}
               onClick={() => onChange(value.filter((x) => x !== v))}
               className="inline-flex h-5 w-5 items-center justify-center rounded-xs text-dim hover:bg-hover hover:text-fg"
             >
@@ -925,7 +927,7 @@ export function MultiSelect({
           }}
           className="flex h-6 min-w-16 flex-1 items-center justify-between gap-2 rounded-xs px-1.5 text-left text-ui text-dim outline-none"
         >
-          <span className="truncate">{value.length === 0 ? placeholder : 'Add…'}</span>
+          <span className="truncate">{value.length === 0 ? placeholder : translate('Add…')}</span>
           <Icon name="chevronDown" size={14} className="shrink-0" />
         </button>
       </div>
@@ -944,9 +946,11 @@ export function MultiSelect({
                   aria-autocomplete="list"
                   aria-activedescendant={options[active] ? optionId(active) : undefined}
                   aria-label={
-                    creatable ? `Search or add ${listLabel ?? noun}` : `Search ${listLabel ?? noun}`
+                    creatable
+                      ? translate('Search or add {0}', listLabel ?? noun)
+                      : translate('Search {0}', listLabel ?? noun)
                   }
-                  placeholder={creatable ? 'Search or add…' : 'Search…'}
+                  placeholder={creatable ? translate('Search or add…') : translate('Search…')}
                   autoComplete="off"
                   spellCheck={false}
                   value={query}
@@ -968,7 +972,9 @@ export function MultiSelect({
               >
                 {options.length === 0 ? (
                   <div className="flex justify-center px-2.5 py-3">
-                    <EmptyPill>{creatable ? 'Type to add a value' : 'No matches'}</EmptyPill>
+                    <EmptyPill>
+                      {creatable ? translate('Type to add a value') : translate('No matches')}
+                    </EmptyPill>
                   </div>
                 ) : null}
                 {options.map((o, i) => (
@@ -993,14 +999,17 @@ export function MultiSelect({
               </div>
               {value.length > 0 ? (
                 <div className="flex shrink-0 items-center justify-between border-t border-line px-2.5 py-1.5 text-caption text-muted">
-                  <span>{value.length} chosen</span>
+                  <span>
+                    {value.length}
+                    {' ' + translate('chosen')}
+                  </span>
                   <button
                     type="button"
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => onChange([])}
                     className="rounded-xs px-1 text-muted hover:text-fg"
                   >
-                    Clear
+                    {translate('Clear')}
                   </button>
                 </div>
               ) : null}

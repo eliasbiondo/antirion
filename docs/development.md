@@ -48,6 +48,11 @@ The admin console is a static export of the frontend in `console/` (`next build`
   gateway, `pnpm dev:mock` adds the contract mocks and demo data), the layout, what each screen reads
   and writes, and how to run the end-to-end suite against an embedded build.
   For a mount other than `/ui`, build the export with `ANTIRION_UI_PATH` set to it.
+- **Localization** uses `console/src/lib/locale.ts` to resolve English and Persian from the saved
+  preference or the browser and set the document direction. `useTranslate` reads the Persian catalog in
+  `console/src/lib/i18n/fa.ts`, with English source text as its fallback and separate interpolation
+  values for resource names. Personal server notifications use the recipient's saved `locale`
+  through `antirion-runtime/src/operators/locale.rs`.
 
 ## Operator identity (console sign-in)
 

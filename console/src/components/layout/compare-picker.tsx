@@ -10,6 +10,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { cn } from '@/lib/cn';
 import { type CompareValue, compareTitle } from '@/lib/time';
 import { useResolvedRange, useTimeRange } from '@/stores/time-range';
+import { useTranslate } from '@/lib/i18n';
 
 const PICKS: CompareValue[] = [{ kind: 'previous' }, { kind: 'week' }, { kind: 'month' }];
 
@@ -21,6 +22,7 @@ const clock = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
  * in the URL, and always as long as the range.
  */
 export function ComparePicker() {
+  const translate = useTranslate();
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const compare = useTimeRange((s) => s.compare);
@@ -48,7 +50,7 @@ export function ComparePicker() {
           type="button"
           aria-haspopup="dialog"
           aria-expanded={open}
-          aria-label={`Compare with: ${compareTitle(compare)}`}
+          aria-label={translate('Compare with: {0}', compareTitle(compare))}
           onClick={() => {
             setOpen(!open);
             setCustom(compare.kind === 'custom');
@@ -65,11 +67,11 @@ export function ComparePicker() {
         onClose={() => setOpen(false)}
         anchor={anchor}
         align="right"
-        label="Compare with"
+        label={translate('Compare with')}
         className="w-[300px] max-w-[calc(100vw-16px)]"
       >
         <div className="border-b border-line px-3 py-2 text-caption text-muted">
-          Deltas on this page compare with a window as long as the range.
+          {translate('Deltas on this page compare with a window as long as the range.')}
         </div>
         <ul className="flex flex-col p-1">
           {[...PICKS, { kind: 'custom', from: 0 } as const].map((p) => {
@@ -94,7 +96,7 @@ export function ComparePicker() {
                     selected ? 'bg-accent-dim text-fg' : 'text-fg hover:bg-hover',
                   )}
                 >
-                  {p.kind === 'custom' ? 'Custom start…' : compareTitle(p)}
+                  {p.kind === 'custom' ? translate('Custom start…') : compareTitle(p)}
                   <span className={on ? 'text-accent' : 'invisible'}>
                     <Icon name="check" size={14} />
                   </span>
@@ -119,12 +121,12 @@ export function ComparePicker() {
               onFocusChange={setFocus}
               onPick={setDay}
               max={toDay(latest)}
-              label="Comparison start"
+              label={translate('Comparison start')}
             />
             <div className="flex items-center gap-2">
-              <span className="text-caption text-muted">Starts at</span>
+              <span className="text-caption text-muted">{translate('Starts at')}</span>
               <TimeField
-                aria-label="Comparison start time"
+                aria-label={translate('Comparison start time')}
                 value={time}
                 onChange={setTime}
                 className="w-[64px]"
@@ -132,10 +134,12 @@ export function ComparePicker() {
             </div>
             <div className="flex items-center justify-between gap-2">
               <span className={cn('text-caption', valid ? 'text-muted' : 'text-error')}>
-                {valid ? 'Same length as the range' : 'Pick a start before the range’s own'}
+                {valid
+                  ? translate('Same length as the range')
+                  : translate('Pick a start before the range’s own')}
               </span>
               <Button size="sm" type="submit" disabled={!valid}>
-                Compare
+                {translate('Compare')}
               </Button>
             </div>
           </form>

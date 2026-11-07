@@ -18,6 +18,7 @@ import { notify } from '@/stores/ui';
 import { hasAccount, principalName, roleLabel } from '../describe';
 import { PhotoError, shrinkPhoto } from '../photo';
 import { useAccount } from '../store';
+import { useTranslate } from '@/lib/i18n';
 
 const profileSchema = z.object({
   display_name: z.string().trim().min(1, 'Enter the name people see').max(200, 'Use 200 characters or fewer'),
@@ -26,6 +27,7 @@ const profileSchema = z.object({
 
 /** Upload or remove the photo shown instead of the initials; it is kept, shrunk, in preferences. */
 function PhotoControls() {
+  const translate = useTranslate();
   const photo = usePreferences((s) => s.photo);
   const setPreferences = usePreferences((s) => s.set);
   const [busy, setBusy] = useState(false);
@@ -44,7 +46,7 @@ function PhotoControls() {
             shrinkPhoto(file)
               .then((url) => {
                 setPreferences({ photo: url });
-                notify('success', 'Photo updated');
+                notify('success', translate('Photo updated'));
               })
               .catch((e: unknown) =>
                 setError(
@@ -54,7 +56,7 @@ function PhotoControls() {
               .finally(() => setBusy(false));
           }}
         >
-          {photo ? 'Change photo' : 'Upload photo'}
+          {photo ? translate('Change photo') : translate('Upload photo')}
         </FileButton>
         {photo ? (
           <Button
@@ -62,10 +64,10 @@ function PhotoControls() {
             variant="ghost"
             onClick={() => {
               setPreferences({ photo: null });
-              notify('success', 'Photo removed');
+              notify('success', translate('Photo removed'));
             }}
           >
-            Remove
+            {translate('Remove')}
           </Button>
         ) : null}
       </div>
@@ -74,7 +76,7 @@ function PhotoControls() {
           {error}
         </p>
       ) : (
-        <p className="text-caption text-dim">Shown instead of your initials.</p>
+        <p className="text-caption text-dim">{translate('Shown instead of your initials.')}</p>
       )}
     </div>
   );
@@ -82,6 +84,7 @@ function PhotoControls() {
 
 /** Who is signed in: avatar, name, handle and email, and the role that decides what they can do. */
 function Identity() {
+  const translate = useTranslate();
   const me = useSession((s) => s.me);
   const user = me?.user && typeof me.user === 'object' ? me.user : null;
   const name = principalName(me);
@@ -100,7 +103,10 @@ function Identity() {
           </p>
         ) : (
           <p className="text-ui text-muted">
-            Signed in with {me?.principal.type === 'bootstrap' ? 'the bootstrap token' : 'an admin token'}
+            {translate('Signed in with') + ' '}
+            {me?.principal.type === 'bootstrap'
+              ? translate('the bootstrap token')
+              : translate('an admin token')}
           </p>
         )}
         {role ? <p className="text-caption text-dim">{role}</p> : null}
@@ -134,6 +140,7 @@ function emailMessage(e: unknown): string {
  * is followed; a single sign-on account's at once.
  */
 function EmailBlock() {
+  const translate = useTranslate();
   const me = useSession((s) => s.me);
   const changeEmail = useAccount((s) => s.changeEmail);
   const current = me?.user?.email ?? null;
@@ -163,7 +170,7 @@ function EmailBlock() {
       setValue('');
       if (applied) {
         setPending(null);
-        notify('success', 'Email changed', result.data);
+        notify('success', translate('Email changed'), result.data);
       } else setPending(result.data);
     } catch (e) {
       setError(emailMessage(e));
@@ -175,9 +182,9 @@ function EmailBlock() {
   return (
     <div className="flex flex-col gap-2">
       <Field
-        label="Email"
+        label={translate('Email')}
         controlId={emailId}
-        hint={editing ? undefined : 'Where invitations, resets and notifications go.'}
+        hint={editing ? undefined : translate('Where invitations, resets and notifications go.')}
       >
         <div className="flex flex-wrap items-center gap-2">
           <Input
@@ -185,11 +192,11 @@ function EmailBlock() {
             value={current ?? ''}
             readOnly
             className="min-w-0 flex-1"
-            placeholder="No email"
+            placeholder={translate('No email')}
           />
           {editing ? null : (
             <Button size="sm" onClick={() => setEditing(true)}>
-              Change email
+              {translate('Change email')}
             </Button>
           )}
         </div>
@@ -200,8 +207,11 @@ function EmailBlock() {
             <Icon name="mail" size={13} />
           </span>
           <span>
-            We sent a link to <span className="font-medium text-fg">{pending}</span>. Your email changes when
-            you open it while signed in; until then you keep using {current ?? 'your current address'}.
+            {translate('We sent a link to') + ' '}
+            <span className="font-medium text-fg">{pending}</span>
+            {translate('. Your email changes when you open it while signed in; until then you keep using') +
+              ' '}
+            {current ?? translate('your current address')}.
           </span>
         </p>
       ) : null}
@@ -214,7 +224,7 @@ function EmailBlock() {
             void submit();
           }}
         >
-          <Field label="New email" error={fieldError}>
+          <Field label={translate('New email')} error={fieldError}>
             <Input
               type="email"
               autoComplete="email"
@@ -235,7 +245,7 @@ function EmailBlock() {
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <Button type="submit" variant="primary" size="sm" busy={busy}>
-              Change email
+              {translate('Change email')}
             </Button>
             <Button
               size="sm"
@@ -247,7 +257,7 @@ function EmailBlock() {
                 setError(null);
               }}
             >
-              Cancel
+              {translate('Cancel')}
             </Button>
             {error ? (
               <span role="alert" className="text-caption text-error">
@@ -266,13 +276,14 @@ function EmailBlock() {
  * missing, why, and how to get it.
  */
 export function TokenPrincipalNote({ what }: { what?: 'profile' | 'tokens' | 'notifications' }) {
+  const translate = useTranslate();
   const bootstrap = useSession((s) => s.me?.principal.type === 'bootstrap');
   const lead =
     what === 'tokens'
-      ? 'Personal tokens belong to a user account.'
+      ? translate('Personal tokens belong to a user account.')
       : what === 'notifications'
-        ? 'Email notifications go to a user account.'
-        : "You're signed in with an admin token, so there's no profile to edit.";
+        ? translate('Email notifications go to a user account.')
+        : translate("You're signed in with an admin token, so there's no profile to edit.");
   return (
     <div className="flex flex-col gap-4 rounded-sm border border-line bg-sunken p-4">
       <div className="flex items-start gap-3">
@@ -281,13 +292,17 @@ export function TokenPrincipalNote({ what }: { what?: 'profile' | 'tokens' | 'no
         </span>
         <div className="flex flex-col gap-2 text-body leading-relaxed text-fg">
           <p>
-            {lead} Invite yourself as a user to get a profile, personal tokens, two-step verification and
-            email notifications.
+            {lead}
+            {' ' +
+              translate(
+                'Invite yourself as a user to get a profile, personal tokens, two-step verification and email notifications.',
+              )}
           </p>
           {bootstrap ? (
             <p className="text-muted">
-              The bootstrap token is meant for setting up the gateway. Once your team has accounts, keep it
-              somewhere safe and stop using it day to day.
+              {translate(
+                'The bootstrap token is meant for setting up the gateway. Once your team has accounts, keep it somewhere safe and stop using it day to day.',
+              )}
             </p>
           ) : null}
         </div>
@@ -306,6 +321,7 @@ export function TokenPrincipalNote({ what }: { what?: 'profile' | 'tokens' | 'no
 }
 
 export function ProfileSection({ onDirty }: { onDirty: (dirty: boolean) => void }) {
+  const translate = useTranslate();
   const me = useSession((s) => s.me);
   const updateProfile = useAccount((s) => s.updateProfile);
   const user = me?.user && typeof me.user === 'object' ? me.user : null;
@@ -335,7 +351,7 @@ export function ProfileSection({ onDirty }: { onDirty: (dirty: boolean) => void 
     try {
       await updateProfile(result.data);
       onDirty(false);
-      notify('success', 'Profile saved');
+      notify('success', translate('Profile saved'));
     } catch (e) {
       setError(e);
     } finally {
@@ -344,7 +360,7 @@ export function ProfileSection({ onDirty }: { onDirty: (dirty: boolean) => void 
   }
 
   return (
-    <section aria-label="Profile" className="flex flex-col gap-6">
+    <section aria-label={translate('Profile')} className="flex flex-col gap-6">
       <Identity />
       {user && hasAccount(me) ? (
         <form
@@ -354,26 +370,33 @@ export function ProfileSection({ onDirty }: { onDirty: (dirty: boolean) => void 
             void save();
           }}
         >
-          <Field label="Display name" error={errors.display_name} required>
+          <Field label={translate('Display name')} error={errors.display_name} required>
             <Input
               autoComplete="name"
               value={values.display_name}
               onChange={(e) => change({ display_name: e.target.value })}
             />
           </Field>
-          <Field label="Title" optional hint="Shown next to your name, such as Platform engineer.">
+          <Field
+            label={translate('Title')}
+            optional
+            hint={translate('Shown next to your name, such as Platform engineer.')}
+          >
             <Input
               autoComplete="organization-title"
               value={values.title}
               onChange={(e) => change({ title: e.target.value })}
             />
           </Field>
-          <Field label="User name" hint="Used in mentions and the audit log. It can't be changed.">
+          <Field
+            label={translate('User name')}
+            hint={translate("Used in mentions and the audit log. It can't be changed.")}
+          >
             <Input value={user.name} readOnly mono />
           </Field>
           <div className="flex items-center gap-3 sm:col-span-2">
             <Button type="submit" variant="primary" busy={busy}>
-              Save profile
+              {translate('Save profile')}
             </Button>
             <InlineError error={error} />
           </div>

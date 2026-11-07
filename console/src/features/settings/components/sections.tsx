@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 
 import type { IconName } from '@/components/ui/icon';
+import { translator } from '@/lib/i18n';
 
 import { ApiEndpointsSection } from './api-endpoints-section';
 import { AuditSection } from './audit-section';
@@ -275,17 +276,26 @@ export const MOVED_SECTIONS: Record<string, string> = { providers: '/providers/'
  * and the scope picker: one organization (the default one while the scope is the whole gateway),
  * the whole gateway, or both.
  */
-export function settingsScopeWords(sectionId: string, scope: { kind: string; name?: string }): string {
+export function settingsScopeWords(
+  sectionId: string,
+  scope: { kind: string; name?: string },
+  translate = translator('en'),
+): string {
   const section = SETTINGS_SECTIONS.find((s) => s.id === sectionId);
-  const org = scope.kind === 'gateway' ? 'the default organization' : (scope.name ?? 'this organization');
+  const org =
+    scope.kind === 'gateway'
+      ? translate('the default organization')
+      : (scope.name ?? translate('this organization'));
   switch (section?.scope ?? 'gateway') {
     case 'organization':
-      return `For ${org}`;
+      return translate('For {0}', org);
     case 'mixed':
-      return `For the whole gateway and ${org}`;
+      return translate('For the whole gateway and {0}', org);
     case 'follows':
-      return scope.kind === 'gateway' ? 'For the whole gateway' : `For ${org} and the whole gateway`;
+      return scope.kind === 'gateway'
+        ? translate('For the whole gateway')
+        : translate('For {0} and the whole gateway', org);
     default:
-      return 'For the whole gateway';
+      return translate('For the whole gateway');
   }
 }

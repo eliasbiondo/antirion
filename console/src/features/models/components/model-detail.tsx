@@ -64,6 +64,7 @@ import { MigrationPanel } from './migration-panel';
 import { ModelUsage } from './model-usage';
 import { PoliciesPanel } from './policies-panel';
 import { TierPrices } from './tier-prices';
+import { translateNow } from '@/lib/i18n';
 
 /** The rates behind "More rates" in the price dialog: per token in the reader's unit, or flat in USD. */
 const MORE_RATES = PRICE_FIELDS.filter((p) => p.field !== 'input' && p.field !== 'output');
@@ -812,7 +813,7 @@ export function ModelDetail({ view, defaults = [], onEdit, onOpenModel }: ModelD
         effect="Every app can use it from then on, and its access list no longer applies."
         onConfirm={async (reason) => {
           await patchModelSpec(view.name, { lifecycle: { state: 'ga' } }, reason);
-          notify('success', 'Model promoted', `${view.name} is available to every app`);
+          notify('success', 'Model promoted', translateNow('{0} is available to every app', view.name));
         }}
       />
       <ConfirmDialog

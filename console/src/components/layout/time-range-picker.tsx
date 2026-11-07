@@ -20,6 +20,7 @@ import {
 } from '@/lib/time';
 import { usePreferences } from '@/stores/preferences';
 import { useResolvedRange, useTimeRange } from '@/stores/time-range';
+import { useTranslate } from '@/lib/i18n';
 
 const JUMPS: { label: string; minutes: number }[] = [
   { label: '−1h', minutes: 60 },
@@ -44,6 +45,7 @@ function at(day: Day | null, time: string): number {
 
 /** The time range: presets, a custom range with quick jumps, the granularity and the time zone. */
 export function TimeRangePicker() {
+  const translate = useTranslate();
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const range = useTimeRange((s) => s.range);
@@ -115,10 +117,10 @@ export function TimeRangePicker() {
         onClose={() => setOpen(false)}
         anchor={anchor}
         align="right"
-        label="Time range"
+        label={translate('Time range')}
         className="w-[320px] max-w-[calc(100vw-16px)]"
       >
-        <div role="tablist" aria-label="Range kind" className="flex border-b border-line">
+        <div role="tablist" aria-label={translate('Range kind')} className="flex border-b border-line">
           {(['presets', 'custom'] as const).map((m) => (
             <button
               key={m}
@@ -133,7 +135,7 @@ export function TimeRangePicker() {
                   : 'border-transparent text-muted hover:text-fg',
               )}
             >
-              {m === 'presets' ? 'Presets' : 'Custom'}
+              {m === 'presets' ? translate('Presets') : translate('Custom')}
             </button>
           ))}
         </div>
@@ -161,7 +163,7 @@ export function TimeRangePicker() {
                         on ? 'bg-accent-dim text-fg' : 'text-fg hover:bg-hover',
                       )}
                     >
-                      {presetLabel(p)}
+                      {translate(presetLabel(p))}
                       <span className="flex items-center gap-2">
                         <span className="mono text-caption text-dim">
                           {defaultInterval({ kind: 'preset', preset: p })}
@@ -195,17 +197,17 @@ export function TimeRangePicker() {
               onPick={pick}
               max={toDay(new Date())}
               min={earliest !== null ? toDay(new Date(earliest)) : undefined}
-              label="Custom range"
+              label={translate('Custom range')}
             />
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1">
-                <span className="text-caption text-muted">From</span>
+                <span className="text-caption text-muted">{translate('From')}</span>
                 <div className="flex items-center gap-1.5">
                   <span className="min-w-0 flex-1 truncate text-caption text-fg">
                     {fromDay ? shortDay(fromDay) : '—'}
                   </span>
                   <TimeField
-                    aria-label="From time"
+                    aria-label={translate('From time')}
                     value={fromTime}
                     onChange={setFromTime}
                     className="w-[64px]"
@@ -213,17 +215,22 @@ export function TimeRangePicker() {
                 </div>
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-caption text-muted">To</span>
+                <span className="text-caption text-muted">{translate('To')}</span>
                 <div className="flex items-center gap-1.5">
                   <span className="min-w-0 flex-1 truncate text-caption text-fg">
-                    {toDayValue ? shortDay(toDayValue) : 'Pick a day'}
+                    {toDayValue ? shortDay(toDayValue) : translate('Pick a day')}
                   </span>
-                  <TimeField aria-label="To time" value={toTime} onChange={setToTime} className="w-[64px]" />
+                  <TimeField
+                    aria-label={translate('To time')}
+                    value={toTime}
+                    onChange={setToTime}
+                    className="w-[64px]"
+                  />
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-caption text-muted">Jump to</span>
+              <span className="text-caption text-muted">{translate('Jump to')}</span>
               {JUMPS.map((j) => (
                 <button
                   key={j.label}
@@ -238,19 +245,19 @@ export function TimeRangePicker() {
             <div className="flex items-center justify-between">
               <span className={cn('text-caption', valid ? 'text-muted' : 'text-error')}>
                 {valid
-                  ? `${((toMs - fromMs) / 3_600_000).toFixed(1)} h range`
+                  ? translate('{0} h range', ((toMs - fromMs) / 3_600_000).toFixed(1))
                   : toDayValue === null
-                    ? 'Pick the last day'
+                    ? translate('Pick the last day')
                     : tooOld
-                      ? `${kept ?? ''}; start later`
-                      : 'End must be after start'}
+                      ? translate('{0}; start later', kept ?? '')
+                      : translate('End must be after start')}
               </span>
               <div className="flex gap-1.5">
                 <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>
-                  Cancel
+                  {translate('Cancel')}
                 </Button>
                 <Button size="sm" type="submit" disabled={!valid}>
-                  Apply range
+                  {translate('Apply range')}
                 </Button>
               </div>
             </div>
@@ -258,19 +265,22 @@ export function TimeRangePicker() {
         )}
         <div className="flex items-center justify-between gap-2 border-t border-line px-3 py-2">
           <div className="flex items-center gap-2 text-caption text-muted">
-            <span>Granularity</span>
+            <span>{translate('Granularity')}</span>
             <div className="w-20">
               <Select
                 size="sm"
                 mono
-                aria-label="Granularity"
+                aria-label={translate('Granularity')}
                 value={interval}
                 onChange={(v) => setInterval(v as Interval)}
                 options={allowedIntervals(resolved.seconds).map((i) => ({ value: i, label: i }))}
               />
             </div>
           </div>
-          <span className="text-caption text-dim">Times in {zoneLabel(timeZone)}</span>
+          <span className="text-caption text-dim">
+            {translate('Times in') + ' '}
+            {zoneLabel(timeZone)}
+          </span>
         </div>
       </Popover>
     </div>

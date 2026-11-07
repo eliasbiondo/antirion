@@ -84,6 +84,7 @@ struct Secret {
 pub struct PushMessage {
     pub title: String,
     pub body: String,
+    pub locale: &'static str,
     /// The console page a click opens.
     pub url: Option<String>,
     /// Replaces an earlier notification with the same tag (an alert instance's id).
@@ -322,9 +323,16 @@ impl Runtime {
 
     /// Sends a test notification to each of `user`'s browsers now and says how each went.
     pub async fn push_test(&self, user: &str) -> Result<Vec<TestOutcome>, PushError> {
+        let locale = self.console_locale(user).await;
         let message = PushMessage {
             title: "Antirion".to_owned(),
-            body: "Notifications from this gateway reach this browser.".to_owned(),
+            body: locale
+                .pick(
+                    "Notifications from this gateway reach this browser.",
+                    "این مرورگر اعلان‌های درگاه را دریافت می‌کند.",
+                )
+                .to_owned(),
+            locale: locale.tag(),
             url: None,
             tag: Some("antirion-test".to_owned()),
             urgency: "normal",

@@ -24,11 +24,11 @@ import { useUi } from '@/stores/ui';
 
 import { ChangeControlHost } from './change-control';
 import { CommandPalette, ShortcutsDialog } from './command-palette';
-import { PreferencesApplier } from './preferences-applier';
 import { RecentTracker } from './recent-tracker';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
 import { UrlSync, useOpenSettings } from './url-sync';
+import { useTranslate } from '@/lib/i18n';
 
 function useGlobalKeys() {
   const router = useRouter();
@@ -96,6 +96,7 @@ function ShellFacts() {
  * so it makes none of the calls the gateway would refuse.
  */
 function PageAccess({ children }: { children: ReactNode }) {
+  const translate = useTranslate();
   const pathname = usePathname();
   const me = useSession((s) => s.me);
   const organization = scopeOrganization(useScope((s) => s.scope));
@@ -103,9 +104,9 @@ function PageAccess({ children }: { children: ReactNode }) {
   if (!item || navAllowed(item, navHolds(me, organization))) return children;
   return (
     <>
-      <PageHeader title={item.label} />
+      <PageHeader title={translate(item.label)} />
       <div className="flex min-h-[calc(100vh-48px-57px)] items-center justify-center bg-raised">
-        <Forbidden what={item.label} />
+        <Forbidden what={translate(item.label)} />
       </div>
     </>
   );
@@ -136,6 +137,7 @@ export function MainArea({ children }: { children: ReactNode }) {
 
 /** The splash shown while the session is checked; static, with no data. */
 export function Splash() {
+  const translate = useTranslate();
   return (
     <div
       className="flex h-screen items-center justify-center bg-canvas text-muted"
@@ -144,13 +146,14 @@ export function Splash() {
     >
       <span className="flex items-center gap-2 text-ui">
         <BrandMark size={16} />
-        Loading Antirion…
+        {translate('Loading Antirion…')}
       </span>
     </div>
   );
 }
 
 function SessionExpiredDialog() {
+  const translate = useTranslate();
   const status = useSession((s) => s.status);
   const router = useRouter();
   const pathname = usePathname();
@@ -158,8 +161,8 @@ function SessionExpiredDialog() {
     <Dialog
       open={status === 'expired'}
       onClose={() => undefined}
-      title="Your session expired"
-      description="Sign in again to pick up where you left off."
+      title={translate('Your session expired')}
+      description={translate('Sign in again to pick up where you left off.')}
       size="sm"
       role="alertdialog"
       footer={
@@ -169,11 +172,11 @@ function SessionExpiredDialog() {
             router.replace(`/login/?next=${encodeURIComponent(pathname + window.location.search)}`)
           }
         >
-          Sign in again
+          {translate('Sign in again')}
         </Button>
       }
     >
-      <p className="text-ui text-muted">Unsaved changes on this page will be lost.</p>
+      <p className="text-ui text-muted">{translate('Unsaved changes on this page will be lost.')}</p>
     </Dialog>
   );
 }
@@ -183,6 +186,7 @@ function SessionExpiredDialog() {
  * the static HTML is a splash with no per-user data.
  */
 export function AppShell({ children }: { children: ReactNode }) {
+  const translate = useTranslate();
   const status = useSession((s) => s.status);
   const load = useSession((s) => s.load);
   const pullPreferences = usePreferences((s) => s.pull);
@@ -209,15 +213,14 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <PreferencesApplier />
       <UrlSync />
       <RecentTracker />
       <ShellFacts />
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[70] focus:rounded-sm focus:bg-raised focus:px-3 focus:py-2"
+        className="sr-only focus:not-sr-only focus:fixed focus:start-2 focus:top-2 focus:z-[70] focus:rounded-sm focus:bg-raised focus:px-3 focus:py-2"
       >
-        Skip to main content
+        {translate('Skip to main content')}
       </a>
       <div className="grid h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[48px_minmax(0,1fr)] bg-canvas lg:grid-cols-[var(--spacing-sidebar)_minmax(0,1fr)]">
         <Topbar />

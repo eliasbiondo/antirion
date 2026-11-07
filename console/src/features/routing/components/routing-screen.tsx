@@ -78,6 +78,7 @@ import { LiveDecisions } from './live-decisions';
 import { RuleRow, strategyLabel, Targets } from './rule-row';
 import { DefaultTargetDrawer, NewRouteDrawer, RouteSettingsDrawer } from './route-drawer';
 import { RuleWizard } from './rule-wizard';
+import { translateNow, useTranslate } from '@/lib/i18n';
 
 type Tab = 'rules' | 'health' | 'live' | 'changes';
 
@@ -135,6 +136,7 @@ function ReferenceDrawer({ open, onClose, rules }: { open: boolean; onClose: () 
  * bottom, with traffic figures, deployment health and defaults, live decisions and changes.
  */
 export function RoutingScreen() {
+  const translate = useTranslate();
   const routes = useRouting((s) => s.routes);
   const health = useRouting((s) => s.health);
   const tiers = useRouting((s) => s.tiers);
@@ -437,7 +439,7 @@ export function RoutingScreen() {
     link.searchParams.set('rule', r.name);
     void navigator.clipboard
       .writeText(link.toString())
-      .then(() => notify('success', 'Link copied', `Rule ${r.name}`));
+      .then(() => notify('success', 'Link copied', translateNow('Rule {0}', r.name)));
   };
 
   const toggleExpanded = (i: number) =>
@@ -451,8 +453,8 @@ export function RoutingScreen() {
   return (
     <>
       <PageHeader
-        title="Routing policy"
-        description="Send requests to the right deployments by team, tag or size"
+        title={translate('Routing policy')}
+        description={translate('Send requests to the right deployments by team, tag or size')}
         meta={
           parsed || !routeOn ? (
             <>

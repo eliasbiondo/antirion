@@ -19,6 +19,7 @@ import { cn } from '@/lib/cn';
 import { Button, IconButton } from './button';
 import { useFloating, usePortalTarget } from './floating';
 import { useLayer } from './layers';
+import { useTranslate } from '@/lib/i18n';
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -106,17 +107,12 @@ const GuardedClose = createContext<(() => void) | null>(null);
  * A form's Cancel: it closes the drawer or dialog it is in the way Escape and ✕ do, so unsaved
  * edits are confirmed first. Outside one, it calls `onClick`.
  */
-export function CancelButton({
-  onClick,
-  children = 'Cancel',
-}: {
-  onClick?: () => void;
-  children?: ReactNode;
-}) {
+export function CancelButton({ onClick, children }: { onClick?: () => void; children?: ReactNode }) {
+  const translate = useTranslate();
   const close = use(GuardedClose);
   return (
     <Button variant="ghost" onClick={close ?? onClick}>
-      {children}
+      {children ?? translate('Cancel')}
     </Button>
   );
 }
@@ -148,6 +144,7 @@ export function Dialog({
   role = 'dialog',
   dirty = false,
 }: DialogProps) {
+  const translate = useTranslate();
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const descId = useId();
@@ -184,7 +181,7 @@ export function Dialog({
                   </p>
                 ) : null}
               </div>
-              <IconButton icon="x" label="Close" onClick={close} />
+              <IconButton icon="x" label={translate('Close')} onClick={close} />
             </div>
             <div className="max-h-[70vh] overflow-y-auto px-5 py-4">{children}</div>
             {footer ? (
@@ -227,6 +224,7 @@ export interface DrawerProps {
 
 /** "Discard changes?": the question an edit drawer asks before it closes with unsaved edits. */
 function DiscardChanges({ onKeep, onDiscard }: { onKeep: () => void; onDiscard: () => void }) {
+  const translate = useTranslate();
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
   useFocusTrap(ref, true, onKeep);
@@ -241,15 +239,15 @@ function DiscardChanges({ onKeep, onDiscard }: { onKeep: () => void; onDiscard: 
         className="w-full max-w-[400px] animate-fade-in rounded-container border border-line-strong bg-raised p-5 shadow-pop"
       >
         <h2 id={titleId} className="text-title font-semibold text-fg">
-          Discard changes?
+          {translate('Discard changes?')}
         </h2>
-        <p className="mt-2 text-ui text-muted">What you changed here has not been saved.</p>
+        <p className="mt-2 text-ui text-muted">{translate('What you changed here has not been saved.')}</p>
         <div className="mt-4 flex justify-end gap-2">
           <Button variant="ghost" onClick={onKeep} data-autofocus>
-            Keep editing
+            {translate('Keep editing')}
           </Button>
           <Button variant="danger" onClick={onDiscard}>
-            Discard
+            {translate('Discard')}
           </Button>
         </div>
       </div>
@@ -269,6 +267,7 @@ export function Drawer({
   headerActions,
   dirty = false,
 }: DrawerProps) {
+  const translate = useTranslate();
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const [asking, setAsking] = useState(false);
@@ -301,7 +300,7 @@ export function Drawer({
               </div>
               <div className="flex items-center gap-1">
                 {headerActions}
-                <IconButton icon="x" label="Close" onClick={close} />
+                <IconButton icon="x" label={translate('Close')} onClick={close} />
               </div>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>

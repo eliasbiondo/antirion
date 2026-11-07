@@ -9,6 +9,7 @@ import { notify } from '@/stores/ui';
 import { runtimeStatus, useDeploymentDisables } from '../deployment-state';
 import { setDeploymentEnabled, useCatalog } from '../store';
 import { resumeNow, turnOn } from './deployment-runtime';
+import { translateNow } from '@/lib/i18n';
 
 /** Re-reads the deployments' health and who turned them off, after a runtime action. */
 export async function reloadHealth(): Promise<void> {
@@ -52,7 +53,8 @@ export function DeploymentMenu({
               void setDeploymentEnabled(name, true).then(
                 () => notify('success', 'Deployment turned on', name),
                 (e: unknown) => {
-                  if (!isChangeControl(e)) notify('error', `Couldn’t turn on ${name}`, describeError(e));
+                  if (!isChangeControl(e))
+                    notify('error', translateNow('Couldn’t turn on {0}', name), describeError(e));
                 },
               ),
           },

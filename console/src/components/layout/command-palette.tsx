@@ -22,6 +22,7 @@ import { SHORTCUTS } from '@/lib/shortcuts';
 import { useUi } from '@/stores/ui';
 
 import { SHARED_PARAMS, useOpenSettings } from './url-sync';
+import { useTranslate } from '@/lib/i18n';
 
 interface Entry {
   id: string;
@@ -203,6 +204,7 @@ async function loadIndex(me: Me | null): Promise<Index> {
 
 /** ⌘K: look up a request by id or text, or jump to a page, key, user, model or setting. */
 export function CommandPalette() {
+  const translate = useTranslate();
   const open = useUi((s) => s.paletteOpen);
   const setOpen = useUi((s) => s.setPaletteOpen);
   const router = useRouter();
@@ -254,11 +256,12 @@ export function CommandPalette() {
     const out: Entry[] = [];
     for (const f of favourites) {
       const l = favouriteLink(f);
-      if (!lower || l.label.toLowerCase().includes(lower))
+      const label = f.kind === 'page' ? translate(l.label) : l.label;
+      if (!lower || label.toLowerCase().includes(lower) || l.label.toLowerCase().includes(lower))
         out.push({
           id: `fav-${f.kind}-${f.name}`,
-          label: l.label,
-          detail: l.kind,
+          label,
+          detail: translate(l.kind),
           icon: l.icon,
           ...(f.kind === 'model' ? { model: f.name } : {}),
           href: link(l.path, l.query),
@@ -287,7 +290,7 @@ export function CommandPalette() {
         out.push({
           id: `search-${text}`,
           label: text,
-          detail: 'Search',
+          detail: translate('Search'),
           icon: 'history',
           href: '',
           group: 'Recent searches',
@@ -323,7 +326,7 @@ export function CommandPalette() {
         out.push({
           id: `alert-${a.id}`,
           label: a.title,
-          detail: 'Open alert',
+          detail: translate('Open alert'),
           icon: 'alert',
           href: link('/alerts/', { alert: a.id }),
           group: 'Routes and alerts',
@@ -367,7 +370,7 @@ export function CommandPalette() {
         out.push({
           id: `rule-${r.route}-${r.rule}`,
           label: r.rule,
-          detail: `${PLACES.rule.detail} in ${r.route}`,
+          detail: translate('{0} in {1}', PLACES.rule.detail, r.route),
           icon: PLACES.rule.icon,
           href: link(PLACES.rule.path, { route: r.route, rule: r.rule }),
           group: 'Providers, rules and gateways',
@@ -383,8 +386,8 @@ export function CommandPalette() {
       if (looksLikeRequestId(q)) {
         out.push({
           id: 'req',
-          label: `Open request ${q}`,
-          detail: 'Request log',
+          label: translate('Open request {0}', q),
+          detail: translate('Request log'),
           icon: 'list',
           href: link('/request-log/', { request: q }),
           group: 'Requests',
@@ -392,8 +395,8 @@ export function CommandPalette() {
       }
       out.push({
         id: 'logq',
-        label: `Requests containing “${q}”`,
-        detail: 'Request log',
+        label: translate('Requests containing “{0}”', q),
+        detail: translate('Request log'),
         icon: 'search',
         href: link('/request-log/', { q }),
         group: 'Requests',
@@ -403,11 +406,12 @@ export function CommandPalette() {
       navAllowed(s, navHolds(me, null)),
     );
     for (const s of screens) {
-      if (!lower || s.label.toLowerCase().includes(lower))
+      const label = translate(s.label);
+      if (!lower || label.toLowerCase().includes(lower) || s.label.toLowerCase().includes(lower))
         out.push({
           id: `nav-${s.id}`,
-          label: s.label,
-          detail: 'Page',
+          label,
+          detail: translate('Page'),
           icon: s.icon,
           href: link(s.href, s.query),
           group: 'Pages',
@@ -420,8 +424,8 @@ export function CommandPalette() {
       if (lower && words.some((w) => w.includes(lower)))
         out.push({
           id: `set-${section.id}`,
-          label: `Gateway settings › ${section.label}`,
-          detail: 'Setting',
+          label: translate('Gateway settings › {0}', section.label),
+          detail: translate('Setting'),
           icon: section.icon,
           href: '',
           settings: section.id,
@@ -429,7 +433,7 @@ export function CommandPalette() {
         });
     }
     return out.slice(0, 40);
-  }, [query, index, shared, favourites, recentItems, recentSearches, me]);
+  }, [query, index, shared, favourites, recentItems, recentSearches, me, translate]);
 
   if (!open) return null;
 
@@ -456,7 +460,7 @@ export function CommandPalette() {
         ref={ref}
         role="dialog"
         aria-modal="true"
-        aria-label="Search"
+        aria-label={translate('Search')}
         className="relative w-full max-w-[640px] animate-fade-in overflow-hidden rounded-container border border-line-strong bg-raised shadow-pop"
       >
         <div className="flex items-center gap-2.5 border-b border-line px-4">
@@ -468,8 +472,8 @@ export function CommandPalette() {
             aria-expanded="true"
             aria-controls="palette-results"
             aria-activedescendant={entries[active] ? `palette-${entries[active].id}` : undefined}
-            aria-label="Search"
-            placeholder="Search keys, models, people, routes, alerts, requests, settings…"
+            aria-label={translate('Search')}
+            placeholder={translate('Search keys, models, people, routes, alerts, requests, settings…')}
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -494,19 +498,19 @@ export function CommandPalette() {
         <ul
           id="palette-results"
           role="listbox"
-          aria-label="Results"
+          aria-label={translate('Results')}
           className="max-h-[56vh] overflow-y-auto p-1.5"
         >
           {entries.length === 0 ? (
             <li className="flex justify-center px-3 py-8">
-              <EmptyPill>No results for “{query.trim()}”</EmptyPill>
+              <EmptyPill>{translate('No results for “{0}”', query.trim())}</EmptyPill>
             </li>
           ) : null}
           {entries.map((e, i) => (
             <Fragment key={e.id}>
               {i === 0 || entries[i - 1]?.group !== e.group ? (
                 <li role="presentation" className="px-3 pt-2.5 pb-1 text-caption font-medium text-dim">
-                  {e.group}
+                  {translate(e.group)}
                 </li>
               ) : null}
               <li id={`palette-${e.id}`} role="option" aria-selected={i === active}>
@@ -516,7 +520,7 @@ export function CommandPalette() {
                   onMouseEnter={() => setActive(i)}
                   onClick={() => go(e)}
                   className={cn(
-                    'flex h-9 w-full items-center gap-3 rounded-sm px-3 text-left',
+                    'flex h-9 w-full items-center gap-3 rounded-sm px-3 text-start',
                     i === active ? 'bg-accent-dim' : 'hover:bg-hover',
                   )}
                 >
@@ -541,27 +545,30 @@ export function CommandPalette() {
         <div className="flex items-center gap-4 border-t border-line bg-canvas px-4 py-2 text-caption text-dim">
           <span className="flex items-center gap-1.5">
             <Kbd>↑</Kbd>
-            <Kbd>↓</Kbd> to move
+            <Kbd>↓</Kbd>
+            {' ' + translate('to move')}
           </span>
           <span className="flex items-center gap-1.5">
-            <Kbd>↵</Kbd> to open
+            <Kbd>↵</Kbd>
+            {' ' + translate('to open')}
           </span>
           {!query && (recentItems.length > 0 || recentSearches.length > 0) ? (
             <button
               type="button"
               onClick={clearRecents}
-              className="ml-auto text-caption text-muted hover:text-fg"
+              className="ms-auto text-caption text-muted hover:text-fg"
             >
-              Clear recent
+              {translate('Clear recent')}
             </button>
           ) : null}
           <span
             className={cn(
               'flex items-center gap-1.5',
-              query || (recentItems.length === 0 && recentSearches.length === 0) ? 'ml-auto' : '',
+              query || (recentItems.length === 0 && recentSearches.length === 0) ? 'ms-auto' : '',
             )}
           >
-            <Kbd>?</Kbd> all shortcuts
+            <Kbd>?</Kbd>
+            {' ' + translate('all shortcuts')}
           </span>
         </div>
       </div>
@@ -570,6 +577,7 @@ export function CommandPalette() {
 }
 
 export function ShortcutsDialog() {
+  const translate = useTranslate();
   const open = useUi((s) => s.shortcutsOpen);
   const setOpen = useUi((s) => s.setShortcutsOpen);
   const ref = useRef<HTMLDivElement>(null);
@@ -587,17 +595,17 @@ export function ShortcutsDialog() {
         className="relative w-full max-w-[480px] animate-fade-in rounded-container border border-line-strong bg-raised p-5 shadow-pop"
       >
         <h2 id="shortcuts-title" className="mb-3 text-title font-semibold text-fg">
-          Keyboard shortcuts
+          {translate('Keyboard shortcuts')}
         </h2>
         <dl className="flex flex-col gap-2">
           {SHORTCUTS.map((s) => (
             <div key={s.description} className="flex items-center justify-between gap-4">
-              <dt className="text-ui text-muted">{s.description}</dt>
+              <dt className="text-ui text-muted">{translate(s.description)}</dt>
               <dd className="flex shrink-0 gap-1">
                 {s.keys.map((k) =>
                   k === 'then' ? (
                     <span key={k} className="px-0.5 text-caption text-dim">
-                      then
+                      {translate('then')}
                     </span>
                   ) : (
                     <Kbd key={k}>{k}</Kbd>

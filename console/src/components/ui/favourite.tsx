@@ -8,6 +8,7 @@ import { type FavouriteKind, useIsFavourite, usePreferences } from '@/stores/pre
 
 import { IconButton } from './button';
 import { ChipToggle } from './form';
+import { useTranslate } from '@/lib/i18n';
 
 /** The names a user starred of one kind, kept up to date. */
 export function useFavouriteNames(kind: FavouriteKind): Set<string> {
@@ -33,12 +34,15 @@ export function FavouriteButton({
   label: string;
   className?: string;
 }) {
+  const translate = useTranslate();
   const starred = useIsFavourite(kind, name);
   const toggle = usePreferences((s) => s.toggleFavourite);
   return (
     <IconButton
       icon={starred ? 'starFilled' : 'star'}
-      label={starred ? `Remove ${label} from favourites` : `Add ${label} to favourites`}
+      label={
+        starred ? translate('Remove {0} from favourites', label) : translate('Add {0} to favourites', label)
+      }
       aria-pressed={starred}
       onClick={(e) => {
         e.stopPropagation();
@@ -59,11 +63,12 @@ export function StarredFilter({
   pressed: boolean;
   onChange: (pressed: boolean) => void;
 }) {
+  const translate = useTranslate();
   const names = useFavouriteNames(kind);
   if (names.size === 0 && !pressed) return null;
   return (
     <ChipToggle pressed={pressed} onChange={onChange} count={names.size}>
-      Starred
+      {translate('Starred')}
     </ChipToggle>
   );
 }

@@ -9,6 +9,7 @@ import { useShell } from '@/stores/shell';
 import { notify, useUi } from '@/stores/ui';
 
 import { SHARED_PARAMS } from './url-sync';
+import { useTranslate } from '@/lib/i18n';
 
 /** The Change requests screen at one request, keeping the page's scope and range. */
 export function changeRequestHref(id: string): string {
@@ -27,6 +28,7 @@ export function changeRequestHref(id: string): string {
  * same change; one the two-person rule held (202) says so and links to the request.
  */
 export function ChangeControlHost() {
+  const translate = useTranslate();
   const router = useRouter();
   const draft = useUi((s) => s.changeDraft);
   const setDraft = useUi((s) => s.setChangeDraft);
@@ -53,8 +55,8 @@ export function ChangeControlHost() {
       onClose={() => setDraft(null)}
       onOpened={(id) => {
         setDraft(null);
-        notify('success', 'Change request opened', 'A reviewer can now approve it.', {
-          label: 'View request',
+        notify('success', translate('Change request opened'), translate('A reviewer can now approve it.'), {
+          label: translate('View request'),
           onClick: () => router.push(changeRequestHref(id)),
         });
       }}

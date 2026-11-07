@@ -12,6 +12,7 @@ import { validate, type FieldErrors } from '@/lib/validation';
 import { authApi } from '../api';
 import { useLogin, useTrustDays } from '../store';
 import { ErrorStrip, MoreOptions, Note, SecretInput, StepHeader, TextButton } from './parts';
+import { useTranslate } from '@/lib/i18n';
 
 export { ErrorStrip } from './parts';
 
@@ -33,23 +34,26 @@ const localSchema = z.object({
 
 /** "Organization acme · Change" when one is chosen; it only picks the methods and where the console opens. */
 export function OrganizationLine() {
+  const translate = useTranslate();
   const organization = useLogin((s) => s.organization);
   const go = useLogin((s) => s.go);
   if (!organization) return null;
   return (
     <span className="inline-flex flex-wrap items-baseline gap-x-1.5">
       <span>
-        Organization <span className="font-medium text-fg">{organization}</span>
+        {translate('Organization') + ' '}
+        <span className="font-medium text-fg">{organization}</span>
       </span>
       <span aria-hidden="true">·</span>
       <TextButton tone="accent" onClick={() => go({ kind: 'organization' })}>
-        Change
+        {translate('Change')}
       </TextButton>
     </span>
   );
 }
 
 function LocalForm({ autoFocus }: { autoFocus: boolean }) {
+  const translate = useTranslate();
   const signInLocal = useLogin((s) => s.signInLocal);
   const busy = useLogin((s) => s.busy);
   const email = useLogin((s) => s.email);
@@ -80,7 +84,7 @@ function LocalForm({ autoFocus }: { autoFocus: boolean }) {
         });
       }}
     >
-      <Field label="Email" error={errors.email}>
+      <Field label={translate('Email')} error={errors.email}>
         <Input
           type="email"
           name="email"
@@ -99,12 +103,12 @@ function LocalForm({ autoFocus }: { autoFocus: boolean }) {
         />
       </Field>
       <Field
-        label="Password"
+        label={translate('Password')}
         error={errors.password}
         aside={
           passwordReset ? (
             <TextButton tone="accent" className="text-caption" onClick={() => go({ kind: 'forgot' })}>
-              Forgot password?
+              {translate('Forgot password?')}
             </TextButton>
           ) : null
         }
@@ -121,13 +125,15 @@ function LocalForm({ autoFocus }: { autoFocus: boolean }) {
         />
       </Field>
       <Button type="submit" variant="primary" busy={busy} className="mt-1 h-10 w-full text-base">
-        Sign in
+        {translate('Sign in')}
       </Button>
       <p className="flex items-start gap-1.5 text-caption leading-relaxed text-dim">
         <span className="mt-px shrink-0">
           <Icon name="shield" size={12} />
         </span>
-        Password sign-in always asks for a second step: a code from your authenticator app, or a security key.
+        {translate(
+          'Password sign-in always asks for a second step: a code from your authenticator app, or a security key.',
+        )}
       </p>
     </form>
   );
@@ -135,6 +141,7 @@ function LocalForm({ autoFocus }: { autoFocus: boolean }) {
 
 /** The first step: SSO buttons, then email and password, then the other ways in. */
 export function MethodsStep({ next }: { next: string }) {
+  const translate = useTranslate();
   const options = useLogin((s) => s.options);
   const error = useLogin((s) => s.error);
   const organization = useLogin((s) => s.organization);
@@ -151,11 +158,11 @@ export function MethodsStep({ next }: { next: string }) {
 
   return (
     <>
-      <StepHeader title="Sign in" subtitle={organization ? <OrganizationLine /> : null} />
+      <StepHeader title={translate('Sign in')} subtitle={organization ? <OrganizationLine /> : null} />
       <div className="flex flex-col gap-4">
         <ErrorStrip message={error} />
         {sso.length > 0 ? (
-          <ul className="flex flex-col gap-2" aria-label="Single sign-on">
+          <ul className="flex flex-col gap-2" aria-label={translate('Single sign-on')}>
             {sso.map((m) => {
               const name = m.display_name ?? m.id;
               return (
@@ -175,7 +182,10 @@ export function MethodsStep({ next }: { next: string }) {
                     >
                       {name.charAt(0).toUpperCase()}
                     </span>
-                    <span className="flex-1 truncate">Continue with {name}</span>
+                    <span className="flex-1 truncate">
+                      {translate('Continue with') + ' '}
+                      {name}
+                    </span>
                     <span className="text-caption font-normal text-dim">
                       {PROTOCOL[m.type] ?? m.type.toUpperCase()}
                     </span>
@@ -187,8 +197,10 @@ export function MethodsStep({ next }: { next: string }) {
         ) : null}
         {trustable && trustDays ? (
           <Checkbox
-            label={`Trust this browser for ${plural(trustDays, 'day')}`}
-            description="When your identity provider confirms a second step, you won't sign in again on this browser until then."
+            label={translate('Trust this browser for {0}', plural(trustDays, 'day'))}
+            description={translate(
+              "When your identity provider confirms a second step, you won't sign in again on this browser until then.",
+            )}
             checked={trust}
             onChange={(v) => setTrust(v)}
           />
@@ -196,7 +208,7 @@ export function MethodsStep({ next }: { next: string }) {
         {sso.length > 0 && local ? (
           <div className="flex items-center gap-3 text-caption text-dim">
             <span className="h-px flex-1 bg-line" />
-            or
+            {translate('or')}
             <span className="h-px flex-1 bg-line" />
           </div>
         ) : null}
@@ -205,20 +217,20 @@ export function MethodsStep({ next }: { next: string }) {
       <MoreOptions>
         <div className="flex flex-col gap-1">
           <TextButton icon="key" className="self-start" onClick={() => go({ kind: 'token' })}>
-            Use an admin token
+            {translate('Use an admin token')}
           </TextButton>
           <p className="pl-5 text-caption leading-relaxed text-dim">
-            Setting up a new gateway? Sign in with the bootstrap token from its configuration.
+            {translate('Setting up a new gateway? Sign in with the bootstrap token from its configuration.')}
           </p>
         </div>
         {options?.device_authorization ? (
           <TextButton icon="terminal" className="self-start" onClick={() => go({ kind: 'cli' })}>
-            Sign in from a terminal
+            {translate('Sign in from a terminal')}
           </TextButton>
         ) : null}
         {organization ? null : (
           <TextButton icon="building" className="self-start" onClick={() => go({ kind: 'organization' })}>
-            Choose an organization
+            {translate('Choose an organization')}
           </TextButton>
         )}
       </MoreOptions>
@@ -230,6 +242,7 @@ const tokenSchema = z.object({ token: z.string().trim().min(8, 'Paste your admin
 
 /** The admin-token form: the token goes once to `POST /auth/session` and is never stored. */
 export function TokenStep() {
+  const translate = useTranslate();
   const signIn = useLogin((s) => s.signInWithToken);
   const busy = useLogin((s) => s.busy);
   const error = useLogin((s) => s.error);
@@ -245,7 +258,7 @@ export function TokenStep() {
   return (
     <>
       <StepHeader
-        title={setup ? 'Set up your gateway' : 'Sign in with an admin token'}
+        title={setup ? translate('Set up your gateway') : translate('Sign in with an admin token')}
         subtitle={
           setup ? (
             'This gateway has no accounts yet. Sign in with its bootstrap token, then invite your team so everyone signs in as themselves.'
@@ -286,17 +299,19 @@ export function TokenStep() {
           className="sr-only"
         />
         <Field
-          label="Admin token"
+          label={translate('Admin token')}
           error={fieldError}
           hint={
             setup
-              ? "Paste the bootstrap token. It's used once to start your session and isn't stored."
-              : "Paste an admin token or the bootstrap token. It's used once to start your session and isn't stored."
+              ? translate("Paste the bootstrap token. It's used once to start your session and isn't stored.")
+              : translate(
+                  "Paste an admin token or the bootstrap token. It's used once to start your session and isn't stored.",
+                )
           }
         >
           <SecretInput
             ref={inputRef}
-            what="token"
+            what={translate('token')}
             mono
             name="password"
             autoComplete="current-password"
@@ -309,17 +324,18 @@ export function TokenStep() {
           />
         </Field>
         <Button type="submit" variant="primary" busy={busy} className="mt-1 h-10 w-full text-base">
-          Sign in
+          {translate('Sign in')}
         </Button>
         <Note>
           <p>
             {setup
-              ? 'The bootstrap token is the value of'
-              : 'On a new gateway, use the bootstrap token: the value of'}{' '}
-            <code className="mono text-fg">auth.admin.bootstrap_token</code> in its configuration.
+              ? translate('The bootstrap token is the value of')
+              : translate('On a new gateway, use the bootstrap token: the value of')}{' '}
+            <code className="mono text-fg">auth.admin.bootstrap_token</code>
+            {' ' + translate('in its configuration.')}
             {setup
-              ? ' Keep it for emergencies once your team has accounts.'
-              : ' Then invite your team, so everyone signs in with their own account.'}
+              ? translate(' Keep it for emergencies once your team has accounts.')
+              : translate(' Then invite your team, so everyone signs in with their own account.')}
           </p>
         </Note>
       </form>
@@ -330,12 +346,12 @@ export function TokenStep() {
             className="self-start"
             onClick={() => go({ kind: setup ? 'methods' : 'start' })}
           >
-            Use another sign-in method
+            {translate('Use another sign-in method')}
           </TextButton>
         )}
         {organization || setup ? null : (
           <TextButton icon="building" className="self-start" onClick={() => go({ kind: 'organization' })}>
-            Choose an organization
+            {translate('Choose an organization')}
           </TextButton>
         )}
       </MoreOptions>
@@ -353,6 +369,7 @@ const organizationSchema = z.object({
 
 /** Asked before the credentials, because the organization decides which ways in are offered. */
 export function OrganizationStep() {
+  const translate = useTranslate();
   const current = useLogin((s) => s.organization);
   const choose = useLogin((s) => s.chooseOrganization);
   const busy = useLogin((s) => s.busy);
@@ -363,7 +380,7 @@ export function OrganizationStep() {
   return (
     <>
       <StepHeader
-        title="Choose your organization"
+        title={translate('Choose your organization')}
         subtitle="Your organization may have its own way to sign in. It also sets where the console opens; it doesn't change what you can access."
       />
       <form
@@ -381,9 +398,9 @@ export function OrganizationStep() {
         }}
       >
         <Field
-          label="Organization ID"
+          label={translate('Organization ID')}
           error={fieldError}
-          hint="Not sure? Ask your gateway admin, or use the sign-in link they shared."
+          hint={translate('Not sure? Ask your gateway admin, or use the sign-in link they shared.')}
         >
           <Input
             mono
@@ -395,23 +412,23 @@ export function OrganizationStep() {
               setValue(e.target.value);
               if (fieldError) setFieldError(undefined);
             }}
-            placeholder="e.g. acme"
+            placeholder={translate('e.g. acme')}
             autoFocus
             className="h-10 text-base"
           />
         </Field>
         <Button type="submit" variant="primary" busy={busy} className="mt-1 h-10 w-full text-base">
-          Continue
+          {translate('Continue')}
         </Button>
       </form>
       <MoreOptions>
         {current ? (
           <TextButton className="self-start" onClick={() => void choose('')}>
-            Sign in without an organization
+            {translate('Sign in without an organization')}
           </TextButton>
         ) : (
           <TextButton className="self-start" onClick={() => go({ kind: 'start' })}>
-            Back to sign in
+            {translate('Back to sign in')}
           </TextButton>
         )}
       </MoreOptions>

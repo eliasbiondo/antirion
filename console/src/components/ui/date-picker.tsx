@@ -7,6 +7,7 @@ import { cn } from '@/lib/cn';
 import { IconButton } from './button';
 import { Icon } from './icon';
 import { Popover } from './overlay';
+import { useTranslate } from '@/lib/i18n';
 
 /** A calendar day as `YYYY-MM-DD`, in local time (what a date field holds). */
 export type Day = string;
@@ -84,6 +85,7 @@ export function Calendar({
   autoFocus,
   label = 'Calendar',
 }: CalendarProps) {
+  const translate = useTranslate();
   const titleId = useId();
   const grid = useRef<HTMLTableElement>(null);
   const moved = useRef(Boolean(autoFocus));
@@ -127,7 +129,7 @@ export function Calendar({
       <div className="flex items-center justify-between">
         <IconButton
           icon="chevronLeft"
-          label="Previous month"
+          label={translate('Previous month')}
           onClick={() => {
             moved.current = false;
             onFocusChange(toDay(addMonths(focusDate, -1)));
@@ -138,7 +140,7 @@ export function Calendar({
         </h3>
         <IconButton
           icon="chevronRight"
-          label="Next month"
+          label={translate('Next month')}
           onClick={() => {
             moved.current = false;
             onFocusChange(toDay(addMonths(focusDate, 1)));
@@ -261,6 +263,7 @@ export function DatePicker({
   className,
   ...aria
 }: DatePickerProps) {
+  const translate = useTranslate();
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const [focus, setFocus] = useState<Day>(() => value || toDay(new Date()));
@@ -307,7 +310,7 @@ export function DatePicker({
         open={open}
         onClose={() => setOpen(false)}
         anchor={anchor}
-        label="Choose a date"
+        label={translate('Choose a date')}
         className="w-[272px] p-3"
       >
         <Calendar
@@ -317,7 +320,7 @@ export function DatePicker({
           min={min}
           max={max}
           autoFocus
-          label="Choose a date"
+          label={translate('Choose a date')}
           onPick={(day) => {
             onChange(day);
             close();
@@ -335,7 +338,7 @@ export function DatePicker({
             }}
             className="rounded-xs px-1.5 py-0.5 text-caption text-accent hover:bg-hover"
           >
-            Today
+            {translate('Today')}
           </button>
           {clearable && value ? (
             <button
@@ -346,7 +349,7 @@ export function DatePicker({
               }}
               className="rounded-xs px-1.5 py-0.5 text-caption text-muted hover:bg-hover hover:text-fg"
             >
-              Clear
+              {translate('Clear')}
             </button>
           ) : null}
         </div>

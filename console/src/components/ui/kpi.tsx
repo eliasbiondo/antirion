@@ -10,6 +10,7 @@ import { Icon, type IconName } from './icon';
 import { TileGrid } from './layout';
 import { Skeleton } from './states';
 import { Tooltip } from './tooltip';
+import { useTranslate } from '@/lib/i18n';
 
 export type KpiState = 'ready' | 'loading' | 'empty' | 'unavailable';
 
@@ -77,6 +78,7 @@ export function KpiTile({
   emptyHint,
   className,
 }: KpiTileProps) {
+  const translate = useTranslate();
   const blank = state === 'empty' || state === 'unavailable';
   return (
     <div className={cn('@container flex min-w-0 flex-col bg-raised px-4 pt-3.5 pb-3', className)}>
@@ -85,7 +87,7 @@ export function KpiTile({
         <span className="truncate">{label}</span>
       </div>
       {state === 'loading' ? (
-        <div role="status" aria-label={`Loading ${label}`} className="flex flex-col gap-2 pt-2">
+        <div role="status" aria-label={translate('Loading {0}', label)} className="flex flex-col gap-2 pt-2">
           <Skeleton className="h-6 w-24" />
           <Skeleton className="h-3 w-32" />
           <Skeleton className="mt-1 h-[22px] w-full" />
@@ -108,11 +110,11 @@ export function KpiTile({
               <Tooltip content="This gateway doesn't serve this figure yet">
                 <span className="flex items-center gap-1 truncate">
                   <Icon name="info" size={12} className="shrink-0" />
-                  Not available
+                  {translate('Not available')}
                 </span>
               </Tooltip>
             ) : state === 'empty' ? (
-              <span className="truncate">{emptyHint ?? 'No data yet'}</span>
+              <span className="truncate">{emptyHint ?? translate('No data yet')}</span>
             ) : (
               <>
                 {context ? <span className="min-w-0 truncate">{context}</span> : null}

@@ -6,6 +6,7 @@ import { Button } from './button';
 import { Checkbox } from './choice';
 import { Icon } from './icon';
 import { Dialog } from './overlay';
+import { useTranslate } from '@/lib/i18n';
 
 export interface RevealOnceDialogProps {
   /** The value the API returned once; null closes the dialog. Held only in the caller's memory. */
@@ -30,6 +31,7 @@ export function RevealOnceDialog({
   label = 'Secret',
   children,
 }: RevealOnceDialogProps) {
+  const translate = useTranslate();
   const [copied, setCopied] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
 
@@ -64,7 +66,7 @@ export function RevealOnceDialog({
           disabled={!acknowledged && !copied}
           disabledReason="Copy it or tick “I’ve saved it” to continue"
         >
-          Done
+          {translate('Done')}
         </Button>
       }
     >
@@ -89,7 +91,7 @@ export function RevealOnceDialog({
               {secret}
             </output>
             <Button icon={copied ? 'check' : 'copy'} onClick={() => void copy()} data-autofocus>
-              {copied ? 'Copied' : 'Copy'}
+              {copied ? translate('Copied') : translate('Copy')}
             </Button>
           </div>
         </div>

@@ -29,6 +29,7 @@ import { GetStarted } from './get-started';
 import { ProviderHeadroom, TeamSpend, TopModels } from './leaderboards';
 import { RecentRequests } from './recent-requests';
 import { monthProjection } from '@/features/budgets/projection';
+import { useTranslate } from '@/lib/i18n';
 
 function bucketLabel(b: UsageBucket, timeZone: string, long: boolean): string {
   return long
@@ -103,6 +104,7 @@ function ChartPanel({
  * once and still shows its requests.
  */
 export function OverviewScreen() {
+  const translate = useTranslate();
   const { current, previous, key } = useUsageQueries();
   const scope = useScope((s) => s.scope);
   const environment = useScope((s) => s.environment);
@@ -222,18 +224,18 @@ export function OverviewScreen() {
   return (
     <div className="flex min-h-full flex-col">
       <PageHeader
-        title="Overview"
-        description="Live traffic, spend and health"
+        title={translate('Overview')}
+        description={translate('Live traffic, spend and health')}
         context={range.label}
         actions={<UpdatedAt at={series?.at ?? logs.at ?? null} />}
       />
       {unavailable ? (
         <Banner
           tone="info"
-          title="Usage analytics isn't available on this gateway yet"
+          title={translate("Usage analytics isn't available on this gateway yet")}
           actions={
             <Link href={logHref} className="text-ui text-muted hover:text-fg">
-              View requests
+              {translate('View requests')}
             </Link>
           }
         >
@@ -244,20 +246,20 @@ export function OverviewScreen() {
       {failed ? (
         <Banner
           tone="error"
-          title="Couldn't load usage analytics"
+          title={translate("Couldn't load usage analytics")}
           actions={
             <Button size="sm" icon="refresh" onClick={retry}>
-              Try again
+              {translate('Try again')}
             </Button>
           }
         >
-          Something went wrong on the gateway. The figures below are blank until it answers.
+          {translate('Something went wrong on the gateway. The figures below are blank until it answers.')}
         </Banner>
       ) : null}
 
       <KpiStrip>
         <KpiTile
-          label="Spend this month"
+          label={translate('Spend this month')}
           icon="dollar"
           state={monthState}
           emptyHint={firstRun ? 'After the first request' : 'No spend yet'}
@@ -268,8 +270,9 @@ export function OverviewScreen() {
             budgetAmount ? (
               <Tooltip content="What the budget counted, adjustments included; charts count requests">
                 <span>
-                  of {formatMoney(budgetAmount, { compact: true })} budget ·{' '}
-                  {Math.round(((monthSpend ?? 0) / budgetAmount) * 100)}%
+                  {translate('of') + ' '}
+                  {formatMoney(budgetAmount, { compact: true })}
+                  {' ' + translate('budget ·')} {Math.round(((monthSpend ?? 0) / budgetAmount) * 100)}%
                 </span>
               </Tooltip>
             ) : t ? (
@@ -284,15 +287,15 @@ export function OverviewScreen() {
                   text: `→ ${formatMoney(projected, { compact: true })}`,
                   tone: budgetAmount ? (projected > budgetAmount ? 'bad' : 'good') : 'neutral',
                   title: budgetAmount
-                    ? `Projected month end, against a ${formatMoney(budgetAmount)} budget`
-                    : 'Projected month end at the current rate',
+                    ? translate('Projected month end, against a {0} budget', formatMoney(budgetAmount))
+                    : translate('Projected month end at the current rate'),
                 }
               : null
           }
           spark={{ values: rows.map((r) => Number(r.cost_usd)) }}
         />
         <KpiTile
-          label="Requests"
+          label={translate('Requests')}
           icon="activity"
           state={kpiState}
           emptyHint={emptyHint}
@@ -302,7 +305,7 @@ export function OverviewScreen() {
           spark={{ values: rows.map((r) => r.requests) }}
         />
         <KpiTile
-          label="Tokens in → out"
+          label={translate('Tokens in → out')}
           icon="chart"
           state={kpiState}
           emptyHint={emptyHint}
@@ -317,7 +320,7 @@ export function OverviewScreen() {
           spark={{ values: rows.map((r) => (r.input ?? 0) + (r.output ?? 0)) }}
         />
         <KpiTile
-          label="Latency"
+          label={translate('Latency')}
           icon="clock"
           state={kpiState}
           emptyHint={emptyHint}
@@ -341,7 +344,7 @@ export function OverviewScreen() {
           spark={{ values: rows.map((r) => r.latency_ms?.p95 ?? 0), tone: 'warn' }}
         />
         <KpiTile
-          label="Error rate"
+          label={translate('Error rate')}
           icon="alert"
           state={kpiState}
           emptyHint={emptyHint}
@@ -357,7 +360,7 @@ export function OverviewScreen() {
           spark={{ values: rows.map((r) => (r.requests ? r.errors / r.requests : 0)), tone: 'error' }}
         />
         <KpiTile
-          label="Cache hit rate"
+          label={translate('Cache hit rate')}
           icon="cache"
           state={kpiState}
           emptyHint={emptyHint}
@@ -386,24 +389,24 @@ export function OverviewScreen() {
 
       {!firstRun && !unavailable ? (
         <>
-          <TileGrid label="Charts" className="md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr]">
+          <TileGrid label={translate('Charts')} className="md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr]">
             <ChartPanel
-              title="Request volume"
+              title={translate('Request volume')}
               className="md:col-span-2 lg:col-span-1"
               subtitle={`per ${current.interval}`}
               legend={
                 <Legend
                   items={[
-                    { label: 'Successful', tone: 'accent' },
-                    { label: 'Errors', tone: 'error' },
-                    { label: `All, ${compareName}`, tone: 'muted', dashed: true },
+                    { label: translate('Successful'), tone: 'accent' },
+                    { label: translate('Errors'), tone: 'error' },
+                    { label: translate('All, {0}', compareName), tone: 'muted', dashed: true },
                   ]}
                 />
               }
             >
               <TimeChart
                 kind="area"
-                title="Requests per bucket, successful and errors"
+                title={translate('Requests per bucket, successful and errors')}
                 labels={labels}
                 height={184}
                 emptyLabel={analyticsLoading ? undefined : 'No requests in this range'}
@@ -422,7 +425,7 @@ export function OverviewScreen() {
               />
             </ChartPanel>
             <ChartPanel
-              title="Latency"
+              title={translate('Latency')}
               legend={
                 <Legend
                   items={[
@@ -435,7 +438,7 @@ export function OverviewScreen() {
             >
               <TimeChart
                 kind="line"
-                title="Latency percentiles per bucket"
+                title={translate('Latency percentiles per bucket')}
                 labels={labels}
                 height={184}
                 emptyLabel={analyticsLoading ? undefined : 'No requests in this range'}
@@ -447,10 +450,10 @@ export function OverviewScreen() {
                 formatValue={(v) => (v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${Math.round(v)} ms`)}
               />
             </ChartPanel>
-            <ChartPanel title="Volume and errors">
+            <ChartPanel title={translate('Volume and errors')}>
               <TimeChart
                 kind="stacked-bars"
-                title="Requests per bucket, stacked successful and errors"
+                title={translate('Requests per bucket, stacked successful and errors')}
                 labels={labels}
                 height={184}
                 emptyLabel={analyticsLoading ? undefined : 'No requests in this range'}
@@ -463,7 +466,7 @@ export function OverviewScreen() {
             </ChartPanel>
           </TileGrid>
 
-          <TileGrid label="Leaderboards" className="md:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr]">
+          <TileGrid label={translate('Leaderboards')} className="md:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr]">
             <TeamSpend
               usage={monthByTeam?.data}
               counters={counters}

@@ -15,6 +15,7 @@ import { useDeploymentMap } from '../hooks';
 import { useCatalog } from '../store';
 import { priceListKey, type TierRow, tierErrors, tierPatch, tiersOf, tiersText } from '../tiers';
 import { useEdited } from '@/lib/hooks';
+import { translateNow } from '@/lib/i18n';
 
 /**
  * Prices that depend on the request, in the Models price grid: the service-tier multipliers
@@ -108,7 +109,7 @@ function TierPriceDialog({
         prices: Object.fromEntries(Object.entries(st.prices).filter(([, p]) => priceListKey(p) !== key)),
       }));
       await loadPrices(leaves);
-      notify('success', 'Tier prices saved', `${key}: new requests are priced with them.`);
+      notify('success', 'Tier prices saved', translateNow('{0}: new requests are priced with them.', key));
       onClose();
     } catch (e) {
       if (isChangeControl(e)) onClose();

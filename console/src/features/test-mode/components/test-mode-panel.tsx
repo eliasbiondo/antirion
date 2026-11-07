@@ -20,6 +20,7 @@ import { notify } from '@/stores/ui';
 
 import { isGatewayAdmin, RESET_SCOPES, type ResetScope, testModeApi } from '../api';
 import { useTestClock } from '../clock';
+import { translateNow } from '@/lib/i18n';
 
 const STEPS = [
   { value: '1m', label: '1 minute' },
@@ -77,7 +78,11 @@ function Clock() {
       setNow(c.now);
       // The banner and the page's time ranges follow the gateway's new time.
       useTestClock.getState().set(c.now);
-      notify('success', 'Clock moved', `The gateway's time is now ${formatDateTime(c.now, timeZone)}.`);
+      notify(
+        'success',
+        'Clock moved',
+        translateNow("The gateway's time is now {0}.", formatDateTime(c.now, timeZone)),
+      );
       refreshPage();
     } catch (e) {
       setError(e);
@@ -178,7 +183,7 @@ function Reset() {
         effect={`The gateway clears ${labels.join(', ')}. Its configuration, keys and accounts are kept.`}
         onConfirm={async () => {
           await testModeApi.reset(scopes);
-          notify('success', 'State reset', `Cleared ${labels.join(', ')}.`);
+          notify('success', 'State reset', translateNow('Cleared {0}.', labels.join(', ')));
           refreshPage();
         }}
       />
@@ -217,7 +222,7 @@ function Seed() {
             setBusy(true);
             testModeApi.seed(value).then(
               () => {
-                notify('success', 'Seed set', `Random choices now follow seed ${value}.`);
+                notify('success', 'Seed set', translateNow('Random choices now follow seed {0}.', value));
                 setBusy(false);
               },
               (e: unknown) => {

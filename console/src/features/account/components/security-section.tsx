@@ -26,6 +26,7 @@ import { accountApi } from '../api';
 import { describeAgent, describeLocation, hasAccount, methodLabel } from '../describe';
 import { useAccount } from '../store';
 import { Tooltip } from '@/components/ui/tooltip';
+import { useTranslate } from '@/lib/i18n';
 
 function Block({
   title,
@@ -72,6 +73,7 @@ const passwordSchema = z
 const EMPTY_PASSWORD = { current: '', next: '', confirm: '', code: '' };
 
 function ChangePassword() {
+  const translate = useTranslate();
   const change = useAccount((s) => s.changePassword);
   const [values, setValues] = useState(EMPTY_PASSWORD);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -95,7 +97,7 @@ function ChangePassword() {
     try {
       await change(result.data.current, result.data.next, result.data.code);
       setValues(EMPTY_PASSWORD);
-      notify('success', 'Password changed', 'Your other sessions were signed out.');
+      notify('success', translate('Password changed'), translate('Your other sessions were signed out.'));
     } catch (e) {
       setValues((v) => ({ ...v, code: '' }));
       setError(messageOf(e, "Your current password or the code didn't match. Try again."));
@@ -118,7 +120,7 @@ function ChangePassword() {
           <ErrorStrip message={error} />
         </div>
       ) : null}
-      <Field label="Current password" error={errors.current}>
+      <Field label={translate('Current password')} error={errors.current}>
         <SecretInput
           autoComplete="current-password"
           compact
@@ -127,13 +129,17 @@ function ChangePassword() {
         />
       </Field>
       <Field
-        label="Verification code"
+        label={translate('Verification code')}
         error={errors.code}
-        hint="From your authenticator app, or a recovery code."
+        hint={translate('From your authenticator app, or a recovery code.')}
       >
         <CodeInput recovery compact value={values.code} onChange={(e) => set({ code: e.target.value })} />
       </Field>
-      <Field label="New password" error={errors.next} hint="At least 12 characters.">
+      <Field
+        label={translate('New password')}
+        error={errors.next}
+        hint={translate('At least 12 characters.')}
+      >
         <SecretInput
           autoComplete="new-password"
           compact
@@ -141,7 +147,7 @@ function ChangePassword() {
           onChange={(e) => set({ next: e.target.value })}
         />
       </Field>
-      <Field label="Confirm password" error={errors.confirm}>
+      <Field label={translate('Confirm password')} error={errors.confirm}>
         <SecretInput
           autoComplete="new-password"
           compact
@@ -151,9 +157,11 @@ function ChangePassword() {
       </Field>
       <div className="flex items-center gap-3 sm:col-span-2">
         <Button type="submit" busy={busy}>
-          Change password
+          {translate('Change password')}
         </Button>
-        <span className="text-caption text-muted">Your other sessions will be signed out.</span>
+        <span className="text-caption text-muted">
+          {translate('Your other sessions will be signed out.')}
+        </span>
       </div>
     </form>
   );
@@ -172,6 +180,7 @@ interface Enrolment {
 
 /** Adds an authenticator app to a signed-in account: scan, confirm one code, keep any new codes. */
 function AddAuthenticator({ onDone, onCancel }: { onDone: (codes: string[]) => void; onCancel: () => void }) {
+  const translate = useTranslate();
   const [enrolment, setEnrolment] = useState<Enrolment | null>(null);
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
@@ -226,13 +235,15 @@ function AddAuthenticator({ onDone, onCancel }: { onDone: (codes: string[]) => v
           {enrolment.uri ? (
             <QrCode
               value={enrolment.uri}
-              label="QR code to add Antirion to your authenticator app"
+              label={translate('QR code to add Antirion to your authenticator app')}
               size={148}
             />
           ) : null}
           <div className="flex min-w-0 flex-1 flex-col gap-3">
             <p className="text-ui text-fg">
-              Scan the QR code with your authenticator app, then enter the 6-digit code it shows.
+              {translate(
+                'Scan the QR code with your authenticator app, then enter the 6-digit code it shows.',
+              )}
             </p>
             {enrolment.secret ? (
               <p className="text-caption text-muted">
@@ -243,11 +254,15 @@ function AddAuthenticator({ onDone, onCancel }: { onDone: (codes: string[]) => v
               </p>
             ) : null}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Field label="Verification code">
+              <Field label={translate('Verification code')}>
                 <CodeInput compact value={code} onChange={(e) => setCode(e.target.value)} autoFocus />
               </Field>
-              <Field label="Name" optional>
-                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Work phone" />
+              <Field label={translate('Name')} optional>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={translate('e.g. Work phone')}
+                />
               </Field>
             </div>
           </div>
@@ -257,10 +272,10 @@ function AddAuthenticator({ onDone, onCancel }: { onDone: (codes: string[]) => v
       )}
       <div className="flex gap-2">
         <Button variant="primary" busy={busy} disabled={!enrolment} onClick={() => void confirm()}>
-          Add authenticator
+          {translate('Add authenticator')}
         </Button>
         <Button variant="ghost" onClick={onCancel}>
-          Cancel
+          {translate('Cancel')}
         </Button>
       </div>
     </div>
@@ -269,6 +284,7 @@ function AddAuthenticator({ onDone, onCancel }: { onDone: (codes: string[]) => v
 
 /** Registers a security key or a passkey on a signed-in account; the browser runs the ceremony. */
 function AddSecurityKey({ onDone, onCancel }: { onDone: (codes: string[]) => void; onCancel: () => void }) {
+  const translate = useTranslate();
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -308,19 +324,25 @@ function AddSecurityKey({ onDone, onCancel }: { onDone: (codes: string[]) => voi
     >
       <ErrorStrip message={error} />
       <p className="text-ui text-fg">
-        Connect or touch your security key when your browser asks. A passkey saved on this device works too.
+        {translate(
+          'Connect or touch your security key when your browser asks. A passkey saved on this device works too.',
+        )}
       </p>
       <div className="max-w-[280px]">
-        <Field label="Name" optional>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Blue YubiKey" />
+        <Field label={translate('Name')} optional>
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={translate('e.g. Blue YubiKey')}
+          />
         </Field>
       </div>
       <div className="flex gap-2">
         <Button type="submit" variant="primary" icon="key" busy={busy}>
-          Register security key
+          {translate('Register security key')}
         </Button>
         <Button variant="ghost" onClick={onCancel}>
-          Cancel
+          {translate('Cancel')}
         </Button>
       </div>
     </form>
@@ -337,6 +359,7 @@ function NewRecoveryCodes({
   onDone: (codes: string[]) => void;
   onCancel: () => void;
 }) {
+  const translate = useTranslate();
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -369,19 +392,21 @@ function NewRecoveryCodes({
     >
       <ErrorStrip message={error} />
       <p className="text-ui text-fg">
-        Your current recovery codes will stop working. Enter a code from your authenticator app to continue.
+        {translate(
+          'Your current recovery codes will stop working. Enter a code from your authenticator app to continue.',
+        )}
       </p>
       <div className="max-w-[220px]">
-        <Field label="Verification code">
+        <Field label={translate('Verification code')}>
           <CodeInput compact value={code} onChange={(e) => setCode(e.target.value)} autoFocus />
         </Field>
       </div>
       <div className="flex gap-2">
         <Button type="submit" variant="primary" busy={busy}>
-          Get new codes
+          {translate('Get new codes')}
         </Button>
         <Button variant="ghost" onClick={onCancel}>
-          Cancel
+          {translate('Cancel')}
         </Button>
       </div>
     </form>
@@ -389,6 +414,7 @@ function NewRecoveryCodes({
 }
 
 function TwoStep() {
+  const translate = useTranslate();
   const factors = useAccount((s) => s.factors);
   const load = useAccount((s) => s.loadFactors);
   const remove = useAccount((s) => s.deleteFactor);
@@ -404,16 +430,19 @@ function TwoStep() {
     setPanel(null);
     void load();
     if (next.length > 0) setCodes(next);
-    else notify('success', panel === 'key' ? 'Security key added' : 'Authenticator added');
+    else
+      notify('success', panel === 'key' ? translate('Security key added') : translate('Authenticator added'));
   }
 
   return (
     <Block
-      title="Two-step verification"
-      description="Password sign-in always asks for a second step. Keep at least one way to verify."
+      title={translate('Two-step verification')}
+      description={translate(
+        'Password sign-in always asks for a second step. Keep at least one way to verify.',
+      )}
     >
       {factors.status === 'loading' && !factors.data ? <LoadingRows rows={2} /> : null}
-      <LoadError of={factors} subject="two-step verification" onRetry={() => void load()} />
+      <LoadError of={factors} subject={translate('two-step verification')} onRetry={() => void load()} />
       {factors.data ? (
         <ul className="flex flex-col divide-y divide-line rounded-sm border border-line">
           {items.length === 0 ? (
@@ -429,8 +458,9 @@ function TwoStep() {
                   {f.name ? <span className="font-normal text-muted"> · {f.name}</span> : null}
                 </p>
                 <p className="text-caption text-muted">
-                  Added {formatDate(f.created_at, timeZone)} · last used{' '}
-                  {formatRelative(f.last_used_at ?? null)}
+                  {translate('Added') + ' '}
+                  {formatDate(f.created_at, timeZone)}
+                  {' ' + translate('· last used')} {formatRelative(f.last_used_at ?? null)}
                 </p>
               </div>
               <Button
@@ -440,21 +470,21 @@ function TwoStep() {
                 disabledReason="Add another way to verify before removing this one."
                 onClick={() => setRemoving(f)}
               >
-                Remove
+                {translate('Remove')}
               </Button>
             </li>
           ))}
           <li className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2.5">
             <div className="min-w-0 flex-1">
-              <p className="text-ui font-medium text-fg">Recovery codes</p>
+              <p className="text-ui font-medium text-fg">{translate('Recovery codes')}</p>
               <p className="text-caption text-muted">
-                {remaining === 1 ? '1 code left' : `${remaining} codes left`}. Each signs you in once if you
-                lose your phone.
+                {remaining === 1 ? translate('1 code left') : translate('{0} codes left', remaining)}
+                {translate('. Each signs you in once if you lose your phone.')}
               </p>
             </div>
             {totp ? (
               <Button size="sm" variant="ghost" onClick={() => setPanel(panel === 'codes' ? null : 'codes')}>
-                Get new codes
+                {translate('Get new codes')}
               </Button>
             ) : null}
           </li>
@@ -468,11 +498,11 @@ function TwoStep() {
       {panel === null && factors.data ? (
         <div className="flex flex-wrap gap-2">
           <Button size="sm" icon="plus" onClick={() => setPanel('add')}>
-            Add authenticator app
+            {translate('Add authenticator app')}
           </Button>
           {webauthnAvailable() ? (
             <Button size="sm" icon="key" onClick={() => setPanel('key')}>
-              Add security key
+              {translate('Add security key')}
             </Button>
           ) : null}
         </div>
@@ -480,14 +510,19 @@ function TwoStep() {
       <RevealOnceDialog
         secret={codes ? codes.join('\n') : null}
         onClose={() => setCodes(null)}
-        title="Your new recovery codes"
-        label="Recovery codes"
-        description="Your old codes no longer work. Each of these signs you in once if you lose your phone."
+        title={translate('Your new recovery codes')}
+        label={translate('Recovery codes')}
+        description={translate(
+          'Your old codes no longer work. Each of these signs you in once if you lose your phone.',
+        )}
       />
       <ConfirmDialog
         open={removing !== null}
         onClose={() => setRemoving(null)}
-        title={`Remove this ${removing ? FACTOR_NAME[removing.type].toLowerCase() : 'way to verify'}?`}
+        title={translate(
+          'Remove this {0}?',
+          removing ? FACTOR_NAME[removing.type].toLowerCase() : 'way to verify',
+        )}
         objectName={removing?.name ?? (removing ? FACTOR_NAME[removing.type] : undefined)}
         effect="You won't be able to use it to sign in. You can add it again later."
         confirmLabel={`Remove ${removing ? FACTOR_NAME[removing.type].toLowerCase() : ''}`.trim()}
@@ -501,6 +536,7 @@ function TwoStep() {
 }
 
 function Sessions() {
+  const translate = useTranslate();
   const sessions = useAccount((s) => s.sessions);
   const load = useAccount((s) => s.loadSessions);
   const revoke = useAccount((s) => s.revokeSession);
@@ -515,19 +551,19 @@ function Sessions() {
   const located = (sessions.data ?? []).some((s) => describeLocation(s.location) !== null);
 
   return (
-    <Block title="Where you're signed in">
+    <Block title={translate("Where you're signed in")}>
       {sessions.status === 'loading' && !sessions.data ? <LoadingRows rows={2} /> : null}
-      <LoadError of={sessions} subject="sessions" onRetry={() => void load()} />
+      <LoadError of={sessions} subject={translate('sessions')} onRetry={() => void load()} />
       {sessions.data ? (
-        <Table label="Your sessions">
+        <Table label={translate('Your sessions')}>
           <thead>
             <tr>
-              <Th>Device</Th>
-              <Th>Signed in with</Th>
-              <Th>{located ? 'Location' : 'IP address'}</Th>
-              <Th>Last active</Th>
+              <Th>{translate('Device')}</Th>
+              <Th>{translate('Signed in with')}</Th>
+              <Th>{located ? translate('Location') : translate('IP address')}</Th>
+              <Th>{translate('Last active')}</Th>
               <Th>
-                <span className="sr-only">Actions</span>
+                <span className="sr-only">{translate('Actions')}</span>
               </Th>
             </tr>
           </thead>
@@ -539,7 +575,7 @@ function Sessions() {
                     <Tooltip content={s.user_agent}>
                       <span className="max-w-[220px] truncate">{describeAgent(s.user_agent)}</span>
                     </Tooltip>
-                    {s.current ? <Badge tone="accent">This browser</Badge> : null}
+                    {s.current ? <Badge tone="accent">{translate('This browser')}</Badge> : null}
                   </span>
                 </Td>
                 <Td>
@@ -554,17 +590,17 @@ function Sessions() {
                 </Td>
                 {located ? (
                   <Td>
-                    {describeLocation(s.location) ?? 'Unknown'}
+                    {describeLocation(s.location) ?? translate('Unknown')}
                     <span className="mono block text-caption text-muted">{s.client_ip ?? '—'}</span>
                   </Td>
                 ) : (
                   <Td mono>{s.client_ip ?? '—'}</Td>
                 )}
-                <Td muted>{s.current ? 'Now' : formatRelative(s.last_seen_at)}</Td>
-                <Td className="text-right">
+                <Td muted>{s.current ? translate('Now') : formatRelative(s.last_seen_at)}</Td>
+                <Td className="text-end">
                   {s.current ? null : (
                     <Button size="sm" variant="ghost" onClick={() => void revoke(s.id)}>
-                      Sign out
+                      {translate('Sign out')}
                     </Button>
                   )}
                 </Td>
@@ -577,15 +613,17 @@ function Sessions() {
         <div className="flex items-center gap-3">
           <Button
             size="sm"
-            onClick={() => void revokeOthers().then(() => notify('success', 'Other sessions signed out'))}
+            onClick={() =>
+              void revokeOthers().then(() => notify('success', translate('Other sessions signed out')))
+            }
             disabled={others === 0}
             disabledReason="You're only signed in here."
           >
-            Sign out other sessions
+            {translate('Sign out other sessions')}
           </Button>
           {others > 0 ? (
             <span className="text-caption text-muted">
-              {others === 1 ? '1 other session' : `${others} other sessions`}
+              {others === 1 ? translate('1 other session') : translate('{0} other sessions', others)}
             </span>
           ) : null}
         </div>
@@ -599,6 +637,7 @@ function Sessions() {
  * ends that session, so its next sign-in asks for the second step again.
  */
 function TrustedBrowsers() {
+  const translate = useTranslate();
   const sessions = useAccount((s) => s.sessions);
   const revoke = useAccount((s) => s.revokeSession);
   const timeZone = usePreferences((s) => s.timeZone);
@@ -607,8 +646,10 @@ function TrustedBrowsers() {
   if (!sessions.data) return null;
   return (
     <Block
-      title="Trusted browsers"
-      description="These browsers skip the second step until their trust ends. Forget one you no longer use, or any you don't recognise."
+      title={translate('Trusted browsers')}
+      description={translate(
+        "These browsers skip the second step until their trust ends. Forget one you no longer use, or any you don't recognise.",
+      )}
     >
       {trusted.length === 0 ? (
         <p className="rounded-sm border border-line px-3 py-2.5 text-ui text-muted">
@@ -625,17 +666,18 @@ function TrustedBrowsers() {
                     <Tooltip content={s.user_agent}>
                       <span className="truncate">{describeAgent(s.user_agent)}</span>
                     </Tooltip>
-                    {s.current ? <Badge tone="accent">This browser</Badge> : null}
+                    {s.current ? <Badge tone="accent">{translate('This browser')}</Badge> : null}
                   </p>
                   <p className="text-caption text-muted">
                     {[where, s.client_ip ?? null].filter(Boolean).join(' · ')}
                     {where || s.client_ip ? ' · ' : ''}
-                    Trusted since {formatDate(s.created_at, timeZone)} · until{' '}
-                    {formatDateTime(s.expires_at, timeZone)}
+                    {translate('Trusted since') + ' '}
+                    {formatDate(s.created_at, timeZone)}
+                    {' ' + translate('· until')} {formatDateTime(s.expires_at, timeZone)}
                   </p>
                 </div>
                 <Button size="sm" variant="ghost" onClick={() => setForgetting(s)}>
-                  Forget
+                  {translate('Forget')}
                 </Button>
               </li>
             );
@@ -645,21 +687,23 @@ function TrustedBrowsers() {
       <ConfirmDialog
         open={forgetting !== null}
         onClose={() => setForgetting(null)}
-        title={forgetting?.current ? 'Forget this browser?' : 'Forget this trusted browser?'}
+        title={
+          forgetting?.current ? translate('Forget this browser?') : translate('Forget this trusted browser?')
+        }
         objectName={forgetting ? describeAgent(forgetting.user_agent) : undefined}
         effect={
           forgetting?.current
             ? "You'll be signed out here, and your next sign-in on this browser will ask for the second step."
             : 'That browser is signed out, and its next sign-in will ask for the second step.'
         }
-        confirmLabel="Forget browser"
+        confirmLabel={translate('Forget browser')}
         withReason={false}
         onConfirm={async () => {
           if (!forgetting) return;
           await revoke(forgetting.id);
           // The session just ended: reading it again sends the console to the sign-in page.
           if (forgetting.current) await useSession.getState().load();
-          else notify('success', 'Browser forgotten');
+          else notify('success', translate('Browser forgotten'));
         }}
       />
     </Block>
@@ -668,6 +712,7 @@ function TrustedBrowsers() {
 
 /** Password, second factors and sessions for a person; only the sessions for an admin token. */
 export function SecuritySection() {
+  const translate = useTranslate();
   const me = useSession((s) => s.me);
   const loadSessions = useAccount((s) => s.loadSessions);
   const loadFactors = useAccount((s) => s.loadFactors);
@@ -683,11 +728,13 @@ export function SecuritySection() {
     <div className="flex flex-col gap-8">
       {account ? null : (
         <p className="text-ui text-muted">
-          Admin tokens have no password or two-step verification. These are the sessions this token started.
+          {translate(
+            'Admin tokens have no password or two-step verification. These are the sessions this token started.',
+          )}
         </p>
       )}
       {password ? (
-        <Block title="Password">
+        <Block title={translate('Password')}>
           <ChangePassword />
         </Block>
       ) : null}

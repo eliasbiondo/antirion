@@ -22,6 +22,7 @@ import { GatewayDrawer } from './gateway-drawer';
 import { ApproveToolsDialog, ServerDrawer } from './server-drawer';
 import { SERVER_CSV, SERVER_FILTERS, ServersTab, useServerRows } from './servers-tab';
 import { SessionsTab } from './sessions-tab';
+import { useTranslate } from '@/lib/i18n';
 
 type Tab = 'servers' | 'gateways' | 'sessions';
 const TABS: Tab[] = ['servers', 'gateways', 'sessions'];
@@ -31,6 +32,7 @@ const TABS: Tab[] = ['servers', 'gateways', 'sessions'];
  * gateways clients connect to, and their sessions.
  */
 export function McpScreen() {
+  const translate = useTranslate();
   const canRead = usePermission('mcp:read');
   const servers = useMcp((s) => s.servers);
   const gateways = useMcp((s) => s.gateways);
@@ -86,7 +88,9 @@ export function McpScreen() {
     <>
       <PageHeader
         title="MCP"
-        description="Tool servers your apps and agents reach through the gateway, and the addresses they connect to"
+        description={translate(
+          'Tool servers your apps and agents reach through the gateway, and the addresses they connect to',
+        )}
         actions={
           <>
             <UpdatedAt at={servers.at} />

@@ -45,6 +45,7 @@ import { MaintenanceDrawer } from './maintenance-drawer';
 import { RuleDrawer } from './rule-drawer';
 import { ManageRulesDialog, RulesView } from './rules-view';
 import { WebhookDrawer } from './webhook-drawer';
+import { useTranslate } from '@/lib/i18n';
 
 type Status = 'all' | 'firing' | 'acknowledged' | 'resolved';
 const STATUSES: Status[] = ['all', 'firing', 'acknowledged', 'resolved'];
@@ -65,25 +66,27 @@ function positive(n: number | undefined): number | undefined {
 }
 
 function StatusText({ alert }: { alert: Alert }) {
+  const translate = useTranslate();
   return (
     <span className="inline-flex items-center gap-1.5 text-caption whitespace-nowrap">
       <Dot tone={STATUS_TONE[alert.status]} />
-      <span className="text-fg">{STATUS_WORD[alert.status]}</span>
+      <span className="text-fg">{translate(STATUS_WORD[alert.status])}</span>
     </span>
   );
 }
 
 function AlertRow({ alert, now }: { alert: Alert; now: number }) {
+  const translate = useTranslate();
   const lasting =
     alert.status === 'resolved'
-      ? `resolved after ${spanWords(durationOf(alert, now))}`
-      : `lasting ${spanWords(durationOf(alert, now))}`;
+      ? translate('resolved after {0}', spanWords(durationOf(alert, now)))
+      : translate('lasting {0}', spanWords(durationOf(alert, now)));
   return (
     <div className="flex items-start gap-3">
       <div className="min-w-0 flex-1">
         <p className="truncate text-body font-semibold text-fg">{alert.summary}</p>
         <p className="mt-0.5 text-caption text-muted">
-          Fired {agoWords(alert.fired_at, now)} · {lasting}
+          {translate('Fired {0}', agoWords(alert.fired_at, now))} · {lasting}
         </p>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
@@ -91,7 +94,7 @@ function AlertRow({ alert, now }: { alert: Alert; now: number }) {
         {snoozed(alert, now) ? (
           <span className="inline-flex items-center gap-1 text-caption text-muted">
             <Icon name="clock" size={12} />
-            Snoozed
+            {translate('Snoozed')}
           </span>
         ) : alert.owner_team ? (
           <Badge>{alert.owner_team}</Badge>
@@ -170,6 +173,7 @@ const CSV_COLUMNS = [
 
 /** Alerts: 30-day figures, the inbox with its detail, the rules and the channels, with their editors. */
 export function AlertsScreen() {
+  const translate = useTranslate();
   const alerts = useAlerts((s) => s.alerts);
   const history = useAlerts((s) => s.history.data);
   const rules = useAlerts((s) => s.rules);
@@ -229,22 +233,22 @@ export function AlertsScreen() {
 
   const header = (
     <PageHeader
-      title="Alerts"
-      description="What needs attention on the gateway, and the rules that raise it"
+      title={translate('Alerts')}
+      description={translate('What needs attention on the gateway, and the rules that raise it')}
       actions={
         <>
           <UpdatedAt at={alerts.at} />
           {unavailable ? null : (
             <>
               <Button icon="sliders" onClick={() => show({ kind: 'manage' })} disabled={!rules.data}>
-                Manage rules
+                {translate('Manage rules')}
               </Button>
               <MenuButton
-                label="More"
+                label={translate('More')}
                 iconOnly
                 items={[
                   {
-                    label: 'Delivery log',
+                    label: translate('Delivery log'),
                     icon: 'send',
                     disabled: !canDeliveries,
                     disabledReason: canDeliveries
@@ -253,7 +257,7 @@ export function AlertsScreen() {
                     onSelect: () => show({ kind: 'deliveries' }),
                   },
                   {
-                    label: 'Maintenance windows',
+                    label: translate('Maintenance windows'),
                     icon: 'calendar',
                     disabled: !canMaintenance,
                     disabledReason: canMaintenance
@@ -262,7 +266,7 @@ export function AlertsScreen() {
                     onSelect: () => show({ kind: 'maintenance' }),
                   },
                   {
-                    label: 'Unusual key activity',
+                    label: translate('Unusual key activity'),
                     icon: 'key',
                     disabled: !canAnomalies,
                     disabledReason: canAnomalies
@@ -285,8 +289,10 @@ export function AlertsScreen() {
         {header}
         <div className="flex min-h-[calc(100vh-48px-57px)] items-center justify-center bg-raised">
           <UnavailableState
-            subject="Alerting"
-            description="Alerts tell you when latency, errors, spend or guardrails cross a line you set, and who was told. This version of the gateway doesn't include them; upgrade the gateway to use them."
+            subject={translate('Alerting')}
+            description={translate(
+              "Alerts tell you when latency, errors, spend or guardrails cross a line you set, and who was told. This version of the gateway doesn't include them; upgrade the gateway to use them.",
+            )}
             operation={(alerts.error as { operation?: string } | null)?.operation}
           />
         </div>
@@ -306,7 +312,7 @@ export function AlertsScreen() {
         />
       ) : null}
       <Tabs<View>
-        label="Alerts views"
+        label={translate('Alerts views')}
         value={view}
         onChange={(v) =>
           // An alert selected in the inbox does not follow to the rules or channels.
@@ -315,12 +321,17 @@ export function AlertsScreen() {
         items={[
           {
             value: 'inbox',
-            label: 'Inbox',
+            label: translate('Inbox'),
             count: positive(firing.length + acknowledged.length),
             icon: 'bell',
           },
-          { value: 'rules', label: 'Rules', count: positive(rules.data?.length), icon: 'sliders' },
-          { value: 'channels', label: 'Channels', count: positive(channels.data?.length), icon: 'send' },
+          { value: 'rules', label: translate('Rules'), count: positive(rules.data?.length), icon: 'sliders' },
+          {
+            value: 'channels',
+            label: translate('Channels'),
+            count: positive(channels.data?.length),
+            icon: 'send',
+          },
         ]}
       />
       {view === 'rules' ? (
@@ -338,21 +349,21 @@ export function AlertsScreen() {
           {list.length > 0 ? (
             <FilterBar>
               <Segmented<Status>
-                label="Alert status"
+                label={translate('Alert status')}
                 value={status}
                 onChange={setStatus}
                 options={[
-                  { value: 'all', label: 'All', count: bySeverity.length },
-                  { value: 'firing', label: 'Firing', count: firing.length },
-                  { value: 'acknowledged', label: 'Acknowledged', count: acknowledged.length },
+                  { value: 'all', label: translate('All'), count: bySeverity.length },
+                  { value: 'firing', label: translate('Firing'), count: firing.length },
+                  { value: 'acknowledged', label: translate('Acknowledged'), count: acknowledged.length },
                   {
                     value: 'resolved',
-                    label: 'Resolved',
+                    label: translate('Resolved'),
                     count: bySeverity.filter((a) => a.status === 'resolved').length,
                   },
                 ]}
               />
-              <div className="flex gap-1.5" role="group" aria-label="Severity">
+              <div className="flex gap-1.5" role="group" aria-label={translate('Severity')}>
                 {SEVERITIES.map((sv) => (
                   <ChipToggle
                     key={sv}
@@ -366,11 +377,11 @@ export function AlertsScreen() {
                       url.set({ severity: on ? [...severities, sv] : severities.filter((x) => x !== sv) })
                     }
                   >
-                    {severityWord(sv)}
+                    {translate(severityWord(sv))}
                   </ChipToggle>
                 ))}
               </div>
-              <span className="ml-auto flex items-center gap-3">
+              <span className="ms-auto flex items-center gap-3">
                 <CountNote shown={visible.length} total={list.length} noun="alerts" />
                 <ExportCsvButton filename="alerts" rows={visible} columns={CSV_COLUMNS} />
               </span>
@@ -384,9 +395,11 @@ export function AlertsScreen() {
                 title="No alerts"
                 action={
                   rules.data?.length ? (
-                    <EmptyAction onClick={() => setView('rules')}>View rules</EmptyAction>
+                    <EmptyAction onClick={() => setView('rules')}>{translate('View rules')}</EmptyAction>
                   ) : (
-                    <EmptyAction onClick={() => show({ kind: 'rule', name: null })}>Create rule</EmptyAction>
+                    <EmptyAction onClick={() => show({ kind: 'rule', name: null })}>
+                      {translate('Create rule')}
+                    </EmptyAction>
                   )
                 }
               />
@@ -394,12 +407,12 @@ export function AlertsScreen() {
           ) : null}
           {list.length > 0 ? (
             <div className="grid min-h-[520px] flex-auto lg:grid-cols-[minmax(340px,440px)_minmax(0,1fr)]">
-              <div className="min-w-0 bg-canvas lg:border-r lg:border-line">
+              <div className="min-w-0 bg-canvas lg:border-e lg:border-line">
                 {visible.length === 0 ? (
                   <NoMatch onClear={() => url.clear()} />
                 ) : (
                   <SelectableList
-                    label="Alerts"
+                    label={translate('Alerts')}
                     items={visible}
                     keyOf={(a) => a.id}
                     selectedKey={current?.id ?? null}
@@ -416,7 +429,9 @@ export function AlertsScreen() {
                   ) : missing ? (
                     <EmptyState
                       title="We couldn't find this alert"
-                      description="It may have been resolved and cleared, or the link has a mistake in it."
+                      description={translate(
+                        'It may have been resolved and cleared, or the link has a mistake in it.',
+                      )}
                     />
                   ) : (
                     <EmptyState title="Select an alert to see its details" />
@@ -430,7 +445,11 @@ export function AlertsScreen() {
               open={current !== undefined}
               onClose={() => setSelected(null)}
               width="lg"
-              title={current ? severityWord(current.severity) + ' alert' : 'Alert'}
+              title={
+                current
+                  ? translate('{0} alert', translate(severityWord(current.severity)))
+                  : translate('Alert')
+              }
             >
               <div className="-mx-5 -my-4">
                 {current ? <AlertDetail key={current.id} alert={current} onOpen={setSelected} /> : null}

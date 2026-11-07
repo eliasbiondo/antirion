@@ -32,6 +32,7 @@ import { attachmentName, type PluginResource, type PluginRuntime } from '../api'
 import { failureRate, HOOK_LABEL, type PluginType, TYPE_LABEL } from '../form';
 import { usePlugins } from '../store';
 import { PluginDrawer } from './plugin-drawer';
+import { useTranslate } from '@/lib/i18n';
 
 const FILTERS = { q: '', type: '', state: 'all' };
 type StateFilter = 'all' | 'attached' | 'failing' | 'off';
@@ -62,6 +63,7 @@ const CSV: CsvColumn<Row>[] = [
 
 /** Plugins: the code the gateway runs on requests, with how often it runs and fails. */
 export function PluginsScreen() {
+  const translate = useTranslate();
   const canRead = usePermission('plugins:read');
   const plugins = usePlugins((s) => s.plugins);
   const runtime = usePlugins((s) => s.runtime.data);
@@ -131,8 +133,10 @@ export function PluginsScreen() {
   return (
     <>
       <PageHeader
-        title="Plugins"
-        description="Code the gateway runs on requests: webhooks you host, built-ins and WebAssembly modules"
+        title={translate('Plugins')}
+        description={translate(
+          'Code the gateway runs on requests: webhooks you host, built-ins and WebAssembly modules',
+        )}
         actions={
           <>
             <UpdatedAt at={plugins.at} />

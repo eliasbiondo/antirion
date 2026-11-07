@@ -43,6 +43,7 @@ import { OrganizationsPanel } from './organizations-panel';
 import { RolesPanel } from './roles-panel';
 import { TeamsPanel } from './teams-panel';
 import { UserDetail } from './user-detail';
+import { useTranslate } from '@/lib/i18n';
 
 type Tab = 'people' | 'teams' | 'organizations' | 'projects' | 'roles' | 'access' | 'activity';
 const TABS: Tab[] = ['people', 'teams', 'organizations', 'projects', 'roles', 'access', 'activity'];
@@ -237,6 +238,7 @@ function DirectorySummary({
 
 /** Teams and users: people with roles, teams with budgets, and the organizations and projects. */
 export function TeamsUsersScreen() {
+  const translate = useTranslate();
   useDirectoryData();
   const status = useUsers((s) => s.status);
   const error = useUsers((s) => s.error);
@@ -313,8 +315,10 @@ export function TeamsUsersScreen() {
   return (
     <>
       <PageHeader
-        title="Teams & users"
-        description="Who can sign in to this console, with which roles, and the teams they work in"
+        title={translate('Teams & users')}
+        description={translate(
+          'Who can sign in to this console, with which roles, and the teams they work in',
+        )}
         actions={
           <>
             <UpdatedAt at={loadedAt} />

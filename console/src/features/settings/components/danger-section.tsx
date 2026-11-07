@@ -27,6 +27,7 @@ import { ChangeControlCard } from './change-control-card';
 import { KeyRequirementCard } from './key-requirement-card';
 import { MaintenanceCard } from './maintenance-card';
 import { Card, SaveBar } from './parts';
+import { translateNow } from '@/lib/i18n';
 
 export const DUAL_ACTIONS: { value: DualAction; label: string; description: string }[] = [
   { value: 'ingress_pause', label: 'Pause traffic', description: 'Gateway-wide or one organization.' },
@@ -166,7 +167,10 @@ function PauseCard() {
             const until = new Date(Date.now() + Number(minutes || '15') * 60_000);
             notify(
               'success',
-              `Traffic paused until ${until.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+              translateNow(
+                'Traffic paused until {0}',
+                until.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              ),
             );
           } finally {
             void loadStatus();
@@ -279,7 +283,7 @@ function PurgeCard() {
         onConfirm={async (reason) => {
           try {
             await settingsApi.purgeCache(org, reason);
-            notify('success', org ? `${org}'s cache cleared` : 'Cache cleared');
+            notify('success', org ? translateNow("{0}'s cache cleared", org) : 'Cache cleared');
           } finally {
             void loadPending();
           }
@@ -574,7 +578,7 @@ function DeletionBlock({ target }: { target: string | null }) {
             notify(
               'success',
               'Deletion scheduled',
-              `${target} will be deleted on ${formatDateTime(r.delete_at, timeZone)}.`,
+              translateNow('{0} will be deleted on {1}.', target, formatDateTime(r.delete_at, timeZone)),
             );
           } finally {
             void loadTarget(target);

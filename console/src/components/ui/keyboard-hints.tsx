@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import { usePreferences } from '@/stores/preferences';
 
 import { Kbd } from './misc';
+import { useTranslate } from '@/lib/i18n';
 
 export type HintKey = 'search' | 'move' | 'open' | 'close' | 'filters' | 'export' | 'new';
 
@@ -32,12 +33,13 @@ export const KeyboardHintsSlot = createContext<HTMLElement | null>(null);
  * keyboard hints off in their preferences.
  */
 export function KeyboardHints({ keys = ['search', 'move', 'open', 'close'] }: { keys?: HintKey[] }) {
+  const translate = useTranslate();
   const on = usePreferences((s) => s.keyboardHints);
   const slot = useContext(KeyboardHintsSlot);
   if (!on) return null;
   const strip = (
     <div
-      aria-label="Keyboard shortcuts on this page"
+      aria-label={translate('Keyboard shortcuts on this page')}
       role="note"
       data-keyboard-hints=""
       className="sticky bottom-0 z-10 flex h-10 items-center gap-x-4 overflow-hidden border-t border-line bg-canvas px-gutter text-caption whitespace-nowrap text-dim max-md:hidden"
@@ -51,7 +53,8 @@ export function KeyboardHints({ keys = ['search', 'move', 'open', 'close'] }: { 
         </span>
       ))}
       <span className="ml-auto flex items-center gap-1.5">
-        <Kbd>?</Kbd> all shortcuts
+        <Kbd>?</Kbd>
+        {' ' + translate('all shortcuts')}
       </span>
     </div>
   );

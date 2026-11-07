@@ -35,6 +35,7 @@ import { EntriesTab } from './entries-tab';
 import { ModelsTab } from './models-tab';
 import { RulesTab } from './rules-tab';
 import { StatsTab } from './stats-tab';
+import { useTranslate } from '@/lib/i18n';
 
 type Tab = 'models' | 'entries' | 'rules' | 'stats' | 'activity';
 const TABS: Tab[] = ['models', 'entries', 'rules', 'stats', 'activity'];
@@ -47,6 +48,7 @@ const LEGEND: LegendItem[] = [
 
 /** The response cache: what it saves, caching per model, cached responses, rules, statistics, activity. */
 export function CacheScreen() {
+  const translate = useTranslate();
   const router = useRouter();
   const status = useCache((s) => s.status);
   const models = useCache((s) => s.models);
@@ -160,8 +162,8 @@ export function CacheScreen() {
   return (
     <>
       <PageHeader
-        title="Cache"
-        description="Answer repeated requests without calling a provider"
+        title={translate('Cache')}
+        description={translate('Answer repeated requests without calling a provider')}
         actions={
           <div className="flex flex-wrap items-center gap-2 max-sm:min-w-[calc(100vw-32px)]">
             <UpdatedAt at={status.at} />

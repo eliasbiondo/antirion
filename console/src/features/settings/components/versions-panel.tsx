@@ -21,6 +21,7 @@ import { compareDocuments } from '../doc-diff';
 import { useConfigDoc } from '../store';
 import { ChangeRow } from './change-row';
 import { auditActorLabel } from '@/lib/audit-words';
+import { translateNow } from '@/lib/i18n';
 
 /** Where a version came from, in words. */
 export function sourceLabel(source: string): string {
@@ -266,8 +267,8 @@ export function VersionsPanel() {
           const result = await settingsApi.rollback(target, document.data?.etag ?? null, reason);
           notify(
             'success',
-            `Rolled back to version ${target}`,
-            `Now running as version ${result.generation}.`,
+            translateNow('Rolled back to version {0}', target),
+            translateNow('Now running as version {0}.', result.generation),
           );
           setOpened(null);
           await rolledBack(target, result);

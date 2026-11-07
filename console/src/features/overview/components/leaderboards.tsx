@@ -19,6 +19,7 @@ import { groupTotals } from '@/features/analytics/store';
 import type { ProviderStatus } from '@/features/providers/api';
 
 import { headroom, teamBudgets } from '../runtime';
+import { useTranslate } from '@/lib/i18n';
 
 /** A team's colour when it has none of its own: a hue from its name. */
 export function teamColor(name: string): string {
@@ -62,6 +63,7 @@ export function TeamSpend({
   counters: BudgetCounter[] | null;
   className?: string;
 }) {
+  const translate = useTranslate();
   const budgetsHref = useScopedHref('/budgets/');
   const budgets = teamBudgets(counters);
   const spent = new Map(groupTotals(usage, 'team').map((t) => [t.name, t.totals.cost] as const));
@@ -82,21 +84,21 @@ export function TeamSpend({
   const maxSpend = Math.max(0.0001, ...rows.map((r) => r.spent));
   return (
     <Panel
-      title="Team spend"
+      title={translate('Team spend')}
       className={className}
       subtitle={
         budgets.size > 0 ? 'This month, on budget counters where a team has one' : 'This month, from requests'
       }
       actions={
         <Link href={budgetsHref} className="text-caption text-muted hover:text-fg">
-          View budgets
+          {translate('View budgets')}
         </Link>
       }
     >
       {rows.length === 0 ? (
         emptyRows('No spend this month')
       ) : (
-        <ul aria-label="Spend by team this month" className="flex flex-col gap-0.5">
+        <ul aria-label={translate('Spend by team this month')} className="flex flex-col gap-0.5">
           {rows.map((t) => {
             const share = t.amount ? t.spent / t.amount : null;
             const tone = t.state ? STATE_TONE[t.state] : undefined;
@@ -114,8 +116,14 @@ export function TeamSpend({
                 {...(tone ? { tone } : { color: teamColor(t.name) })}
                 label={
                   t.amount
-                    ? `${t.name}: ${formatMoney(t.spent)} of ${formatMoney(t.amount)}${t.state ? `, ${STATE_WORDS[t.state]}` : ''}`
-                    : `${t.name}: ${formatMoney(t.spent)}, no monthly budget`
+                    ? translate(
+                        '{0}: {1} of {2}{3}',
+                        t.name,
+                        formatMoney(t.spent),
+                        formatMoney(t.amount),
+                        t.state ? `, ${STATE_WORDS[t.state]}` : '',
+                      )
+                    : translate('{0}: {1}, no monthly budget', t.name, formatMoney(t.spent))
                 }
                 display={
                   <>
@@ -125,7 +133,7 @@ export function TeamSpend({
                         <span className="text-dim"> / {formatMoney(t.amount, { compact: true })}</span>
                         <span
                           className={cn(
-                            'ml-2 inline-block w-9 text-right',
+                            'ml-2 inline-block w-9 text-end',
                             tone === 'error' ? 'text-error' : tone === 'warn' ? 'text-warn' : 'text-muted',
                           )}
                         >
@@ -133,7 +141,7 @@ export function TeamSpend({
                         </span>
                       </>
                     ) : (
-                      <span className="ml-2 inline-block w-9 text-right text-dim">—</span>
+                      <span className="ml-2 inline-block w-9 text-end text-dim">—</span>
                     )}
                   </>
                 }
@@ -154,6 +162,7 @@ export function TopModels({
   usage: UsageBucket[] | null | undefined;
   format: (n: number) => string;
 }) {
+  const translate = useTranslate();
   const [by, setBy] = useState<'requests' | 'spend'>('requests');
   const modelsHref = useScopedHref('/models/');
   const models = groupTotals(usage, 'model')
@@ -168,15 +177,15 @@ export function TopModels({
     `${modelsHref}${modelsHref.includes('?') ? '&' : '?'}model=${encodeURIComponent(name)}`;
   return (
     <Panel
-      title="Top models"
+      title={translate('Top models')}
       actions={
         <Segmented<'requests' | 'spend'>
-          label="Rank models by"
+          label={translate('Rank models by')}
           value={by}
           onChange={setBy}
           options={[
-            { value: 'requests', label: 'Requests' },
-            { value: 'spend', label: 'Spend' },
+            { value: 'requests', label: translate('Requests') },
+            { value: 'spend', label: translate('Spend') },
           ]}
           className="[&_button]:h-6 [&_button]:px-2 [&_button]:text-caption"
         />
@@ -185,7 +194,7 @@ export function TopModels({
       {models.length === 0 ? (
         emptyRows('No requests in this range')
       ) : (
-        <ul aria-label={`Top models by ${by}`} className="flex flex-col gap-0.5">
+        <ul aria-label={translate('Top models by {0}', by)} className="flex flex-col gap-0.5">
           {models.map((m) => (
             <BarRow
               key={m.name}
@@ -202,7 +211,12 @@ export function TopModels({
               }
               value={by === 'spend' ? m.totals.cost : m.totals.requests}
               max={max}
-              label={`${m.name}: ${formatCount(m.totals.requests)} requests, ${formatMoney(m.totals.cost)}`}
+              label={translate(
+                '{0}: {1} requests, {2}',
+                m.name,
+                formatCount(m.totals.requests),
+                formatMoney(m.totals.cost),
+              )}
               display={
                 by === 'spend' ? (
                   <>
@@ -242,6 +256,7 @@ export function ProviderHeadroom({
   status: ProviderStatus[] | null;
   minutes: number;
 }) {
+  const translate = useTranslate();
   const typeOf = useProviderType();
   const providersHref = useScopedHref('/providers/');
   const configuredList = useConfiguredProviders();
@@ -269,18 +284,18 @@ export function ProviderHeadroom({
   const warned = rows.filter((r) => (r.room?.share ?? 0) >= WARN_AT).length;
   return (
     <Panel
-      title="Provider headroom"
+      title={translate('Provider headroom')}
       subtitle={warned ? `${warned} near the limit` : 'against upstream limits'}
       actions={
         <Link href={providersHref} className="text-caption text-muted hover:text-fg">
-          View providers
+          {translate('View providers')}
         </Link>
       }
     >
       {rows.length === 0 ? (
         emptyRows('No providers yet')
       ) : (
-        <ul aria-label="Provider headroom" className="flex flex-col gap-0.5">
+        <ul aria-label={translate('Provider headroom')} className="flex flex-col gap-0.5">
           {rows.map((r) => {
             const room = r.room;
             const tone = room
@@ -305,8 +320,18 @@ export function ProviderHeadroom({
                 tone={tone}
                 label={
                   room
-                    ? `${r.name}: ${formatCount(room.used)} of ${formatCount(room.limit)} ${room.unit} per minute used upstream`
-                    : `${r.name}: ${r.rate.toFixed(1)} requests per minute; the provider reports no limit`
+                    ? translate(
+                        '{0}: {1} of {2} {3} per minute used upstream',
+                        r.name,
+                        formatCount(room.used),
+                        formatCount(room.limit),
+                        room.unit,
+                      )
+                    : translate(
+                        '{0}: {1} requests per minute; the provider reports no limit',
+                        r.name,
+                        r.rate.toFixed(1),
+                      )
                 }
                 display={
                   room ? (
@@ -320,8 +345,10 @@ export function ProviderHeadroom({
                       >
                         {formatCount(room.used, { compact: true })}
                         <span className="text-dim"> / {formatCount(room.limit, { compact: true })}</span>
-                        {room.unit === 'tokens' ? <span className="text-dim"> tok</span> : null}
-                        <span className="ml-2 inline-block w-9 text-right">
+                        {room.unit === 'tokens' ? (
+                          <span className="text-dim">{' ' + translate('tok')}</span>
+                        ) : null}
+                        <span className="ml-2 inline-block w-9 text-end">
                           {Math.round(room.share * 100)}%
                         </span>
                       </span>
@@ -329,8 +356,9 @@ export function ProviderHeadroom({
                   ) : (
                     <Tooltip content="The provider reports no rate limit; this is the gateway's own rate in the range">
                       <span className="text-muted">
-                        {r.rate.toFixed(1)}/min
-                        <span className="ml-2 inline-block w-9 text-right text-dim">—</span>
+                        {r.rate.toFixed(1)}
+                        {translate('/min')}
+                        <span className="ml-2 inline-block w-9 text-end text-dim">—</span>
                       </span>
                     </Tooltip>
                   )

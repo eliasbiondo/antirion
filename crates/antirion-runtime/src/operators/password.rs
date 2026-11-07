@@ -6,7 +6,7 @@ use antirion_identity::verifier::digest_hex;
 use serde::{Deserialize, Serialize};
 
 use super::signin::PasswordRecord;
-use super::{IdentityError, LoginStep, Proof, kind, token};
+use super::{ConsoleLocale, IdentityError, LoginStep, Proof, kind, token};
 use crate::Runtime;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -133,13 +133,27 @@ impl Runtime {
         )
         .await?;
         let minutes = c.reset_ttl.as_secs() / 60;
-        let body = format!(
-            "A password reset was asked for the console account of {email}.\n\n\
-             Set a new password here (the link works once, for {minutes} minutes):\n\
-             {link_base}/reset-password?token={secret}\n\n\
-             If you did not ask for it, ignore this message; your password stays the same.\n"
-        );
-        self.send_mail(email.trim(), "Reset your console password", body);
+        let (subject, body) = match self.console_locale(&user).await {
+            ConsoleLocale::English => (
+                "Reset your console password",
+                format!(
+                    "A password reset was asked for the console account of {email}.\n\n\
+                 Set a new password here (the link works once, for {minutes} minutes):\n\
+                 {link_base}/reset-password?token={secret}\n\n\
+                 If you did not ask for it, ignore this message; your password stays the same.\n"
+                ),
+            ),
+            ConsoleLocale::Persian => (
+                "بازنشانی گذرواژهٔ پنل",
+                format!(
+                    "برای حساب پنل با نشانی {email} درخواست بازنشانی گذرواژه ثبت شده است.\n\n\
+                 از پیوند زیر گذرواژهٔ جدیدی تعیین کنید. پیوند یک‌بار مصرف است و {minutes} دقیقه اعتبار دارد.\n\
+                 {link_base}/reset-password?token={secret}\n\n\
+                 اگر شما این درخواست را ثبت نکرده‌اید، می‌توانید این پیام را نادیده بگیرید.\n"
+                ),
+            ),
+        };
+        self.send_mail(email.trim(), subject, body);
         Ok(())
     }
 

@@ -30,6 +30,7 @@ import {
 } from '../form';
 import { useMcp } from '../store';
 import { describeError } from '@/lib/api/client';
+import { translateNow } from '@/lib/i18n';
 
 export const SERVER_FILTERS = { q: '', transport: '', state: 'all' };
 export type ServerStateFilter = 'all' | 'on' | 'off' | 'failing' | 'waiting';
@@ -279,18 +280,28 @@ export function ServersTab({
                             () =>
                               notify(
                                 'success',
-                                on ? `${server.name} turned on` : `${server.name} turned off`,
+                                on
+                                  ? translateNow('{0} turned on', server.name)
+                                  : translateNow('{0} turned off', server.name),
                                 undefined,
                                 {
                                   label: 'Undo',
                                   onClick: () =>
                                     void setEnabled(server.name, !on).catch((e: unknown) =>
-                                      notify('error', `Couldn't change ${server.name}`, describeError(e)),
+                                      notify(
+                                        'error',
+                                        translateNow("Couldn't change {0}", server.name),
+                                        describeError(e),
+                                      ),
                                     ),
                                 },
                               ),
                             (e: unknown) =>
-                              notify('error', `Couldn't change ${server.name}`, describeError(e)),
+                              notify(
+                                'error',
+                                translateNow("Couldn't change {0}", server.name),
+                                describeError(e),
+                              ),
                           )
                         }
                       />

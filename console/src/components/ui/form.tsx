@@ -16,6 +16,7 @@ import { cn } from '@/lib/cn';
 
 import { Button, type ButtonProps } from './button';
 import { Icon, type IconName } from './icon';
+import { useTranslate } from '@/lib/i18n';
 
 const CONTROL =
   'w-full rounded-control border border-line bg-canvas px-2.5 text-ui text-fg placeholder:text-dim ' +
@@ -57,6 +58,7 @@ export function Field({
   controlId: wrappedId,
   children,
 }: FieldProps) {
+  const translate = useTranslate();
   const id = useId();
   const controlId = wrappedId ?? children.props.id ?? `f${id}`;
   const hintId = hint ? `${controlId}-hint` : undefined;
@@ -83,7 +85,9 @@ export function Field({
               *
             </span>
           ) : null}
-          {optional && !required ? <span className="font-normal text-dim"> (optional)</span> : null}
+          {optional && !required ? (
+            <span className="font-normal text-dim">{' ' + translate('(optional)')}</span>
+          ) : null}
         </label>
         {aside}
       </div>
@@ -96,7 +100,7 @@ export function Field({
       {error ? (
         <p id={errorId} role="alert" className="flex items-start gap-1.5 text-caption text-error">
           <Icon name="alertCircle" size={14} className="mt-px shrink-0" />
-          {error}
+          {translate(error)}
         </p>
       ) : null}
     </div>

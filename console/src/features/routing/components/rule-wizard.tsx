@@ -29,6 +29,7 @@ import { durationMs, validateExtras } from '../resilience';
 import { useRouting } from '../store';
 import { describePredicate, type Json, nodeTypeLabel, type Rule, strategyOf, withRules } from '../types';
 import { ConditionsStep, LimitsFields, StrategyStep, TargetsStep } from './wizard-steps';
+import { translateNow } from '@/lib/i18n';
 
 const STEPS = ['Conditions', 'Strategy', 'Targets', 'Review'] as const;
 
@@ -277,7 +278,9 @@ export function RuleWizard({
       notify(
         'success',
         editing ? 'Rule saved' : 'Rule created',
-        route === null ? `${draft.name.trim()}, in the new shared route ${newRoute}` : draft.name.trim(),
+        route === null
+          ? translateNow('{0}, in the new shared route {1}', draft.name.trim(), newRoute)
+          : draft.name.trim(),
       );
       onSaved?.(route ?? newRoute);
       onClose();

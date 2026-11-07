@@ -13,6 +13,7 @@ import { alertsApi } from '@/features/alerts/api';
 import { CHANNEL_TYPES } from '@/features/alerts/describe';
 import { useAlerts } from '@/features/alerts/store';
 import { describeError } from '@/lib/api/client';
+import { translateNow, useTranslate } from '@/lib/i18n';
 import { notify } from '@/stores/ui';
 
 import {
@@ -47,16 +48,19 @@ function Cell({
   canWrite: boolean;
   onToggle: (on: boolean) => void;
 }) {
+  const translate = useTranslate();
   if (state.kind === 'blocked')
     return (
       <Tooltip content={state.detail || null}>
-        <span aria-label={`${label}: not available`} className="text-dim">
+        <span aria-label={translate('{0}: not available', label)} className="text-dim">
           –
         </span>
       </Tooltip>
     );
   return (
-    <Tooltip content={canWrite ? state.detail : `${state.detail} Your role can't change this.`}>
+    <Tooltip
+      content={canWrite ? state.detail : `${state.detail} ${translate("Your role can't change this.")}`}
+    >
       <span className="inline-flex">
         <Checkbox
           aria-label={label}
@@ -75,6 +79,7 @@ function Cell({
  * webhooks' subscriptions.
  */
 export function NotificationsMatrixSection() {
+  const translate = useTranslate();
   useAlertConfig();
   const rules = useAlerts((s) => s.rules);
   const channels = useAlerts((s) => s.channels);
@@ -114,13 +119,20 @@ export function NotificationsMatrixSection() {
         if (plan.still.length)
           notify(
             'info',
-            `Still sent to ${col.name}`,
-            `${plan.still.join(', ')} also cover${plan.still.length === 1 ? 's' : ''} other events; edit ${plan.still.length === 1 ? 'it' : 'them'} in Alerts.`,
+            translateNow('Still sent to {0}', col.name),
+            translateNow(
+              plan.still.length === 1
+                ? '{0} also covers other events; edit it in Alerts.'
+                : '{0} also cover other events; edit them in Alerts.',
+              plan.still.join(', '),
+            ),
           );
         else
           notify(
             'success',
-            on ? `${row.label} now go to ${col.name}` : `${row.label} no longer go to ${col.name}`,
+            on
+              ? translateNow('{0} now go to {1}', translateNow(row.label), col.name)
+              : translateNow('{0} no longer go to {1}', translateNow(row.label), col.name),
           );
       } else {
         const hook = webhooks.data?.items[col.name];
@@ -138,15 +150,15 @@ export function NotificationsMatrixSection() {
         if (next.still.length)
           notify(
             'info',
-            `Still sent to ${col.name}`,
-            `It also subscribes to ${next.still.join(', ')}, which covers them.`,
+            translateNow('Still sent to {0}', col.name),
+            translateNow('It also subscribes to {0}, which covers them.', next.still.join(', ')),
           );
         else
           notify(
             'success',
             on
-              ? `${col.name} now receives ${row.label.toLowerCase()}`
-              : `${col.name} no longer receives ${row.label.toLowerCase()}`,
+              ? translateNow('{0} now receives {1}', col.name, translateNow(row.label).toLowerCase())
+              : translateNow('{0} no longer receives {1}', col.name, translateNow(row.label).toLowerCase()),
           );
       }
     } catch (e) {
@@ -177,14 +189,14 @@ export function NotificationsMatrixSection() {
               <tr>
                 <th
                   scope="col"
-                  className="sticky left-0 bg-raised py-2 pr-3 text-left text-caption font-medium text-muted"
+                  className="sticky inset-s-0 bg-raised py-2 pe-3 text-start text-caption font-medium text-muted"
                 >
-                  Event
+                  {translate('Event')}
                 </th>
                 {columns.map((c) => (
                   <th key={c.id} scope="col" className="px-2 py-2 text-center align-bottom font-normal">
                     <span className="mono block max-w-[9rem] truncate text-caption text-fg">{c.name}</span>
-                    <span className="block text-caption text-dim">{c.kind}</span>
+                    <span className="block text-caption text-dim">{translate(c.kind)}</span>
                   </th>
                 ))}
               </tr>
@@ -194,18 +206,18 @@ export function NotificationsMatrixSection() {
                 <tr key={row.id}>
                   <th
                     scope="row"
-                    className="sticky left-0 border-t border-line bg-raised py-2 pr-3 text-left font-normal text-fg"
+                    className="sticky inset-s-0 border-t border-line bg-raised py-2 pe-3 text-start font-normal text-fg"
                   >
-                    {row.label}
+                    {translate(row.label)}
                   </th>
                   {row.kind === 'personal' ? (
                     <td
                       colSpan={columns.length}
                       className="border-t border-line px-2 py-2 text-caption text-muted"
                     >
-                      Emailed to each person who turns it on in their{' '}
+                      {translate('Emailed to each person who turns it on in their')}{' '}
                       <Link href={accountHref} className="text-accent hover:underline">
-                        account notifications
+                        {translate('account notifications')}
                       </Link>
                       .
                     </td>
@@ -214,13 +226,17 @@ export function NotificationsMatrixSection() {
                       const channel = (channels.data ?? []).find((x) => x.name === c.name);
                       const state =
                         c.type === 'channel' && channel
-                          ? channelCell(row, channel, rules.data ?? [])
-                          : webhookCell(row, webhooks.data?.items[c.name] ?? { url: '', events: [] });
+                          ? channelCell(row, channel, rules.data ?? [], translate)
+                          : webhookCell(
+                              row,
+                              webhooks.data?.items[c.name] ?? { url: '', events: [] },
+                              translate,
+                            );
                       return (
                         <td key={c.id} className="border-t border-line px-2 py-2 text-center">
                           <Cell
                             state={state}
-                            label={`${row.label} to ${c.name}`}
+                            label={translate('{0} to {1}', translate(row.label), c.name)}
                             busy={busy !== null}
                             canWrite={c.type === 'channel' ? canRules : canHooks}
                             onToggle={(on) => void toggle(row, c, on)}
@@ -238,10 +254,11 @@ export function NotificationsMatrixSection() {
       <p className="mt-3 flex items-start gap-1.5 text-caption text-muted">
         <Icon name="info" size={14} className="mt-px shrink-0" />
         <span>
-          A tick on a severity adds the channel to every alert rule of that severity. A tick on an event
-          category adds it to that category&apos;s event rule, created when there is none. Fine-tune rules in{' '}
+          {translate(
+            "A tick on a severity adds the channel to every alert rule of that severity. A tick on an event category adds it to that category's event rule, created when there is none. Fine-tune rules in",
+          )}{' '}
           <Link href={alertsHref} className="text-accent hover:underline">
-            Alerts
+            {translate('Alerts')}
           </Link>
           .
         </span>

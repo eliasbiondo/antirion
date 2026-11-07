@@ -45,6 +45,7 @@ import { PressurePanel } from './pressure-panel';
 import { SignalsPanel } from './signals-panel';
 import { teamBudgetRows, TeamBudgetsPanel, type TeamBudgetRow } from './team-budgets-panel';
 import { monthProjection } from '@/features/budgets/projection';
+import { useTranslate } from '@/lib/i18n';
 
 const PROVIDER_TONES: ChartTone[] = ['accent', 'warn', 'info', 'success', 'error', 'muted'];
 
@@ -105,6 +106,7 @@ const UNKNOWN_MODELS = 'Names not in the catalog';
 const UNKNOWN_MODELS_HINT = 'Requests that named no Model of this gateway; the Request log lists each name';
 
 export function AnalyticsScreen() {
+  const translate = useTranslate();
   const { current, previous, key } = useUsageQueries();
   const range = useResolvedRange();
   const scope = useScope((s) => s.scope);
@@ -229,7 +231,10 @@ export function AnalyticsScreen() {
   if (series?.error && !series.data) {
     return (
       <>
-        <PageHeader title="Analytics" description="Spend, performance and use across the gateway" />
+        <PageHeader
+          title={translate('Analytics')}
+          description={translate('Spend, performance and use across the gateway')}
+        />
         <div className="flex min-h-[calc(100vh-48px-57px)] items-center justify-center bg-raised">
           {isUnavailable(series.error) ? (
             <UnavailableState
@@ -311,8 +316,8 @@ export function AnalyticsScreen() {
   return (
     <>
       <PageHeader
-        title="Analytics"
-        description="Spend, performance and use across the gateway"
+        title={translate('Analytics')}
+        description={translate('Spend, performance and use across the gateway')}
         context={windowLabel}
         actions={
           <div className="flex items-center gap-2">

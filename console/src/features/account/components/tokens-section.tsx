@@ -17,6 +17,7 @@ import { useSession } from '@/stores/session';
 
 import { useAccount } from '../store';
 import { expiryFor, lifetimeChoices, lifetimeWords, tokenPolicy } from '../token-policy';
+import { useTranslate } from '@/lib/i18n';
 
 type Access = 'read_only' | 'full';
 
@@ -33,6 +34,7 @@ const tokenSchema = z.object({
 const ACCESS_LABEL: Record<Access, string> = { read_only: 'Read only', full: 'Read and write' };
 
 export function TokensSection() {
+  const translate = useTranslate();
   const tokens = useAccount((s) => s.tokens);
   const load = useAccount((s) => s.loadTokens);
   const create = useAccount((s) => s.createToken);
@@ -82,8 +84,9 @@ export function TokensSection() {
   return (
     <div className="flex flex-col gap-6">
       <p className="text-ui text-muted">
-        Use a personal token in scripts and the CLI. It acts as you, with your permissions; choose Read only
-        to limit it.
+        {translate(
+          'Use a personal token in scripts and the CLI. It acts as you, with your permissions; choose Read only to limit it.',
+        )}
       </p>
       {turnedOff ? (
         <p role="status" className="rounded-sm border border-line bg-sunken px-3 py-2 text-ui text-muted">
@@ -101,20 +104,20 @@ export function TokensSection() {
           }}
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_140px]">
-            <Field label="Name" error={errors.description}>
+            <Field label={translate('Name')} error={errors.description}>
               <Input
                 value={values.description}
                 onChange={(e) => {
                   setValues({ ...values, description: e.target.value });
                   setErrors({});
                 }}
-                placeholder="e.g. Deploy script"
+                placeholder={translate('e.g. Deploy script')}
               />
             </Field>
             <Field
-              label="Expires"
+              label={translate('Expires')}
               error={errors.lifetime}
-              hint={`At most ${lifetimeWords(Number(lifetimes.options.at(-1)?.value ?? 0))}.`}
+              hint={translate('At most {0}.', lifetimeWords(Number(lifetimes.options.at(-1)?.value ?? 0)))}
             >
               <Select
                 value={lifetime}
@@ -123,9 +126,9 @@ export function TokensSection() {
               />
             </Field>
           </div>
-          <Field label="Access">
+          <Field label={translate('Access')}>
             <Segmented<Access>
-              label="Access"
+              label={translate('Access')}
               value={values.access}
               onChange={(access) => setValues({ ...values, access })}
               options={[
@@ -138,46 +141,48 @@ export function TokensSection() {
             <InlineError error={error} />
             <div>
               <Button type="submit" variant="primary" icon="plus" busy={busy}>
-                Create token
+                {translate('Create token')}
               </Button>
             </div>
           </div>
         </form>
       )}
       {tokens.status === 'loading' && !tokens.data ? <LoadingRows rows={3} /> : null}
-      {turnedOff ? null : <LoadError of={tokens} subject="personal tokens" onRetry={() => void load()} />}
-      {tokens.data?.length === 0 ? <EmptyState title="No personal tokens yet" /> : null}
+      {turnedOff ? null : (
+        <LoadError of={tokens} subject={translate('personal tokens')} onRetry={() => void load()} />
+      )}
+      {tokens.data?.length === 0 ? <EmptyState title={translate('No personal tokens yet')} /> : null}
       {tokens.data && tokens.data.length > 0 ? (
-        <Table label="Personal tokens">
+        <Table label={translate('Personal tokens')}>
           <thead>
             <tr>
-              <Th>Name</Th>
-              <Th>Access</Th>
-              <Th>Created</Th>
-              <Th>Expires</Th>
-              <Th>Last used</Th>
+              <Th>{translate('Name')}</Th>
+              <Th>{translate('Access')}</Th>
+              <Th>{translate('Created')}</Th>
+              <Th>{translate('Expires')}</Th>
+              <Th>{translate('Last used')}</Th>
               <Th>
-                <span className="sr-only">Actions</span>
+                <span className="sr-only">{translate('Actions')}</span>
               </Th>
             </tr>
           </thead>
           <tbody>
             {tokens.data.map((t) => (
               <Tr key={t.kid}>
-                <Td>{t.description || 'Untitled token'}</Td>
+                <Td>{t.description || translate('Untitled token')}</Td>
                 <Td>
                   <Badge tone={t.access === 'full' ? 'warn' : 'neutral'}>{ACCESS_LABEL[t.access]}</Badge>
                 </Td>
                 <Td muted>{formatDate(t.created_at, timeZone)}</Td>
                 <Td muted>{formatDate(t.expires_at, timeZone)}</Td>
-                <Td muted>{t.last_used_at ? formatRelative(t.last_used_at) : 'Never'}</Td>
-                <Td className="text-right">
+                <Td muted>{t.last_used_at ? formatRelative(t.last_used_at) : translate('Never')}</Td>
+                <Td className="text-end">
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => setRevoking({ kid: t.kid, name: t.description || t.kid })}
                   >
-                    Revoke
+                    {translate('Revoke')}
                   </Button>
                 </Td>
               </Tr>
@@ -188,18 +193,18 @@ export function TokensSection() {
       <RevealOnceDialog
         secret={secret}
         onClose={() => setSecret(null)}
-        title="Your new personal token"
-        label="Token"
-        description="Use it as a bearer token in scripts and the CLI."
+        title={translate('Your new personal token')}
+        label={translate('Token')}
+        description={translate('Use it as a bearer token in scripts and the CLI.')}
       />
       <ConfirmDialog
         open={revoking !== null}
         onClose={() => setRevoking(null)}
-        title="Revoke this token?"
+        title={translate('Revoke this token?')}
         objectName={revoking?.name}
         typeToConfirm={revoking?.name}
         effect="Scripts using it will stop working right away. This can't be undone."
-        confirmLabel="Revoke token"
+        confirmLabel={translate('Revoke token')}
         withReason={false}
         onConfirm={async () => {
           if (revoking) await remove(revoking.kid);

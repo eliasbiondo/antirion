@@ -34,6 +34,7 @@ import { testFailure, testSummary } from '../test-result';
 import { AddProviderDrawer } from './add-provider-drawer';
 import { ProviderDrawer } from './provider-drawer';
 import { TestConnection, testGateReason, type TestState } from './test-connection';
+import { translateNow, useTranslate } from '@/lib/i18n';
 
 const STATE_LABEL: Record<string, string> = {
   valid: 'Working',
@@ -111,7 +112,7 @@ function RotateDialog({
         void useProviders.getState().load({ quiet: true });
         setSecret('');
         setTest(null);
-        notify('success', 'API key replaced', `${name} uses the new key now.`);
+        notify('success', 'API key replaced', translateNow('{0} uses the new key now.', name));
       }}
     >
       <Field label="New API key" hint="Stored encrypted and never shown again.">
@@ -174,6 +175,7 @@ export function providerCsvColumns(
  * provider's keys with their state, age and the provider's reported limits.
  */
 export function ProvidersScreen() {
+  const translate = useTranslate();
   const providers = useProviders((s) => s.providers);
   const status = useProviders((s) => s.status);
   const deployments = useProviders((s) => s.deployments);
@@ -225,12 +227,12 @@ export function ProvidersScreen() {
     void runTest(name).then(
       (result) =>
         result.ok
-          ? notify('success', `${name} answered`, testSummary(result))
-          : notify('error', `${name} didn't pass the test`, testFailure(result)),
+          ? notify('success', translateNow('{0} answered', name), testSummary(result))
+          : notify('error', translateNow("{0} didn't pass the test", name), testFailure(result)),
       (e: unknown) =>
         notify(
           'error',
-          `Couldn't test ${name}`,
+          translateNow("Couldn't test {0}", name),
           e instanceof ApiError && e.details[0]?.message ? e.details[0].message : describeError(e),
         ),
     );
@@ -239,8 +241,8 @@ export function ProvidersScreen() {
   return (
     <>
       <PageHeader
-        title="Providers"
-        description="The AI providers the gateway calls, and the keys it uses for each"
+        title={translate('Providers')}
+        description={translate('The AI providers the gateway calls, and the keys it uses for each')}
         actions={
           <Gate operation="createProvider" mode="hide">
             <Button variant="primary" icon="plus" onClick={() => setAdding(true)}>
@@ -417,9 +419,13 @@ export function ProvidersScreen() {
                                 return;
                               }
                               void setEnabled(p.name, true).then(
-                                () => notify('success', `${p.name} turned on`),
+                                () => notify('success', translateNow('{0} turned on', p.name)),
                                 (e: unknown) =>
-                                  notify('error', `Couldn't change ${p.name}`, describeError(e)),
+                                  notify(
+                                    'error',
+                                    translateNow("Couldn't change {0}", p.name),
+                                    describeError(e),
+                                  ),
                               );
                             }}
                           />
@@ -483,12 +489,12 @@ export function ProvidersScreen() {
           if (!turningOff) return;
           const name = turningOff.name;
           await setEnabled(name, false);
-          notify('success', `${name} turned off`, undefined, {
+          notify('success', translateNow('{0} turned off', name), undefined, {
             label: 'Undo',
             onClick: () =>
               void setEnabled(name, true).then(
-                () => notify('success', `${name} turned on`),
-                (e: unknown) => notify('error', `Couldn't change ${name}`, describeError(e)),
+                () => notify('success', translateNow('{0} turned on', name)),
+                (e: unknown) => notify('error', translateNow("Couldn't change {0}", name), describeError(e)),
               ),
           });
         }}

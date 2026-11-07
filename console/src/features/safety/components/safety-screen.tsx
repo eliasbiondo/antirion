@@ -45,6 +45,7 @@ import { HandlingNote, TopicsPanel } from './handling';
 import { ActivityChart, DataFlowPanel, PosturePanel } from './overview-panels';
 import { PiiPanel } from './pii-panel';
 import { type EditorTarget, RuleEditor } from './rule-editor';
+import { useTranslate } from '@/lib/i18n';
 
 const ACTIONS = ['block', 'redact', 'flag', 'divert'] as const;
 const SEVERITIES = ['critical', 'high', 'medium', 'low'] as const;
@@ -588,6 +589,7 @@ type View = 'events' | 'rules' | 'pii' | 'coverage';
 
 /** Safety & PII: what the guardrails redacted, blocked or flagged, each event's detail, and the rules. */
 export function SafetyScreen() {
+  const translate = useTranslate();
   const window = useQueryWindow();
   const events = useSafety((s) => s.events);
   const load = useSafety((s) => s.load);
@@ -646,8 +648,8 @@ export function SafetyScreen() {
   return (
     <>
       <PageHeader
-        title="Safety & PII"
-        description="What the guardrails redacted, blocked or flagged"
+        title={translate('Safety & PII')}
+        description={translate('What the guardrails redacted, blocked or flagged')}
         actions={
           <>
             <UpdatedAt at={events.at} />

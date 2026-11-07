@@ -1,6 +1,6 @@
 import localFont from 'next/font/local';
 
-/** Hanken Grotesk and JetBrains Mono, bundled into the build (no font is fetched at run time). */
+/** Console fonts bundled into the build and served by the gateway. */
 export const hankenGrotesk = localFont({
   src: [
     {
@@ -29,4 +29,14 @@ export const jetbrainsMono = localFont({
   ],
   variable: '--font-jetbrains',
   display: 'swap',
+});
+
+/** Vazir v30.1.0 from rastikerdar/vazirmatn, distributed under the accompanying SIL OFL. */
+export const vazir = localFont({
+  src: './fonts/Vazir-Variable.woff2',
+  weight: '100 900',
+  variable: '--font-vazir',
+  display: 'swap',
+  preload: false,
+  adjustFontFallback: false,
 });

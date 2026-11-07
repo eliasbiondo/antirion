@@ -7,6 +7,7 @@ use serde_json::{Value, json};
 use super::config::{AlertingConfig, Trigger};
 use super::instance::Instance;
 use super::summaries;
+use crate::operators::ConsoleLocale;
 use crate::wording;
 
 /// How an instance reads in a channel's human text: its rule's metric gives the unit of its value
@@ -211,6 +212,37 @@ pub fn email(i: &Instance, phase: Phase, link: Option<&str>, w: Wording<'_>) -> 
     (subject.chars().take(200).collect(), body)
 }
 
+/// The personal notification for a fired alert, in the recipient's language.
+pub(super) fn personal_email(
+    i: &Instance,
+    link: Option<&str>,
+    w: Wording<'_>,
+    locale: ConsoleLocale,
+) -> (String, String) {
+    if locale == ConsoleLocale::English {
+        return email(i, Phase::Fired, link, w);
+    }
+    let severity = locale.severity(&i.severity);
+    let category = locale.category(&i.category);
+    let subject = format!("[Antirion] هشدار {severity}: {}", i.summary);
+    let mut body = format!(
+        "{}\n\nقاعده: {}\nشدت: {severity}\nدسته: {category}\nدامنه: {}\nمقدار: {} (آستانه: {})\nزمان فعال شدن: {}\n",
+        i.summary,
+        i.rule,
+        w.scope(i),
+        w.value(i.value),
+        w.value(i.threshold),
+        i.fired_at,
+    );
+    if let Some(r) = &i.runbook_url {
+        body.push_str(&format!("راهنمای اقدام: {r}\n"));
+    }
+    if let Some(l) = link {
+        body.push_str(&format!("\n{l}\n"));
+    }
+    (subject.chars().take(200).collect(), body)
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
@@ -243,6 +275,26 @@ mod tests {
             impact: Impact::default(),
             timeline: Vec::new(),
         }
+    }
+
+    #[test]
+    fn personal_alerts_follow_the_recipients_language() {
+        let i = instance();
+        let doc = json!({});
+        let words = Wording {
+            doc: &doc,
+            metric: None,
+        };
+        let link = Some("https://c/ui/alerts/a1");
+        let locale = ConsoleLocale::from_preferences(&json!({"locale": "fa-IR"}));
+        let (title, text) = personal_email(&i, link, words, locale);
+        assert!(title.contains("هشدار"));
+        assert!(text.contains("دسته: تأخیر"));
+        assert!(text.contains("https://c/ui/alerts/a1"));
+        assert_eq!(
+            personal_email(&i, link, words, ConsoleLocale::default()),
+            email(&i, Phase::Fired, link, words),
+        );
     }
 
     #[test]

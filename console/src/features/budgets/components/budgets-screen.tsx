@@ -54,6 +54,7 @@ import { type CountedOwner, counterGap, countedSeries } from '../sources';
 import { TeamBurn, TopSpenders } from './team-burn';
 import { LedgerTab } from '@/features/ledger/components/ledger-tab';
 import { monthProjection } from '../projection';
+import { useTranslate } from '@/lib/i18n';
 
 const STATE_FILTERS: StateFilter[] = ['all', 'over', 'at_risk', 'on_pace'];
 
@@ -289,6 +290,7 @@ type View = 'budgets' | 'people' | 'activity' | 'ledger';
 
 /** Budgets: the scope's month, the tree of budgets with forecasts, the top issue, people and the activity. */
 export function BudgetsScreen() {
+  const translate = useTranslate();
   useBudgetsData();
   const counters = useBudgets((s) => s.counters);
   const monthScope = useScope((s) => s.scope);
@@ -400,8 +402,8 @@ export function BudgetsScreen() {
   return (
     <>
       <PageHeader
-        title="Budgets"
-        description="Spending limits, and how this period is tracking"
+        title={translate('Budgets')}
+        description={translate('Spending limits, and how this period is tracking')}
         context={`Day ${day} of ${days} in ${month}`}
         actions={
           <>

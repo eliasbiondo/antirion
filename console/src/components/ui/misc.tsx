@@ -9,6 +9,7 @@ import { useUi } from '@/stores/ui';
 
 import { Button, IconButton } from './button';
 import { Icon } from './icon';
+import { useTranslate } from '@/lib/i18n';
 
 export function Kbd({ children }: { children: ReactNode }) {
   return (
@@ -28,6 +29,7 @@ export function CopyButton({
   label: string;
   children?: ReactNode;
 }) {
+  const translate = useTranslate();
   const [done, setDone] = useState(false);
   async function copy() {
     try {
@@ -42,20 +44,21 @@ export function CopyButton({
     return (
       <IconButton
         icon={done ? 'check' : 'copy'}
-        label={done ? 'Copied' : label}
+        label={done ? translate('Copied') : label}
         onClick={() => void copy()}
         size={14}
       />
     );
   return (
     <Button size="sm" icon={done ? 'check' : 'copy'} onClick={() => void copy()} aria-label={label}>
-      {done ? 'Copied' : children}
+      {done ? translate('Copied') : children}
     </Button>
   );
 }
 
 /** "Copy link" for the current view: every entity has a stable URL. */
 export function CopyLinkButton() {
+  const translate = useTranslate();
   const [done, setDone] = useState(false);
   return (
     <Button
@@ -68,7 +71,7 @@ export function CopyLinkButton() {
         });
       }}
     >
-      {done ? 'Copied' : 'Copy link'}
+      {done ? translate('Copied') : translate('Copy link')}
     </Button>
   );
 }
@@ -138,6 +141,7 @@ export function ColorChip({ color, className }: { color: string | undefined; cla
 
 /** Toasts at the bottom right: what happened, one line of detail, and at most one action. */
 export function Toaster() {
+  const translate = useTranslate();
   const toasts = useUi((s) => s.toasts);
   const dismiss = useUi((s) => s.dismiss);
   const tone = { info: 'text-info', success: 'text-success', warn: 'text-warn', error: 'text-error' };
@@ -157,8 +161,14 @@ export function Toaster() {
             <Icon name={icon[t.tone]} size={16} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-ui font-semibold text-fg">{t.title}</p>
-            {t.detail ? <p className="mt-0.5 text-caption break-words text-muted">{t.detail}</p> : null}
+            <p className="text-ui font-semibold text-fg" dir="auto">
+              {translate(t.title)}
+            </p>
+            {t.detail ? (
+              <p className="mt-0.5 text-caption break-words text-muted" dir="auto">
+                {translate(t.detail)}
+              </p>
+            ) : null}
           </div>
           {t.action ? (
             <Button
@@ -170,10 +180,16 @@ export function Toaster() {
                 dismiss(t.id);
               }}
             >
-              {t.action.label}
+              {translate(t.action.label)}
             </Button>
           ) : null}
-          <IconButton icon="x" label="Dismiss" size={14} onClick={() => dismiss(t.id)} className="h-6 w-6" />
+          <IconButton
+            icon="x"
+            label={translate('Dismiss')}
+            size={14}
+            onClick={() => dismiss(t.id)}
+            className="h-6 w-6"
+          />
         </div>
       ))}
     </div>
@@ -182,9 +198,20 @@ export function Toaster() {
 
 /** "Updated 12 s ago", shown on every live view next to its refresh control. */
 export function UpdatedAt({ at }: { at: number | null }) {
+  const translate = useTranslate();
   const now = useNow(5000);
   if (!at) return null;
   const s = Math.max(0, Math.round((now - at) / 1000));
-  const text = s < 5 ? 'just now' : s < 60 ? `${s} s ago` : `${Math.round(s / 60)} min ago`;
-  return <span className="text-caption whitespace-nowrap text-dim tabular-nums">Updated {text}</span>;
+  const text =
+    s < 5
+      ? translate('just now')
+      : s < 60
+        ? translate('{0} s ago', s)
+        : translate('{0} min ago', Math.round(s / 60));
+  return (
+    <span className="text-caption whitespace-nowrap text-dim tabular-nums">
+      {translate('Updated') + ' '}
+      {text}
+    </span>
+  );
 }

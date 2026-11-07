@@ -21,6 +21,7 @@ import { dataPlaneAddress } from '../fields';
 import { gatewayPaths } from '../form';
 import { useMcp } from '../store';
 import { describeError } from '@/lib/api/client';
+import { translateNow } from '@/lib/i18n';
 
 const NONE: never[] = [];
 
@@ -182,17 +183,24 @@ export function GatewaysTab({
                             () =>
                               notify(
                                 'success',
-                                on ? `${g.name} turned on` : `${g.name} turned off`,
+                                on
+                                  ? translateNow('{0} turned on', g.name)
+                                  : translateNow('{0} turned off', g.name),
                                 undefined,
                                 {
                                   label: 'Undo',
                                   onClick: () =>
                                     void setEnabled(g.name, !on).catch((e: unknown) =>
-                                      notify('error', `Couldn't change ${g.name}`, describeError(e)),
+                                      notify(
+                                        'error',
+                                        translateNow("Couldn't change {0}", g.name),
+                                        describeError(e),
+                                      ),
                                     ),
                                 },
                               ),
-                            (e: unknown) => notify('error', `Couldn't change ${g.name}`, describeError(e)),
+                            (e: unknown) =>
+                              notify('error', translateNow("Couldn't change {0}", g.name), describeError(e)),
                           )
                         }
                       />

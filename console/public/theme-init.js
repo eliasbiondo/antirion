@@ -24,4 +24,17 @@
   root.setAttribute('data-sidebar', prefs.sidebarCollapsed ? 'collapsed' : 'expanded');
   if (prefs.reducedMotion) root.setAttribute('data-motion', 'reduced');
   if (typeof prefs.accentHue === 'number') root.style.setProperty('--ant-accent-h', String(prefs.accentHue));
+  var languages = [prefs.locale].concat(navigator.languages || []);
+  var language = languages
+    .filter(function (tag) {
+      return typeof tag === 'string';
+    })
+    .map(function (tag) {
+      return tag.toLowerCase().split('-')[0];
+    })
+    .find(function (tag) {
+      return tag === 'en' || tag === 'fa';
+    });
+  root.lang = language || 'en';
+  root.dir = language === 'fa' ? 'rtl' : 'ltr';
 })();

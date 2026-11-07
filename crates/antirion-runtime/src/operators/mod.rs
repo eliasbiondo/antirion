@@ -5,6 +5,7 @@
 
 mod checks;
 mod factors;
+mod locale;
 pub mod mail;
 mod password;
 mod records;
@@ -26,6 +27,7 @@ use serde_json::Value;
 
 pub use checks::{InvitationCheck, ResetCheck, TokenState};
 pub use factors::{Factor, Proof};
+pub use locale::ConsoleLocale;
 pub use mail::{Mailer, Outgoing};
 pub use records::Invitation;
 pub use settings::{ConsoleSettings, DeviceAuthorization, FactorKind, MailSettings, TrustedDevice};

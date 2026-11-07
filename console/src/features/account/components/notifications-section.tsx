@@ -9,8 +9,10 @@ import { api } from '@/lib/api/client';
 import { formatRelative } from '@/lib/time';
 import { notify } from '@/stores/ui';
 import { usePermission } from '@/components/ui/gate';
+import { saveNotificationPreferences } from '@/stores/preferences';
 
 import { type BrowserPush, browserPush, ownSubscription, pushApi, type PushSubscriptionView } from '../push';
+import { useTranslate } from '@/lib/i18n';
 
 type Digest = 'off' | 'daily' | 'weekly';
 type Channel = 'email' | 'push';
@@ -118,12 +120,15 @@ function usePush() {
 }
 
 function BrowsersPanel({ push }: { push: ReturnType<typeof usePush> }) {
+  const translate = useTranslate();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
   const { subs, key, here, reload } = push;
   if (push.error) {
     if (isUnavailable(push.error)) return null;
-    return <ErrorState error={push.error} subject="push notifications" size="sm" onRetry={reload} />;
+    return (
+      <ErrorState error={push.error} subject={translate('push notifications')} size="sm" onRetry={reload} />
+    );
   }
   if (!subs) return <LoadingRows rows={2} />;
 
@@ -146,15 +151,17 @@ function BrowsersPanel({ push }: { push: ReturnType<typeof usePush> }) {
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-col">
-          <span className="text-body font-semibold text-fg">Browsers that get push notifications</span>
+          <span className="text-body font-semibold text-fg">
+            {translate('Browsers that get push notifications')}
+          </span>
           <span className="text-caption text-muted">
             {here.state === 'unsupported'
-              ? 'This browser cannot receive notifications from the console.'
+              ? translate('This browser cannot receive notifications from the console.')
               : here.state === 'denied'
-                ? 'Notifications are blocked for this site in this browser’s settings.'
+                ? translate('Notifications are blocked for this site in this browser’s settings.')
                 : here.state === 'on'
-                  ? 'This browser gets them.'
-                  : 'This browser does not get them yet.'}
+                  ? translate('This browser gets them.')
+                  : translate('This browser does not get them yet.')}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -168,13 +175,15 @@ function BrowsersPanel({ push }: { push: ReturnType<typeof usePush> }) {
                   const sent = r.results.filter((x) => x.ok).length;
                   notify(
                     sent === r.results.length ? 'success' : 'warn',
-                    sent === r.results.length ? 'Test notification sent' : 'Some browsers did not get it',
-                    `${sent} of ${r.results.length}`,
+                    sent === r.results.length
+                      ? translate('Test notification sent')
+                      : translate('Some browsers did not get it'),
+                    translate('{0} of {1}', sent, r.results.length),
                   );
                 })
               }
             >
-              Send a test
+              {translate('Send a test')}
             </Button>
           ) : null}
           {here.state === 'off' && key ? (
@@ -185,11 +194,11 @@ function BrowsersPanel({ push }: { push: ReturnType<typeof usePush> }) {
               onClick={() =>
                 void run('on', async () => {
                   await pushApi.turnOn(key);
-                  notify('success', 'Push notifications are on in this browser');
+                  notify('success', translate('Push notifications are on in this browser'));
                 })
               }
             >
-              Turn on in this browser
+              {translate('Turn on in this browser')}
             </Button>
           ) : null}
           {here.state === 'on' ? (
@@ -198,23 +207,23 @@ function BrowsersPanel({ push }: { push: ReturnType<typeof usePush> }) {
               busy={busy === 'off'}
               onClick={() => void run('off', () => pushApi.turnOff(mine?.id ?? null))}
             >
-              Turn off in this browser
+              {translate('Turn off in this browser')}
             </Button>
           ) : null}
         </div>
       </div>
       <InlineError error={error} />
       {subs.length === 0 ? (
-        <EmptyState size="sm" title="No browser gets your notifications yet" />
+        <EmptyState size="sm" title={translate('No browser gets your notifications yet')} />
       ) : (
-        <ul aria-label="Browsers that get push notifications" className="flex flex-col">
+        <ul aria-label={translate('Browsers that get push notifications')} className="flex flex-col">
           {subs.map((s) => (
             <li key={s.id} className="flex items-center gap-3 border-t border-line py-2 first:border-t-0">
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-ui text-fg">
-                  {s.device ?? 'Browser'}
+                  {s.device ?? translate('Browser')}
                   {mine?.id === s.id ? (
-                    <span className="text-caption text-muted"> · this browser</span>
+                    <span className="text-caption text-muted">{' ' + translate('· this browser')}</span>
                   ) : null}
                 </span>
                 <span className="mono truncate text-caption text-muted">
@@ -223,13 +232,13 @@ function BrowsersPanel({ push }: { push: ReturnType<typeof usePush> }) {
                   {s.last_error
                     ? s.last_error
                     : s.last_success_at
-                      ? `last delivered ${formatRelative(s.last_success_at)}`
-                      : `added ${formatRelative(s.created_at)}`}
+                      ? translate('last delivered {0}', formatRelative(s.last_success_at))
+                      : translate('added {0}', formatRelative(s.created_at))}
                 </span>
               </span>
               <IconButton
                 icon="trash"
-                label={`Remove ${s.device ?? 'this browser'}`}
+                label={translate('Remove {0}', s.device ?? 'this browser')}
                 onClick={() => void run(`rm-${s.id}`, () => pushApi.remove(s.id).then(() => undefined))}
               />
             </li>
@@ -242,6 +251,7 @@ function BrowsersPanel({ push }: { push: ReturnType<typeof usePush> }) {
 
 /** Personal notifications: digest frequency, email and browser push per alert severity and category. */
 export function NotificationsSection() {
+  const translate = useTranslate();
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [error, setError] = useState<unknown>(null);
@@ -261,8 +271,10 @@ export function NotificationsSection() {
   if (!canAlerts)
     return (
       <EmptyState
-        title="No alerts to notify you about"
-        description="Your role doesn't include alerts. Ask a gateway admin if you should get them."
+        title={translate('No alerts to notify you about')}
+        description={translate(
+          "Your role doesn't include alerts. Ask a gateway admin if you should get them.",
+        )}
       />
     );
 
@@ -270,7 +282,7 @@ export function NotificationsSection() {
     return (
       <ErrorState
         error={loadError}
-        subject="notification settings"
+        subject={translate('notification settings')}
         onRetry={() => window.location.reload()}
       />
     );
@@ -281,14 +293,13 @@ export function NotificationsSection() {
     setBusy(true);
     setError(null);
     try {
-      const existing = await api.get('/auth/me/preferences');
       const notifications: Record<string, unknown> = {
         digest: current.digest,
         email: written(current.email),
       };
       if (pushOffered) notifications.push = written(current.push);
-      await api.put('/auth/me/preferences', { body: { ...existing, notifications } });
-      notify('success', 'Notification settings saved');
+      await saveNotificationPreferences(notifications);
+      notify('success', translate('Notification settings saved'));
     } catch (e) {
       setError(e);
     } finally {
@@ -306,9 +317,9 @@ export function NotificationsSection() {
     <tr key={`${member}-${value}`}>
       <th
         scope="row"
-        className={`py-2 text-left font-normal text-fg ${first ? 'border-t border-line-strong' : 'border-t border-line'}`}
+        className={`py-2 text-start font-normal text-fg ${first ? 'border-t border-line-strong' : 'border-t border-line'}`}
       >
-        {label}
+        {translate(label)}
       </th>
       {channels.map((ch) => (
         <td
@@ -317,7 +328,11 @@ export function NotificationsSection() {
         >
           <span className="inline-flex justify-center">
             <Checkbox
-              aria-label={`${CHANNEL_LABEL[ch]}: ${label.toLowerCase()} alerts`}
+              aria-label={translate(
+                '{0}: {1} alerts',
+                translate(CHANNEL_LABEL[ch]),
+                translate(label).toLowerCase(),
+              )}
               checked={prefs[ch][member].includes(value)}
               onChange={() => set(ch, member, value)}
             />
@@ -329,34 +344,34 @@ export function NotificationsSection() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Field label="Email digest" hint="A summary of alerts in your scope.">
+      <Field label={translate('Email digest')} hint={translate('A summary of alerts in your scope.')}>
         <Segmented<Digest>
-          label="Email digest"
+          label={translate('Email digest')}
           value={prefs.digest}
           onChange={(digest) => setPrefs({ ...prefs, digest })}
           options={[
-            { value: 'off', label: 'Off' },
-            { value: 'daily', label: 'Daily' },
-            { value: 'weekly', label: 'Weekly' },
+            { value: 'off', label: translate('Off') },
+            { value: 'daily', label: translate('Daily') },
+            { value: 'weekly', label: translate('Weekly') },
           ]}
         />
       </Field>
       <div className="min-w-0 overflow-x-auto">
         <table className="w-full border-separate border-spacing-0 text-ui">
-          <caption className="mb-2 text-left text-body font-semibold text-fg">
-            Tell me about each alert
+          <caption className="mb-2 text-start text-body font-semibold text-fg">
+            {translate('Tell me about each alert')}
             <span className="block text-caption font-normal text-muted">
-              An alert is sent when both its severity and its category are chosen.
+              {translate('An alert is sent when both its severity and its category are chosen.')}
             </span>
           </caption>
           <thead>
             <tr>
-              <th scope="col" className="py-1.5 text-left text-caption font-medium text-muted">
-                Severity and category
+              <th scope="col" className="py-1.5 text-start text-caption font-medium text-muted">
+                {translate('Severity and category')}
               </th>
               {channels.map((ch) => (
                 <th key={ch} scope="col" className="w-20 py-1.5 text-caption font-medium text-muted">
-                  {CHANNEL_LABEL[ch]}
+                  {translate(CHANNEL_LABEL[ch])}
                 </th>
               ))}
             </tr>
@@ -368,13 +383,15 @@ export function NotificationsSection() {
         </table>
       </div>
       <p className="text-caption text-muted">
-        Only alerts you can see are sent. On-call channels for the whole team are set up on the Alerts screen.
+        {translate(
+          'Only alerts you can see are sent. On-call channels for the whole team are set up on the Alerts screen.',
+        )}
       </p>
       <div className="flex flex-col gap-3">
         <InlineError error={error} />
         <div>
           <Button variant="primary" busy={busy} onClick={() => void save(prefs)}>
-            Save notification settings
+            {translate('Save notification settings')}
           </Button>
         </div>
       </div>
