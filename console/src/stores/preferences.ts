@@ -188,14 +188,42 @@ function fromServer(p: ServerPreferences): Partial<PreferenceValues> {
 }
 
 let pushTimer: ReturnType<typeof setTimeout> | null = null;
-let serverSync = false;
+let syncedUser: string | null = null;
+let pendingWrite = Promise.resolve();
+
+function currentUser(): string | null {
+  const principal = useSession.getState().me?.principal;
+  return principal?.type === 'user' ? principal.id : null;
+}
+
+/** Serialize changes made by the display and notification panels in this browser. */
+function writeServerPreferences(edit: (current: ServerPreferences) => ServerPreferences): Promise<void> {
+  const user = currentUser();
+  const write = pendingWrite.then(async () => {
+    if (!user || currentUser() !== user) return;
+    const current = await api.get('/auth/me/preferences');
+    if (currentUser() !== user) return;
+    await api.put('/auth/me/preferences', { body: edit(current) });
+  });
+  pendingWrite = write.catch(() => undefined);
+  return write;
+}
+
+export function saveNotificationPreferences(notifications: Record<string, unknown>): Promise<void> {
+  return writeServerPreferences((current) => ({ ...current, notifications }));
+}
 
 function schedulePush(values: PreferenceValues): void {
-  if (!serverSync) return;
+  const user = syncedUser;
+  if (!user || currentUser() !== user) return;
   if (pushTimer) clearTimeout(pushTimer);
   pushTimer = setTimeout(() => {
-    api.put('/auth/me/preferences', { body: toServer(values) }).catch(() => {
-      serverSync = false;
+    if (currentUser() !== user) return;
+    writeServerPreferences((current) => ({
+      ...toServer(values),
+      ...(current.notifications ? { notifications: current.notifications } : {}),
+    })).catch(() => {
+      if (syncedUser === user) syncedUser = null;
     });
   }, 800);
 }
@@ -256,16 +284,18 @@ export const usePreferences = create<PreferencesState>()(
       },
       async pull() {
         // Admin tokens have no account to keep preferences: the gateway would answer 403 and log it.
-        if (useSession.getState().me?.principal.type !== 'user') {
-          serverSync = false;
+        const user = currentUser();
+        if (!user) {
+          syncedUser = null;
           return;
         }
         try {
           const prefs = await api.get('/auth/me/preferences');
+          if (currentUser() !== user) return;
           set(fromServer(prefs));
-          serverSync = true;
+          syncedUser = user;
         } catch {
-          serverSync = false;
+          if (syncedUser === user) syncedUser = null;
         }
       },
     }),

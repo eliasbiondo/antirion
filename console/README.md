@@ -348,8 +348,17 @@ The invitation and reset pages read their link with `:check` before showing a pa
 this browser for N days" appears only while `login_options.trusted_device.enabled`, under the single
 sign-on buttons (OpenID providers only, sent as `trust_device=true`) and on the second-factor step.
 A gateway with `setup_required` opens on the bootstrap token. The photo is a small `data:` image in
-`ui.photo` of the preferences (`features/account/photo.ts`); the language is the `locale`
-preference over the catalog in `features/account/i18n` (English is the only translation so far).
+`ui.photo` of the preferences (`features/account/photo.ts`). The `locale` preference can select
+English or Persian, or follow the browser. `lib/locale.ts` resolves regional tags and supplies the
+document direction. Shared Persian copy lives in `lib/i18n/fa.ts`; `useTranslate` accepts English
+source text and interpolates values supplied separately. Keep resource names, protocol values and
+diagnostic details in their original form.
+
+The sign-in page stores the language in the browser. Signed-in users can save it to their account
+in **Preferences**. The gateway uses that saved language for personal alert emails, browser push,
+digests and account emails where the recipient has an account preference. Messages to external
+alert channels retain their existing format.
+
 Trusted browsers are the sessions with `trusted: true`; forgetting one ends it. Notifications store each
 channel's choice as the gateway reads it (`notifications.email` and `.push`: `{severities, categories}`, no
 categories meaning all). Browser push (`features/account/push.ts`) registers `public/push-worker.js`, a

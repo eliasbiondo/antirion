@@ -11,6 +11,7 @@ import { Icon } from '@/components/ui/icon';
 import { Portal, useBackdropClose, useFocusTrap } from '@/components/ui/overlay';
 import { cn } from '@/lib/cn';
 import { useMediaQuery } from '@/lib/hooks';
+import { useTranslate } from '@/lib/i18n';
 import { Forbidden } from '@/components/ui/gate';
 import { navAllowed, SETTINGS_PARAM } from '@/lib/nav';
 import { scopeOrganization, useScope } from '@/stores/scope';
@@ -41,12 +42,13 @@ function SectionNav({
   groups: typeof SETTINGS_GROUPS;
   onSelect: (id: string) => void;
 }) {
+  const translate = useTranslate();
   return (
-    <nav aria-label="Settings sections" className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
+    <nav aria-label={translate('Settings sections')} className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
       {groups.map((g) => (
         <div key={g.label || 'last'} className="pb-1.5">
           {g.label ? (
-            <h3 className="mx-2.5 mt-3 mb-1 text-caption font-medium text-dim">{g.label}</h3>
+            <h3 className="mx-2.5 mt-3 mb-1 text-caption font-medium text-dim">{translate(g.label)}</h3>
           ) : (
             <div className="mx-2.5 my-2.5 border-t border-line" />
           )}
@@ -61,7 +63,7 @@ function SectionNav({
                     data-autofocus={on ? true : undefined}
                     onClick={() => onSelect(s.id)}
                     className={cn(
-                      'flex h-[30px] w-full items-center gap-2.5 rounded-sm px-2.5 text-left text-body transition-colors',
+                      'flex h-[30px] w-full items-center gap-2.5 rounded-sm px-2.5 text-start text-body transition-colors',
                       on ? 'bg-accent-dim font-medium text-fg' : 'text-muted hover:bg-hover hover:text-fg',
                       s.id === 'danger' && !on && 'text-error',
                     )}
@@ -69,7 +71,7 @@ function SectionNav({
                     <span className={on ? 'text-accent' : s.id === 'danger' ? 'text-error' : 'text-muted'}>
                       <Icon name={s.icon} size={16} />
                     </span>
-                    {s.label}
+                    {translate(s.label)}
                   </button>
                 </li>
               );
@@ -88,6 +90,7 @@ function SectionNav({
  * the dialog closes or another section opens.
  */
 export function SettingsDialog() {
+  const translate = useTranslate();
   const [param, setParam] = useQueryParam(SETTINGS_PARAM);
   const router = useRouter();
   const pathname = usePathname();
@@ -122,8 +125,9 @@ export function SettingsDialog() {
 
   if (!open) return null;
 
-  const title = 'Gateway settings';
-  const forWhom = section ? settingsScopeWords(section.id, scope) : '';
+  const title = translate('Gateway settings');
+  const sectionTitle = section ? translate(section.label) : title;
+  const forWhom = section ? settingsScopeWords(section.id, scope, translate) : '';
 
   return (
     <Portal>
@@ -154,23 +158,23 @@ export function SettingsDialog() {
                     {forWhom}
                   </p>
                 </div>
-                <IconButton icon="x" label="Close settings" onClick={() => go(null)} />
+                <IconButton icon="x" label={translate('Close settings')} onClick={() => go(null)} />
               </div>
               <Select
-                aria-label="Section"
+                aria-label={translate('Section')}
                 data-autofocus
                 value={section?.id ?? ''}
                 onChange={(v) => go(v)}
                 options={groups.flatMap((g) =>
                   g.sections.map((s) => ({
                     value: s.id,
-                    label: g.label ? `${g.label}: ${s.label}` : s.label,
+                    label: g.label ? `${translate(g.label)}: ${translate(s.label)}` : translate(s.label),
                   })),
                 )}
               />
             </div>
           ) : (
-            <aside className="flex w-[232px] shrink-0 flex-col border-r border-line bg-canvas">
+            <aside className="flex w-[232px] shrink-0 flex-col border-e border-line bg-canvas">
               <div className="shrink-0 px-4.5 pt-4 pb-1">
                 <h2 id="settings-dialog-title" className="text-title font-semibold text-fg">
                   {title}
@@ -183,7 +187,7 @@ export function SettingsDialog() {
               {unsaved ? (
                 <p className="flex shrink-0 items-center gap-1.5 border-t border-line px-4.5 py-2.5 text-caption text-warn">
                   <Icon name="alertCircle" size={14} />
-                  Unsaved changes
+                  {translate('Unsaved changes')}
                 </p>
               ) : null}
             </aside>
@@ -191,14 +195,14 @@ export function SettingsDialog() {
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             <header className="flex shrink-0 items-start justify-between gap-4 border-b border-line px-6 py-3.5 max-md:px-gutter-sm">
               <div className="min-w-0">
-                <h3 className="text-page font-semibold tracking-[-0.01em] text-fg">
-                  {section?.label ?? title}
-                </h3>
+                <h3 className="text-page font-semibold tracking-[-0.01em] text-fg">{sectionTitle}</h3>
                 {section?.description ? (
-                  <p className="mt-0.5 text-ui text-muted">{section.description}</p>
+                  <p className="mt-0.5 text-ui text-muted">{translate(section.description)}</p>
                 ) : null}
               </div>
-              {phone ? null : <IconButton icon="x" label="Close settings" onClick={() => go(null)} />}
+              {phone ? null : (
+                <IconButton icon="x" label={translate('Close settings')} onClick={() => go(null)} />
+              )}
             </header>
             <div data-settings-body className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-canvas">
               {section ? (
@@ -218,8 +222,11 @@ export function SettingsDialog() {
         title="Discard changes?"
         effect={
           pending?.next === null
-            ? `Your edits in ${section?.label ?? title} aren't saved. Closing Settings discards them.`
-            : `Your edits in ${section?.label ?? title} aren't saved. Opening another section discards them.`
+            ? translate("Your edits in {0} aren't saved. Closing Settings discards them.", sectionTitle)
+            : translate(
+                "Your edits in {0} aren't saved. Opening another section discards them.",
+                sectionTitle,
+              )
         }
         confirmLabel="Discard"
         cancelLabel="Keep editing"

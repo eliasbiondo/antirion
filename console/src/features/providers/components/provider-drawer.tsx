@@ -53,6 +53,7 @@ import { api, ApiError, describeError, isChangeControl } from '@/lib/api/client'
 import { DeploymentDrawer } from '@/features/models/components/deployment-drawer';
 import { collectLeaves } from '@/features/models/types';
 import { hasGatewayPermission, useSession } from '@/stores/session';
+import { translateNow } from '@/lib/i18n';
 
 /** The deployments a Model routes to (its target or route, followed into shared routes). */
 function useUsedDeployments(open: boolean): Set<string> | null {
@@ -371,9 +372,10 @@ function KeyCard({
                 .then(
                   (r) =>
                     r.ok
-                      ? notify('success', `${row.name} answered`, testSummary(r))
-                      : notify('error', `${row.name} didn't pass the test`, testFailure(r)),
-                  (e: unknown) => notify('error', `Couldn't test ${row.name}`, describeError(e)),
+                      ? notify('success', translateNow('{0} answered', row.name), testSummary(r))
+                      : notify('error', translateNow("{0} didn't pass the test", row.name), testFailure(r)),
+                  (e: unknown) =>
+                    notify('error', translateNow("Couldn't test {0}", row.name), describeError(e)),
                 )
                 .finally(() => setTesting(false));
             }}
@@ -388,7 +390,8 @@ function KeyCard({
             onClick={() =>
               void resetKey(provider, row.name).then(
                 () => notify('success', 'Key back in use', `${provider} · ${row.name}`),
-                (e: unknown) => notify('error', `Couldn't reset ${row.name}`, describeError(e)),
+                (e: unknown) =>
+                  notify('error', translateNow("Couldn't reset {0}", row.name), describeError(e)),
               )
             }
           >

@@ -24,6 +24,7 @@ import { STATE_LABEL, stateTone } from '../describe';
 import { useChangeRequests } from '../store';
 import { ChangeControlNotice } from './change-control-notice';
 import { ChangeRequestDetail } from './change-request-detail';
+import { useTranslate } from '@/lib/i18n';
 
 type View = 'pending' | 'closed' | 'all';
 
@@ -72,6 +73,7 @@ function Row({ cr }: { cr: ChangeRequest }) {
 
 /** Change requests: changes waiting for a second person, and what became of the others. */
 export function ChangeRequestsScreen() {
+  const translate = useTranslate();
   const canRead = usePermission('config:read');
   const list = useChangeRequests((s) => s.list);
   const load = useChangeRequests((s) => s.load);
@@ -109,8 +111,8 @@ export function ChangeRequestsScreen() {
   return (
     <>
       <PageHeader
-        title="Change requests"
-        description="Changes waiting for a second person, and what became of the others"
+        title={translate('Change requests')}
+        description={translate('Changes waiting for a second person, and what became of the others')}
         actions={
           <>
             <UpdatedAt at={list.at} />

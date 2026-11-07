@@ -8,6 +8,7 @@ import { IconButton } from './button';
 import { Icon } from './icon';
 import { MenuButton, type MenuItem } from './menu';
 import { Tooltip } from './tooltip';
+import { useTranslate } from '@/lib/i18n';
 
 export interface SavedView {
   id: string;
@@ -50,6 +51,7 @@ export function SavedViews({
   label = 'Saved views',
   className,
 }: SavedViewsProps) {
+  const translate = useTranslate();
   const ordered = [...views.filter((v) => v.starred), ...views.filter((v) => !v.starred)];
   return (
     <nav aria-label={label} className={cn('px-2 py-2', className)}>
@@ -73,7 +75,7 @@ export function SavedViews({
                 <IconButton
                   icon={v.starred ? 'starFilled' : 'star'}
                   size={14}
-                  label={v.starred ? `Unstar ${v.name}` : `Star ${v.name}`}
+                  label={v.starred ? translate('Unstar {0}', v.name) : translate('Star {0}', v.name)}
                   aria-pressed={v.starred}
                   className={cn(
                     'ml-0.5 h-6 w-6 shrink-0 hover:bg-transparent',
@@ -97,7 +99,7 @@ export function SavedViews({
                     name={v.starred ? 'starFilled' : 'star'}
                     size={14}
                     className={cn('shrink-0', v.starred ? 'text-star' : v.active ? 'text-muted' : 'text-dim')}
-                    label={v.starred ? 'Starred' : undefined}
+                    label={v.starred ? translate('Starred') : undefined}
                   />
                 )}
                 <span className="flex min-w-0 flex-1 flex-col">
@@ -109,14 +111,14 @@ export function SavedViews({
                 {v.shared ? (
                   <Tooltip content="Shared with the organization">
                     <span className="flex shrink-0">
-                      <Icon name="users" size={12} className="text-dim" label="Shared" />
+                      <Icon name="users" size={12} className="text-dim" label={translate('Shared')} />
                     </span>
                   </Tooltip>
                 ) : null}
               </button>
               {items.length > 0 ? (
                 <span className="shrink-0 opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100 [&_button]:h-6 [&_button]:w-6">
-                  <MenuButton items={items} iconOnly label={`Actions for ${v.name}`} />
+                  <MenuButton items={items} iconOnly label={translate('Actions for {0}', v.name)} />
                 </span>
               ) : null}
             </li>

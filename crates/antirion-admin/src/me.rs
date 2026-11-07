@@ -108,13 +108,16 @@ pub(crate) async fn patch(call: &Call) -> Result<Response, AdminError> {
                 crate::oidc::own_origin(&call.rt, &call.headers),
                 call.rt.statics.ui.path
             );
-            call.rt.send_mail(
-                e,
-                "Confirm your new email address",
+            let locale = call.rt.console_locale(&user).await;
+            let subject = locale.pick("Confirm your new email address", "تأیید نشانی ایمیل جدید");
+            let body = if locale.tag() == "fa" {
+                format!("نشانی ایمیل حساب پنل را تأیید کنید: {e}\n{base}/confirm-email?token={token}\n")
+            } else {
                 format!(
                     "Confirm {e} as the email address of your console account:\n{base}/confirm-email?token={token}\n"
-                ),
-            );
+                )
+            };
+            call.rt.send_mail(e, subject, body);
         } else {
             direct_email = Some(e.clone());
         }

@@ -34,6 +34,7 @@ import { fromPerMillion, toPerMillion } from '../catalog';
 import { useEffectivePrice } from '../hooks';
 import { addModel, useCatalog, useModels } from '../store';
 import { BUILTIN_TIERS, rate, tierLabel } from '../types';
+import { translateNow } from '@/lib/i18n';
 
 const TIER_HINTS: Record<string, string> = {
   frontier: 'The most capable models',
@@ -260,7 +261,7 @@ export function AddModelDrawer({
               }
             : null,
       });
-      notify('success', 'Model added', `Apps can call it as ${v.name}.`);
+      notify('success', 'Model added', translateNow('Apps can call it as {0}.', v.name));
       onAdded(v.name);
       setValues(EMPTY_ADD_MODEL);
       setPrefilled(null);

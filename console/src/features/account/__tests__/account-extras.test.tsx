@@ -1,9 +1,11 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 
 import type { Me, Session } from '@/lib/api/types';
+import { PreferencesApplier } from '@/components/layout/preferences-applier';
+import { resolveLocale } from '@/lib/locale';
 import { emptySlot } from '@/lib/slot';
 import { server } from '@/mocks/node';
 import { usePreferences } from '@/stores/preferences';
@@ -13,7 +15,6 @@ import { pickOption } from '@/test/utils';
 
 import { AccountDialog } from '../components/account-dialog';
 import { describeLocation } from '../describe';
-import { resolveLocale } from '../i18n';
 import { PhotoError, shrinkPhoto } from '../photo';
 import { useAccount } from '../store';
 
@@ -57,6 +58,8 @@ describe('account extras', () => {
   it('resolves the language from the preference, then the browser, else English', () => {
     expect(resolveLocale('en-GB').tag).toBe('en');
     expect(resolveLocale(null, ['pt-BR', 'en-US']).tag).toBe('en');
+    expect(resolveLocale(null, ['pt-BR', 'fa-IR'])).toMatchObject({ tag: 'fa', direction: 'rtl' });
+    expect(resolveLocale('en', ['fa-IR']).tag).toBe('en');
     expect(resolveLocale('xx').tag).toBe('en');
   });
 
@@ -157,6 +160,20 @@ describe('account extras', () => {
     await pickOption(within(dialog).getByLabelText('Language'), 'English');
     expect(usePreferences.getState().locale).toBe('en');
   });
+
+  it('selects Persian, switches the page direction and can return to English', async () => {
+    open('preferences');
+    render(<PreferencesApplier />);
+    await pickOption(await screen.findByLabelText('Language'), 'فارسی');
+    expect(usePreferences.getState().locale).toBe('fa');
+    expect(screen.getByRole('dialog', { name: 'حساب کاربری' })).toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute('lang', 'fa');
+    expect(document.documentElement).toHaveAttribute('dir', 'rtl');
+
+    await pickOption(screen.getByLabelText('زبان'), 'English');
+    expect(screen.getByRole('dialog', { name: 'Account' })).toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute('dir', 'ltr');
+  });
 });
 
 describe('personal notifications', () => {
@@ -204,5 +221,25 @@ describe('personal notifications', () => {
     await waitFor(() =>
       expect(useUi.getState().toasts.map((t) => t.title)).toContain('Test notification sent'),
     );
+  });
+
+  it('saves a language change without resetting the account notification choices', async () => {
+    const notifications = { digest: 'weekly', email: { severities: ['warning'], categories: [] } };
+    const writes: unknown[] = [];
+    server.use(
+      http.get('*/admin/v1/auth/me/preferences', () => HttpResponse.json({ notifications })),
+      http.put('*/admin/v1/auth/me/preferences', async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        writes.push(body);
+        return HttpResponse.json(body);
+      }),
+    );
+    open('preferences');
+    await act(() => usePreferences.getState().pull());
+    await pickOption(screen.getByLabelText('Language'), 'فارسی');
+    await waitFor(() => expect(writes).toEqual([expect.objectContaining({ locale: 'fa', notifications })]), {
+      timeout: 3000,
+    });
+    await act(() => usePreferences.setState({ locale: null }));
   });
 });

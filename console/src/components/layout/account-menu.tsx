@@ -15,6 +15,7 @@ import { highestRole, navHolds, useSession } from '@/stores/session';
 import { scopeOrganization, useScope } from '@/stores/scope';
 
 import { useOpenSettings, useQueryParam } from './url-sync';
+import { useTranslate } from '@/lib/i18n';
 
 function principalName(me: ReturnType<typeof useSession.getState>['me']): {
   name: string;
@@ -48,6 +49,7 @@ function sessionLeft(seconds: number): string {
 /** The avatar menu: who is signed in, the session's remaining time, account sections, the gateway's
  * settings, the Admin API reference and sign out. The theme lives in Preferences and the top bar's toggle. */
 export function AccountMenu() {
+  const translate = useTranslate();
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const me = useSession((s) => s.me);
@@ -67,12 +69,12 @@ export function AccountMenu() {
   // A token principal has no profile, factors, personal tokens or notifications of its own.
   const items: { icon: IconName; label: string; section: string }[] = isUser
     ? [
-        { icon: 'users', label: 'Profile and preferences', section: 'profile' },
-        { icon: 'lock', label: 'Security', section: 'security' },
-        { icon: 'key', label: 'Personal tokens', section: 'tokens' },
-        { icon: 'bell', label: 'Notifications', section: 'notifications' },
+        { icon: 'users', label: translate('Profile and preferences'), section: 'profile' },
+        { icon: 'lock', label: translate('Security'), section: 'security' },
+        { icon: 'key', label: translate('Personal tokens'), section: 'tokens' },
+        { icon: 'bell', label: translate('Notifications'), section: 'notifications' },
       ]
-    : [{ icon: 'sliders', label: 'Preferences', section: 'preferences' }];
+    : [{ icon: 'sliders', label: translate('Preferences'), section: 'preferences' }];
 
   return (
     <div className="relative ml-1">
@@ -81,7 +83,7 @@ export function AccountMenu() {
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`Account menu for ${who.name}`}
+        aria-label={translate('Account menu for {0}', who.name)}
         onClick={() => setOpen(!open)}
         className="rounded-full border border-transparent p-0.5 hover:border-line hover:bg-hover aria-expanded:border-accent"
       >
@@ -92,7 +94,7 @@ export function AccountMenu() {
         onClose={() => setOpen(false)}
         anchor={anchor}
         align="right"
-        label="Account"
+        label={translate('Account')}
         role="menu"
         className="w-[300px] p-1"
       >
@@ -115,7 +117,7 @@ export function AccountMenu() {
               </div>
             </div>
           </div>
-          <div className="px-2.5 pt-1.5 pb-1 text-caption font-medium text-dim">Account</div>
+          <div className="px-2.5 pt-1.5 pb-1 text-caption font-medium text-dim">{translate('Account')}</div>
           {items.map((item) => (
             <button
               key={item.section}
@@ -126,7 +128,7 @@ export function AccountMenu() {
                 setOpen(false);
                 setAccount(item.section);
               }}
-              className="flex w-full items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-left text-ui text-fg hover:bg-hover focus:bg-hover"
+              className="flex w-full items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-start text-ui text-fg hover:bg-hover focus:bg-hover"
             >
               <span className="text-muted">
                 <Icon name={item.icon} size={16} />
@@ -145,12 +147,12 @@ export function AccountMenu() {
                 setOpen(false);
                 openSettings();
               }}
-              className="flex w-full items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-left text-ui text-fg hover:bg-hover focus:bg-hover"
+              className="flex w-full items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-start text-ui text-fg hover:bg-hover focus:bg-hover"
             >
               <span className="text-muted">
                 <Icon name="settings" size={16} />
               </span>
-              Gateway settings
+              {translate('Gateway settings')}
             </button>
           ) : null}
           {/* The contract of every admin call, for scripts and integrations; the session cookie reads it. */}
@@ -160,13 +162,13 @@ export function AccountMenu() {
             target="_blank"
             rel="noreferrer"
             onClick={() => setOpen(false)}
-            className="flex w-full items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-left text-ui text-fg hover:bg-hover focus:bg-hover"
+            className="flex w-full items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-start text-ui text-fg hover:bg-hover focus:bg-hover"
           >
             <span className="text-muted">
               <Icon name="book" size={16} />
             </span>
-            Admin API reference
-            <span className="ml-auto text-dim">
+            {translate('Admin API reference')}
+            <span className="ms-auto text-dim">
               <Icon name="external" size={14} />
             </span>
           </a>
@@ -177,17 +179,21 @@ export function AccountMenu() {
               setOpen(false);
               void signOut().finally(() => router.replace('/login/'));
             }}
-            className="flex w-full items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-left text-ui text-fg hover:bg-hover focus:bg-hover"
+            className="flex w-full items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-start text-ui text-fg hover:bg-hover focus:bg-hover"
           >
             <span className="text-muted">
               <Icon name="logout" size={16} />
             </span>
-            Sign out
+            {translate('Sign out')}
           </button>
           <div className="flex justify-between gap-2 border-t border-line px-2.5 pt-2 pb-1.5 text-caption text-muted">
-            <span className="truncate">{scope.kind === 'gateway' ? 'All organizations' : scope.name}</span>
+            <span className="truncate">
+              {scope.kind === 'gateway' ? translate('All organizations') : scope.name}
+            </span>
             <span className="whitespace-nowrap">
-              {remaining === null ? 'Signed in with a token' : `Session ends in ${sessionLeft(remaining)}`}
+              {remaining === null
+                ? translate('Signed in with a token')
+                : translate('Session ends in {0}', sessionLeft(remaining))}
             </span>
           </div>
         </div>

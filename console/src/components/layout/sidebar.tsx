@@ -20,8 +20,10 @@ import { useUi } from '@/stores/ui';
 
 import { useScopedHref } from './url-sync';
 import { Tooltip } from '@/components/ui/tooltip';
+import { useTranslate } from '@/lib/i18n';
 
 function SideLink({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
+  const translate = useTranslate();
   const href = useScopedHref(item.href, item.query);
   const facts = useShell();
   const compactNumbers = usePreferences((s) => s.compactNumbers);
@@ -40,7 +42,8 @@ function SideLink({ item, active, collapsed }: { item: NavItem; active: boolean;
                 ? facts.pendingChanges
                 : null;
   const warn = item.count === 'flagged' || item.count === 'alerts' || item.count === 'changes';
-  const tip = item.shortcut ? `${item.label}  (g ${item.shortcut})` : item.label;
+  const label = translate(item.label);
+  const tip = item.shortcut ? `${label}  (g ${item.shortcut})` : label;
   const link = (
     <Link
       href={href}
@@ -54,20 +57,16 @@ function SideLink({ item, active, collapsed }: { item: NavItem; active: boolean;
       {active ? (
         <span
           aria-hidden="true"
-          className="absolute top-1.5 bottom-1.5 -left-2 w-0.5 rounded-full bg-accent"
+          className="absolute -start-2 top-1.5 bottom-1.5 w-0.5 rounded-full bg-accent"
         />
       ) : null}
       <span className={cn('shrink-0', active ? 'text-accent' : 'text-muted')}>
         <Icon name={item.icon} size={16} />
       </span>
-      {collapsed ? (
-        <span className="sr-only">{item.label}</span>
-      ) : (
-        <span className="truncate">{item.label}</span>
-      )}
+      {collapsed ? <span className="sr-only">{label}</span> : <span className="truncate">{label}</span>}
       {!collapsed && count !== null && count > 0 ? (
         <span
-          className={cn('mono ml-auto text-caption tabular-nums', warn ? 'text-warn' : 'text-dim')}
+          className={cn('mono ms-auto text-caption tabular-nums', warn ? 'text-warn' : 'text-dim')}
           aria-label={`${formatCount(count)} ${warn ? 'need attention' : ''}`.trim()}
         >
           {formatCount(count, { compact: compactNumbers })}
@@ -88,6 +87,7 @@ function SideLink({ item, active, collapsed }: { item: NavItem; active: boolean;
 const SIDEBAR_FAVOURITES = 8;
 
 function FavouriteLink({ favourite }: { favourite: Favourite }) {
+  const translate = useTranslate();
   const link = favouriteLink(favourite);
   const href = useScopedHref(link.path, link.query);
   return (
@@ -102,14 +102,17 @@ function FavouriteLink({ favourite }: { favourite: Favourite }) {
           <Icon name={link.icon} size={16} />
         )}
       </span>
-      <span className={cn('truncate', favourite.kind !== 'page' && 'mono text-ui')}>{link.label}</span>
-      <span className="sr-only">, {link.kind}</span>
+      <span className={cn('truncate', favourite.kind !== 'page' && 'mono text-ui')}>
+        {favourite.kind === 'page' ? translate(link.label) : link.label}
+      </span>
+      <span className="sr-only">, {translate(link.kind)}</span>
     </Link>
   );
 }
 
 /** The user's starred pages and items, above the screens; it folds away and keeps that choice. */
 function Favourites() {
+  const translate = useTranslate();
   const favourites = usePreferences((s) => s.favourites);
   const open = usePreferences((s) => s.favouritesOpen);
   const set = usePreferences((s) => s.set);
@@ -123,11 +126,11 @@ function Favourites() {
         aria-expanded={open}
         aria-controls="sidebar-favourites"
         onClick={() => set({ favouritesOpen: !open })}
-        className="mx-0.5 mt-1 mb-1.5 flex w-[calc(100%-4px)] items-center gap-1.5 rounded-sm px-2 text-left text-caption font-medium text-dim hover:text-fg"
+        className="mx-0.5 mt-1 mb-1.5 flex w-[calc(100%-4px)] items-center gap-1.5 rounded-sm px-2 text-start text-caption font-medium text-dim hover:text-fg"
       >
         <Icon name={open ? 'chevronDown' : 'chevronRight'} size={12} />
-        Favourites
-        <span className="ml-auto tabular-nums">{favourites.length}</span>
+        {translate('Favourites')}
+        <span className="ms-auto tabular-nums">{favourites.length}</span>
       </button>
       {open ? (
         <ul id="sidebar-favourites" className="flex flex-col gap-px">
@@ -141,9 +144,10 @@ function Favourites() {
               <button
                 type="button"
                 onClick={() => openPalette(true)}
-                className="flex h-[30px] w-full items-center rounded-sm px-2.5 text-left text-caption text-muted hover:bg-hover hover:text-fg"
+                className="flex h-[30px] w-full items-center rounded-sm px-2.5 text-start text-caption text-muted hover:bg-hover hover:text-fg"
               >
-                {favourites.length - shown.length} more in search
+                {favourites.length - shown.length}
+                {' ' + translate('more in search')}
               </button>
             </li>
           ) : null}
@@ -157,6 +161,7 @@ const NOT_SERVED = 'Not available on this gateway';
 
 /** The prototype's footer facts: ingress, nodes, availability and the release. */
 function Footer() {
+  const translate = useTranslate();
   const facts = useShell();
   const me = useSession((s) => s.me);
   /** Why a figure is blank: still loading, not readable by this principal, or not served. */
@@ -164,7 +169,7 @@ function Footer() {
     facts.loadedAt === null ? 'Loading' : readable ? NOT_SERVED : 'Your role does not include this figure';
   const rows: { label: string; value: string | null; tone?: 'success'; blank: string }[] = [
     {
-      label: 'Ingress',
+      label: translate('Ingress'),
       blank: why(hasPermission(me, 'analytics:read', null)),
       value:
         facts.ingressPerMinute === null
@@ -172,12 +177,12 @@ function Footer() {
           : `${formatCount(facts.ingressPerMinute, { compact: true })}/min`,
     },
     {
-      label: 'Nodes ready',
+      label: translate('Nodes ready'),
       blank: why(hasGatewayPermission(me, 'cluster:read')),
       value: facts.nodesKnown === null ? null : `${facts.nodesReady ?? 0} / ${facts.nodesKnown}`,
     },
     {
-      label: 'Uptime (30 days)',
+      label: translate('Uptime (30 days)'),
       blank: why(hasGatewayPermission(me, 'analytics:read')),
       value: facts.availability30d === null ? null : formatPercent(facts.availability30d, 2),
       tone: 'success',
@@ -202,7 +207,7 @@ function Footer() {
         </div>
       ))}
       <div className="flex items-center justify-between gap-2 border-t border-dashed border-line pt-1.5">
-        <dt className="text-dim">Version</dt>
+        <dt className="text-dim">{translate('Version')}</dt>
         <dd className="mono text-muted">{facts.status ? facts.status.version : '—'}</dd>
       </div>
     </dl>
@@ -215,6 +220,7 @@ function Footer() {
  * menu button opens.
  */
 export function Sidebar() {
+  const translate = useTranslate();
   const pathname = usePathname();
   const active = activeNav(pathname);
   const wide = useMediaQuery('(min-width: 1024px)');
@@ -249,17 +255,24 @@ export function Sidebar() {
         />
       ) : null}
       <nav
-        aria-label="Console"
+        aria-label={translate('Console')}
         className={cn(
-          'flex min-h-0 flex-col border-r border-line bg-raised',
-          'max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50 max-lg:w-[272px] max-lg:shadow-pop max-lg:transition-transform',
-          navOpen ? 'max-lg:translate-x-0' : 'max-lg:invisible max-lg:-translate-x-full',
+          'flex min-h-0 flex-col border-e border-line bg-raised',
+          'max-lg:fixed max-lg:inset-y-0 max-lg:start-0 max-lg:z-50 max-lg:w-[272px] max-lg:shadow-pop max-lg:transition-transform',
+          navOpen
+            ? 'max-lg:translate-x-0'
+            : 'max-lg:invisible max-lg:ltr:-translate-x-full max-lg:rtl:translate-x-full',
         )}
       >
         <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-3 lg:hidden">
           <BrandMark size={18} />
           <span className="text-base font-semibold tracking-tight text-fg">Antirion</span>
-          <IconButton icon="x" label="Close menu" className="ml-auto" onClick={() => setNavOpen(false)} />
+          <IconButton
+            icon="x"
+            label={translate('Close menu')}
+            className="ms-auto"
+            onClick={() => setNavOpen(false)}
+          />
         </div>
         {/* The links scroll on their own; the gateway facts stay pinned under them. */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-2">
@@ -274,7 +287,9 @@ export function Sidebar() {
               )}
             >
               {collapsed ? null : (
-                <h2 className="mx-2.5 mt-1 mb-1.5 text-caption font-medium text-dim">{section.label}</h2>
+                <h2 className="mx-2.5 mt-1 mb-1.5 text-caption font-medium text-dim">
+                  {translate(section.label)}
+                </h2>
               )}
               <ul className="flex flex-col gap-px">
                 {section.items.filter(allowed).map((item) => (

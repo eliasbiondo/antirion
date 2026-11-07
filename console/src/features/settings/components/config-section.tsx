@@ -17,6 +17,7 @@ import { type ConvergenceState, useConfigDoc, useGatewaySettings } from '../stor
 import { useReportUnsaved } from '../unsaved';
 import { ChangeRow } from './change-row';
 import { VersionsPanel } from './versions-panel';
+import { translateNow } from '@/lib/i18n';
 
 /** Whether `admin.config.lock_applied` is on (a startup setting from the configuration file). */
 function useAppliedLock(): boolean {
@@ -304,7 +305,8 @@ export function ConfigSection() {
         effect={`${changes.length} ${changes.length === 1 ? 'change becomes' : 'changes become'} one new configuration version. If someone else applied a change since you loaded it, nothing is applied and you'll be asked to reload.`}
         onConfirm={async (reason) => {
           const result = await apply(reason);
-          if (result) notify('success', `Configuration updated (version ${result.generation})`);
+          if (result)
+            notify('success', translateNow('Configuration updated (version {0})', result.generation));
         }}
       />
     </div>

@@ -11,6 +11,7 @@ import { useUi } from '@/stores/ui';
 import { Button } from './button';
 import { Icon, type IconName } from './icon';
 import { Tooltip } from './tooltip';
+import { useTranslate } from '@/lib/i18n';
 
 export function Skeleton({ className }: { className?: string }) {
   return <div aria-hidden="true" className={cn('animate-pulse rounded-sm bg-hover', className)} />;
@@ -18,9 +19,10 @@ export function Skeleton({ className }: { className?: string }) {
 
 /** Rows of placeholders while a list loads; the page keeps its shape. */
 export function LoadingRows({ rows = 6, label = 'Loading' }: { rows?: number; label?: string }) {
+  const translate = useTranslate();
   return (
     <div role="status" aria-live="polite" data-page-state="" className="flex flex-col">
-      <span className="sr-only">{label}…</span>
+      <span className="sr-only">{translate(label)}…</span>
       {Array.from({ length: rows }, (_, i) => (
         <div
           key={i}
@@ -28,7 +30,7 @@ export function LoadingRows({ rows = 6, label = 'Loading' }: { rows?: number; la
         >
           <Skeleton className="h-3 w-40" />
           <Skeleton className="h-3 w-24" />
-          <Skeleton className="ml-auto h-3 w-16" />
+          <Skeleton className="ms-auto h-3 w-16" />
         </div>
       ))}
     </div>
@@ -83,16 +85,18 @@ export interface EmptyActionProps {
 
 /** The quiet action under an empty pill ("Show last 24 hours", "Clear filters", "Create rule"). */
 export function EmptyAction({ children, onClick, href, disabled, disabledReason }: EmptyActionProps) {
+  const translate = useTranslate();
+  const label = typeof children === 'string' ? translate(children) : children;
   if (href && !disabled) {
     return (
       <Link href={href} className={QUIET_ACTION}>
-        {children}
+        {label}
       </Link>
     );
   }
   const button = (
     <button type="button" onClick={onClick} disabled={disabled} className={QUIET_ACTION}>
-      {children}
+      {label}
     </button>
   );
   return disabled && disabledReason ? (
@@ -131,6 +135,7 @@ export function EmptyState({
   size = 'md',
   className,
 }: EmptyStateProps) {
+  const translate = useTranslate();
   return (
     <div
       data-empty-state=""
@@ -141,8 +146,12 @@ export function EmptyState({
         className,
       )}
     >
-      <EmptyPill>{title}</EmptyPill>
-      {description ? <p className="max-w-md text-caption text-balance text-muted">{description}</p> : null}
+      <EmptyPill>{translate(title)}</EmptyPill>
+      {description ? (
+        <p className="max-w-md text-caption text-balance text-muted">
+          {typeof description === 'string' ? translate(description) : description}
+        </p>
+      ) : null}
       {action || secondaryAction ? (
         <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1">
           {action}
@@ -155,11 +164,12 @@ export function EmptyState({
 
 /** "No results match these filters" with the clear-filters action every list offers. */
 export function NoMatch({ onClear, size }: { onClear: () => void; size?: 'sm' | 'md' }) {
+  const translate = useTranslate();
   return (
     <EmptyState
       size={size}
-      title="No results match these filters"
-      action={<EmptyAction onClick={onClear}>Clear filters</EmptyAction>}
+      title={translate('No results match these filters')}
+      action={<EmptyAction onClick={onClear}>{translate('Clear filters')}</EmptyAction>}
     />
   );
 }
@@ -184,31 +194,32 @@ function namesAnEntity(operation: string): boolean {
 
 /** The operator-facing facts of a failure, behind a "Details" disclosure. */
 function ErrorDetails({ error, extra }: { error: unknown; extra?: string | undefined }) {
+  const translate = useTranslate();
   const message = error instanceof ApiError ? error.message : error instanceof Error ? error.message : null;
   const requestId = error instanceof ApiError ? error.requestId : null;
   if (!message && !requestId && !extra) return null;
   return (
-    <details className="group w-full max-w-md text-left">
+    <details className="group w-full max-w-md text-start">
       <summary className="mx-auto flex w-fit cursor-pointer list-none items-center gap-1 rounded-xs text-caption text-muted hover:text-fg [&::-webkit-details-marker]:hidden">
         <Icon name="chevronRight" size={12} className="transition-transform group-open:rotate-90" />
-        Details
+        {translate('Details')}
       </summary>
       <dl className="mt-2 flex flex-col gap-1 rounded-control border border-line bg-sunken px-3 py-2 text-caption">
         {extra ? (
           <div className="flex gap-2">
-            <dt className="shrink-0 text-dim">Endpoint</dt>
+            <dt className="shrink-0 text-dim">{translate('Endpoint')}</dt>
             <dd className="mono min-w-0 break-all text-muted">{extra}</dd>
           </div>
         ) : null}
         {message ? (
           <div className="flex gap-2">
-            <dt className="shrink-0 text-dim">Message</dt>
+            <dt className="shrink-0 text-dim">{translate('Message')}</dt>
             <dd className="min-w-0 break-words text-muted">{message}</dd>
           </div>
         ) : null}
         {requestId ? (
           <div className="flex gap-2">
-            <dt className="shrink-0 text-dim">Request ID</dt>
+            <dt className="shrink-0 text-dim">{translate('Request ID')}</dt>
             <dd className="mono min-w-0 break-all text-muted">{requestId}</dd>
           </div>
         ) : null}
@@ -236,6 +247,7 @@ export function UnavailableState({
   size = 'md',
   className,
 }: UnavailableStateProps) {
+  const translate = useTranslate();
   return (
     <div
       data-empty-state=""
@@ -246,9 +258,9 @@ export function UnavailableState({
         className,
       )}
     >
-      <EmptyPill>{`${subject} isn't available on this gateway yet`}</EmptyPill>
+      <EmptyPill>{translate("{0} isn't available on this gateway yet", translate(subject))}</EmptyPill>
       <p className="max-w-md text-caption text-balance text-muted">
-        {description ?? 'Upgrade the gateway to use it.'}
+        {description ?? translate('Upgrade the gateway to use it.')}
       </p>
       {operation ? <ErrorDetails error={null} extra={operation} /> : null}
     </div>
@@ -271,13 +283,17 @@ export interface ErrorStateProps {
  * and request id behind "Details".
  */
 export function ErrorState({ error, onRetry, subject, size = 'md', className }: ErrorStateProps) {
+  const translate = useTranslate();
   if (error instanceof ApiError && error.status === 403) {
     return (
       <EmptyState
         size={size}
         className={className}
-        title={`You don't have access to ${subject ? midSentence(subject) : 'this'}`}
-        description="Ask a gateway admin for access."
+        title={translate(
+          "You don't have access to {0}",
+          subject ? translate(midSentence(subject)) : translate('this'),
+        )}
+        description={translate('Ask a gateway admin for access.')}
       />
     );
   }
@@ -296,8 +312,11 @@ export function ErrorState({ error, onRetry, subject, size = 'md', className }: 
       <EmptyState
         size={size}
         className={className}
-        title={`We couldn't find ${subject ? midSentence(subject) : 'this'}`}
-        description="It may have been deleted, or the link has a mistake in it."
+        title={translate(
+          "We couldn't find {0}",
+          subject ? translate(midSentence(subject)) : translate('this'),
+        )}
+        description={translate('It may have been deleted, or the link has a mistake in it.')}
       />
     );
   }
@@ -314,13 +333,13 @@ export function ErrorState({ error, onRetry, subject, size = 'md', className }: 
     >
       <span className="inline-flex max-w-full items-center gap-1.5 rounded-control border border-[color-mix(in_oklab,var(--ant-error)_45%,var(--ant-border))] bg-raised px-2.5 py-1 text-caption text-fg">
         <Icon name="alertCircle" size={14} className="shrink-0 text-error" />
-        Couldn&apos;t load {subject ? midSentence(subject) : 'this view'}
+        {translate("Couldn't load {0}", subject ? translate(midSentence(subject)) : translate('this view'))}
       </span>
       <p className="max-w-md text-caption text-balance text-muted">
-        Something went wrong on the gateway. Try again, or share the details with your admin.
+        {translate('Something went wrong on the gateway. Try again, or share the details with your admin.')}
       </p>
       <ErrorDetails error={error} />
-      {onRetry ? <EmptyAction onClick={onRetry}>Try again</EmptyAction> : null}
+      {onRetry ? <EmptyAction onClick={onRetry}>{translate('Try again')}</EmptyAction> : null}
     </div>
   );
 }
@@ -340,6 +359,7 @@ export interface RefreshNoticeProps {
  * state. It goes away when a refresh succeeds; the gateway's message is in its tooltip.
  */
 export function RefreshNotice({ error, subject, onRetry, size = 'md', className }: RefreshNoticeProps) {
+  const translate = useTranslate();
   return (
     <div
       role="status"
@@ -350,10 +370,13 @@ export function RefreshNotice({ error, subject, onRetry, size = 'md', className 
         className,
       )}
     >
-      <Tooltip content={describeError(error)}>
+      <Tooltip content={translate(describeError(error))}>
         <span className="inline-flex items-center gap-1.5 text-fg">
           <Icon name="alert" size={14} className="shrink-0 text-warn" />
-          Couldn&apos;t refresh {subject ? midSentence(subject) : 'this view'}
+          {translate(
+            "Couldn't refresh {0}",
+            subject ? translate(midSentence(subject)) : translate('this view'),
+          )}
         </span>
       </Tooltip>
       {onRetry ? (
@@ -366,7 +389,7 @@ export function RefreshNotice({ error, subject, onRetry, size = 'md', className 
             onClick={onRetry}
             className="rounded-xs font-medium text-accent underline-offset-2 hover:underline"
           >
-            Try again
+            {translate('Try again')}
           </button>
         </>
       ) : null}
@@ -402,6 +425,7 @@ export function LoadError({ of, onRetry, subject, size = 'md', className }: Load
 /** An inline banner for a form or a failed write: what happened and what to do. */
 /** The request id of a failed call, copied on demand for a support ticket, not shown as raw text. */
 function CopyRequestId({ id }: { id: string }) {
+  const translate = useTranslate();
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -414,7 +438,7 @@ function CopyRequestId({ id }: { id: string }) {
         });
       }}
     >
-      {copied ? 'Request ID copied' : 'Copy request ID'}
+      {copied ? translate('Request ID copied') : translate('Copy request ID')}
     </button>
   );
 }
@@ -424,6 +448,7 @@ function CopyRequestId({ id }: { id: string }) {
  * offers Reload, which reads their version and keeps the form's edits.
  */
 export function InlineError({ error, onReload }: { error: unknown; onReload?: () => void }) {
+  const translate = useTranslate();
   if (!error) return null;
   if (isChangeControl(error)) return <ChangeControlNote error={error} />;
   return (
@@ -435,7 +460,7 @@ export function InlineError({ error, onReload }: { error: unknown; onReload?: ()
         <Icon name="alertCircle" size={16} />
       </span>
       <div className="min-w-0 flex-1">
-        <p>{describeError(error)}</p>
+        <p>{translate(describeError(error))}</p>
         {error instanceof ApiError && error.details.length > 1 ? (
           <ul className="mt-1 list-disc pl-4 text-caption text-muted">
             {error.details.map((d, i) => (
@@ -449,7 +474,7 @@ export function InlineError({ error, onReload }: { error: unknown; onReload?: ()
       </div>
       {onReload && error instanceof ApiError && error.preconditionFailed ? (
         <Button size="sm" onClick={onReload}>
-          Reload
+          {translate('Reload')}
         </Button>
       ) : null}
     </div>
@@ -498,6 +523,7 @@ export function Banner({
 
 /** In place of an error: the write went to review instead (a change request offered or opened). */
 function ChangeControlNote({ error }: { error: ApiError }) {
+  const translate = useTranslate();
   const setDraft = useUi((s) => s.setChangeDraft);
   const request = error.changeRequest;
   return (
@@ -508,13 +534,13 @@ function ChangeControlNote({ error }: { error: ApiError }) {
       <span className="text-info" aria-hidden="true">
         <Icon name="pullRequest" size={16} />
       </span>
-      <p className="min-w-0 flex-1">{describeError(error)}</p>
+      <p className="min-w-0 flex-1">{translate(describeError(error))}</p>
       {request ? (
         <Link
           href={`/change-requests/?request=${encodeURIComponent(request.id)}`}
           className="text-ui font-medium text-accent hover:underline"
         >
-          View request
+          {translate('View request')}
         </Link>
       ) : error.attempt ? (
         <button
@@ -522,7 +548,7 @@ function ChangeControlNote({ error }: { error: ApiError }) {
           onClick={() => setDraft(error.attempt)}
           className="text-ui font-medium text-accent hover:underline"
         >
-          Open change request
+          {translate('Open change request')}
         </button>
       ) : null}
     </div>

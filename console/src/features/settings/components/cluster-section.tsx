@@ -19,6 +19,7 @@ import { notify } from '@/stores/ui';
 
 import { type ClusterNode, settingsApi } from '../api';
 import { useRuntime } from '../store';
+import { translateNow } from '@/lib/i18n';
 
 /** How often an open node is read again while it drains, in ms. */
 export const DRAIN_POLL_MS = 2000;
@@ -351,9 +352,12 @@ export function ClusterSection({ running }: { running: number | null }) {
           const r = await settingsApi.drainNode(id);
           notify(
             'success',
-            `Node ${id} is draining`,
+            translateNow('Node {0} is draining', id),
             'in_flight' in r && typeof r.in_flight === 'number'
-              ? `${formatCount(r.in_flight)} requests still in progress. Open the node to follow them.`
+              ? translateNow(
+                  '{0} requests still in progress. Open the node to follow them.',
+                  formatCount(r.in_flight),
+                )
               : undefined,
           );
           await load({ quiet: true });

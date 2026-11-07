@@ -64,7 +64,7 @@ export function AccountDialog() {
                   aria-current={active === s.id ? 'page' : undefined}
                   onClick={() => setSection(s.id)}
                   className={cn(
-                    'w-full rounded-sm px-2.5 py-1.5 text-left text-ui whitespace-nowrap',
+                    'w-full rounded-sm px-2.5 py-1.5 text-start text-ui whitespace-nowrap',
                     active === s.id
                       ? 'bg-accent-dim font-semibold text-fg'
                       : 'text-muted hover:bg-hover hover:text-fg',

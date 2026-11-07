@@ -12,6 +12,7 @@ import { formatDateTime } from '@/lib/time';
 import { usePreferences } from '@/stores/preferences';
 import { useSession } from '@/stores/session';
 import { useShell } from '@/stores/shell';
+import { useTranslate } from '@/lib/i18n';
 
 /**
  * Test mode, on every page while the gateway runs with it: the gateway's clock when it was moved
@@ -19,6 +20,7 @@ import { useShell } from '@/stores/shell';
  * the page's time ranges on it.
  */
 export function TestModeNotice() {
+  const translate = useTranslate();
   const testMode = useShell((s) => s.status?.test_mode === true);
   const admin = useSession((s) => isGatewayAdmin(s.me));
   const offset = useTestClock((s) => s.offset);
@@ -38,20 +40,27 @@ export function TestModeNotice() {
       tone="info"
       title={
         shifted
-          ? `Test mode · gateway clock ${formatDateTime(new Date(now + offset).toISOString(), timeZone)}`
-          : 'Test mode'
+          ? translate(
+              'Test mode · gateway clock {0}',
+              formatDateTime(new Date(now + offset).toISOString(), timeZone),
+            )
+          : translate('Test mode')
       }
       actions={
         admin ? (
           <Link href={statusHref} className="text-ui font-medium text-accent hover:underline">
-            Test tools
+            {translate('Test tools')}
           </Link>
         ) : null
       }
     >
       {shifted
-        ? `The gateway's clock is ${shiftWords(offset)} ${offset > 0 ? 'ahead of' : 'behind'} real time. Time ranges follow the gateway's clock.`
-        : 'This gateway runs for tests: its clock can be moved and its state reset.'}
+        ? translate(
+            "The gateway's clock is {0} {1} real time. Time ranges follow the gateway's clock.",
+            shiftWords(offset),
+            offset > 0 ? 'ahead of' : 'behind',
+          )
+        : translate('This gateway runs for tests: its clock can be moved and its state reset.')}
     </Banner>
   );
 }
@@ -62,6 +71,7 @@ export function TestModeNotice() {
  * the pause link to the danger zone.
  */
 export function GatewayNotices() {
+  const translate = useTranslate();
   const status = useShell((s) => s.status);
   const timeZone = usePreferences((s) => s.timeZone);
   const dangerHref = useSettingsHref('danger');
@@ -77,23 +87,25 @@ export function GatewayNotices() {
     <>
       <TestModeNotice />
       {status.dry_run_all ? (
-        <Banner tone="warn" title="Dry run is on for every request" actions={link('Turn off')}>
-          Apps get the model the gateway would choose and its estimated cost, not real answers. Nothing is
-          sent to providers.
+        <Banner tone="warn" title={translate('Dry run is on for every request')} actions={link('Turn off')}>
+          {translate(
+            'Apps get the model the gateway would choose and its estimated cost, not real answers. Nothing is sent to providers.',
+          )}
         </Banner>
       ) : null}
       {pause ? (
         <Banner
           tone="error"
-          title={`All traffic is paused until ${formatDateTime(pause.resumes_at, timeZone)}`}
+          title={translate('All traffic is paused until {0}', formatDateTime(pause.resumes_at, timeZone))}
           actions={link('Resume')}
         >
-          Apps get an error for new requests. {pause.reason}
+          {translate('Apps get an error for new requests.') + ' '}
+          {pause.reason}
         </Banner>
       ) : null}
       {window ? (
-        <Banner tone="info" title={`Maintenance until ${formatDateTime(window.end, timeZone)}`}>
-          {window.description ?? 'Planned work is in progress.'}
+        <Banner tone="info" title={translate('Maintenance until {0}', formatDateTime(window.end, timeZone))}>
+          {window.description ?? translate('Planned work is in progress.')}
         </Banner>
       ) : null}
     </>

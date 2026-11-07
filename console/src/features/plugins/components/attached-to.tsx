@@ -13,6 +13,7 @@ import { notify } from '@/stores/ui';
 
 import { attachmentName, type Owner, OWNER_KINDS, type OwnerKind } from '../api';
 import { usePlugins } from '../store';
+import { translateNow } from '@/lib/i18n';
 
 /** The levels the principal may read, and those it may change. */
 export function useOwnerAccess(): { read: OwnerKind[]; write: Set<OwnerKind> } {
@@ -59,10 +60,14 @@ export function AttachedTo({ name }: { name: string }) {
     setBusy(true);
     try {
       await attachAt(owner, name, on);
-      notify('success', on ? `${name} attached` : `${name} taken off`, `${LABEL[owner.kind]} ${owner.name}`);
+      notify(
+        'success',
+        on ? translateNow('{0} attached', name) : translateNow('{0} taken off', name),
+        `${LABEL[owner.kind]} ${owner.name}`,
+      );
       if (on) setTarget('');
     } catch (e) {
-      if (!isChangeControl(e)) notify('error', `Couldn't change ${name}`, describeError(e));
+      if (!isChangeControl(e)) notify('error', translateNow("Couldn't change {0}", name), describeError(e));
     } finally {
       setBusy(false);
     }

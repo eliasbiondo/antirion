@@ -16,6 +16,7 @@ import { type CsvColumn, exportCsv } from '@/lib/csv';
 import { Button } from './button';
 import { Icon } from './icon';
 import { Tooltip } from './tooltip';
+import { useTranslate } from '@/lib/i18n';
 
 export function Table({
   children,
@@ -184,12 +185,13 @@ export function CountNote({
   noun: string;
   singular?: string;
 }) {
+  const translate = useTranslate();
   if (total === 0) return null;
   const word = total === 1 ? (singular ?? singularOf(noun)) : noun;
-  const tail = word ? ` ${word}` : '';
+  const tail = word ? ` ${translate(word)}` : '';
   return (
     <span className="text-caption text-muted tabular-nums" aria-live="polite">
-      {shown === total ? `${total}${tail}` : `${shown} of ${total}${tail}`}
+      {shown === total ? `${total}${tail}` : translate('{0} of {1}{2}', shown, total, tail)}
     </span>
   );
 }
@@ -209,10 +211,11 @@ export function ExportCsvButton<T>({
   rows: T[];
   label?: string;
 }) {
+  const translate = useTranslate();
   if (rows.length === 0) return null;
   return (
     <Button icon="download" variant="ghost" onClick={() => exportCsv(filename, columns, rows)}>
-      {label}
+      {translate(label)}
     </Button>
   );
 }

@@ -3,11 +3,13 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 
-import { PreferencesApplier } from '@/components/layout/preferences-applier';
 import { Spinner } from '@/components/ui/button';
+import { Select } from '@/components/ui/form';
 import { BrandMark } from '@/components/ui/icon';
 import { formatCount, formatLatency, formatPercent } from '@/lib/format';
 import { formatRelative } from '@/lib/time';
+import { LOCALES, matchLocale } from '@/lib/locale';
+import { usePreferences } from '@/stores/preferences';
 import { useSession } from '@/stores/session';
 import { LAST_ORGANIZATION_KEY } from '@/stores/scope';
 
@@ -18,27 +20,33 @@ import { EnrollStep, ForgotStep, MfaStep, RecoveryCodesStep, ResetStep } from '.
 import { CliStep } from './cli-step';
 import { ErrorStrip } from './parts';
 import { MethodsStep, OrganizationStep, TokenStep } from './login-methods';
+import { useTranslate } from '@/lib/i18n';
 
 /**
  * The gateway's coarse traffic figures, only when the operator turned the sign-in ticker on
  * (`login_options.ticker` is null otherwise). One quiet line under the card, never a dashboard.
  */
 function Ticker() {
+  const translate = useTranslate();
   const ticker = useLogin((s) => s.options?.ticker);
   if (!ticker) return null;
   const parts = [
     ticker.requests_24h !== undefined
-      ? `${formatCount(ticker.requests_24h, { compact: true })} requests`
+      ? translate('{0} requests', formatCount(ticker.requests_24h, { compact: true }))
       : null,
-    ticker.error_rate !== undefined ? `${formatPercent(ticker.error_rate, 2)} errors` : null,
+    ticker.error_rate !== undefined ? translate('{0} errors', formatPercent(ticker.error_rate, 2)) : null,
     ticker.p95_ms !== undefined ? `p95 ${formatLatency(ticker.p95_ms)}` : null,
-    ticker.active_keys !== undefined ? `${formatCount(ticker.active_keys)} active keys` : null,
+    ticker.active_keys !== undefined ? translate('{0} active keys', formatCount(ticker.active_keys)) : null,
   ].filter(Boolean);
   if (parts.length === 0) return null;
   return (
-    <p className="text-center text-caption leading-relaxed text-dim" aria-label="Gateway traffic">
-      Last 24 h · {parts.join(' · ')}
-      {ticker.as_of ? ` · updated ${formatRelative(ticker.as_of)}` : null}
+    <p
+      className="text-center text-caption leading-relaxed text-dim"
+      aria-label={translate('Gateway traffic')}
+    >
+      {translate('Last 24 h ·') + ' '}
+      {parts.join(' · ')}
+      {ticker.as_of ? translate(' · updated {0}', formatRelative(ticker.as_of)) : null}
     </p>
   );
 }
@@ -58,10 +66,12 @@ function noSubscription(): () => void {
 
 /** The sign-in pages' frame: the brand, the host, one card and a footer. */
 export function Frame({ children, footer }: { children: ReactNode; footer: ReactNode }) {
+  const translate = useTranslate();
   const host = useHost();
+  const preference = usePreferences((s) => s.locale);
+  const setPreference = usePreferences((s) => s.set);
   return (
     <div className="relative isolate flex min-h-screen flex-col items-center overflow-x-hidden bg-canvas px-4 pt-10 pb-8 sm:pt-[12vh]">
-      <PreferencesApplier />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(var(--ant-grid-line)_1px,transparent_1px),linear-gradient(90deg,var(--ant-grid-line)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_40%,transparent_15%,black_75%)] bg-[size:40px_40px] print:hidden"
@@ -84,6 +94,14 @@ export function Frame({ children, footer }: { children: ReactNode; footer: React
       </main>
       <footer className="mt-6 flex w-full max-w-[400px] flex-col items-center gap-1.5 print:hidden">
         {footer}
+        <Select
+          aria-label={translate('Language')}
+          value={matchLocale(preference)?.tag ?? ''}
+          emptyOption={translate('Same as this browser')}
+          options={LOCALES.map(({ tag, name }) => ({ value: tag, label: name }))}
+          onChange={(locale) => setPreference({ locale: locale || null })}
+          className="w-auto max-w-full"
+        />
       </footer>
     </div>
   );
@@ -91,6 +109,7 @@ export function Frame({ children, footer }: { children: ReactNode; footer: React
 
 /** The sign-in page: one card, whose title and content follow the step of the flow. */
 export function LoginScreen({ entry }: { entry?: 'reset' | 'invitation' } = {}) {
+  const translate = useTranslate();
   const router = useRouter();
   const params = useSearchParams();
   const next = safeNext(params.get('next'));
@@ -156,12 +175,13 @@ export function LoginScreen({ entry }: { entry?: 'reset' | 'invitation' } = {}) 
           role="status"
           className="mb-5 rounded-sm border border-line bg-sunken px-3 py-2 text-ui leading-snug text-muted"
         >
-          Your session expired. Sign in to continue.
+          {translate('Your session expired. Sign in to continue.')}
         </p>
       ) : null}
       {options === null ? (
         <p className="flex min-h-40 items-center justify-center gap-2 text-ui text-muted" role="status">
-          <Spinner /> Loading…
+          <Spinner />
+          {' ' + translate('Loading…')}
         </p>
       ) : step.kind === 'start' && (onlyToken || setup) ? (
         <TokenStep />
@@ -185,7 +205,8 @@ export function LoginScreen({ entry }: { entry?: 'reset' | 'invitation' } = {}) 
         <ResetStep />
       ) : (
         <p className="flex min-h-40 items-center justify-center gap-2 text-ui text-muted" role="status">
-          <Spinner /> Signing in…
+          <Spinner />
+          {' ' + translate('Signing in…')}
         </p>
       )}
     </Frame>

@@ -13,6 +13,7 @@ import { notify } from '@/stores/ui';
 import { safetyApi } from '../api';
 import { ENTITY_NAME, type GuardrailSpec, TYPE_LABEL } from '../rules';
 import { CATEGORY_LABEL, useSafety } from '../store';
+import { translateNow } from '@/lib/i18n';
 
 function listed(lists: { input?: string[]; output?: string[] } | undefined, name: string): string[] {
   const out: string[] = [];
@@ -170,7 +171,7 @@ export function NotifyDialog({
                     'success',
                     r.recipients === 0 ? 'Nobody to notify' : 'Team notified',
                     r.recipients === 0
-                      ? `Team ${team} has no one with email notifications.`
+                      ? translateNow('Team {0} has no one with email notifications.', team)
                       : `${r.recipients === 1 ? '1 person' : `${r.recipients} people`} in ${team}.`,
                   );
                   onClose();

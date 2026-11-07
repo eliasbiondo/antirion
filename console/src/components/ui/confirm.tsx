@@ -9,6 +9,7 @@ import { Button } from './button';
 import { Field, Input, Textarea } from './form';
 import { Icon } from './icon';
 import { Dialog } from './overlay';
+import { translateNow, useTranslate } from '@/lib/i18n';
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -57,6 +58,7 @@ export function ConfirmDialog({
   blockedReason,
   children,
 }: ConfirmDialogProps) {
+  const translate = useTranslate();
   const [typed, setTyped] = useState('');
   const [reason, setReason] = useState('');
   const [reasonOpen, setReasonOpen] = useState(false);
@@ -137,7 +139,9 @@ export function ConfirmDialog({
           <Field
             label={
               <>
-                Type <span className="mono font-semibold text-fg">{typeToConfirm}</span> to confirm
+                {translate('Type') + ' '}
+                <span className="mono font-semibold text-fg">{typeToConfirm}</span>
+                {' ' + translate('to confirm')}
               </>
             }
           >
@@ -151,7 +155,7 @@ export function ConfirmDialog({
           </Field>
         ) : null}
         {withReason && reasonOpen ? (
-          <Field label="Reason" optional hint="Saved in the audit log.">
+          <Field label={translate('Reason')} optional hint={translate('Saved in the audit log.')}>
             <Textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -168,7 +172,7 @@ export function ConfirmDialog({
             className="flex w-fit items-center gap-1.5 rounded-xs text-ui text-muted hover:text-fg"
           >
             <Icon name="plus" size={14} />
-            Add a reason for the audit log
+            {translate('Add a reason for the audit log')}
           </button>
         ) : null}
         {error ? (
@@ -204,7 +208,7 @@ export interface SwitchChange {
 export function useSwitchChanges(): { change: (c: SwitchChange) => void; dialog: ReactNode } {
   const [pending, setPending] = useState<SwitchChange | null>(null);
   const failed = (c: SwitchChange) => (e: unknown) =>
-    notify('error', `Couldn't change ${c.name}`, describeError(e));
+    notify('error', translateNow("Couldn't change {0}", c.name), describeError(e));
   const run = async (c: SwitchChange) => {
     await c.apply();
     notify('success', c.done, undefined, {

@@ -36,6 +36,7 @@ import { PROTOCOL_LABEL } from '../form';
 import { useAgents } from '../store';
 import { AgentDrawer } from './agent-drawer';
 import { describeError } from '@/lib/api/client';
+import { translateNow, useTranslate } from '@/lib/i18n';
 
 const FILTERS = { q: '', state: 'all' };
 type StateFilter = 'all' | 'on' | 'off' | 'public';
@@ -53,6 +54,7 @@ const CSV: CsvColumn<AgentResource>[] = [
 
 /** Agents: the A2A agents apps and other agents call through the gateway. */
 export function AgentsScreen() {
+  const translate = useTranslate();
   const canRead = usePermission('mcp:read');
   const agents = useAgents((s) => s.agents);
   const load = useAgents((s) => s.load);
@@ -94,8 +96,8 @@ export function AgentsScreen() {
   return (
     <>
       <PageHeader
-        title="Agents"
-        description="A2A agents that apps and other agents call through the gateway"
+        title={translate('Agents')}
+        description={translate('A2A agents that apps and other agents call through the gateway')}
         actions={
           <>
             <UpdatedAt at={agents.at} />
@@ -251,18 +253,28 @@ export function AgentsScreen() {
                                     () =>
                                       notify(
                                         'success',
-                                        on ? `${a.name} turned on` : `${a.name} turned off`,
+                                        on
+                                          ? translateNow('{0} turned on', a.name)
+                                          : translateNow('{0} turned off', a.name),
                                         undefined,
                                         {
                                           label: 'Undo',
                                           onClick: () =>
                                             void setEnabled(a.name, !on).catch((e: unknown) =>
-                                              notify('error', `Couldn't change ${a.name}`, describeError(e)),
+                                              notify(
+                                                'error',
+                                                translateNow("Couldn't change {0}", a.name),
+                                                describeError(e),
+                                              ),
                                             ),
                                         },
                                       ),
                                     (e: unknown) =>
-                                      notify('error', `Couldn't change ${a.name}`, describeError(e)),
+                                      notify(
+                                        'error',
+                                        translateNow("Couldn't change {0}", a.name),
+                                        describeError(e),
+                                      ),
                                   )
                                 }
                               />

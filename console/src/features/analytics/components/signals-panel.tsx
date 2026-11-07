@@ -21,6 +21,7 @@ import { notify } from '@/stores/ui';
 import { severityTone, useAlerts } from '@/features/alerts/store';
 
 import { analyticsExtrasApi } from '../api';
+import { translateNow } from '@/lib/i18n';
 
 /** The signal categories, in the order the filter offers them. */
 const CATEGORIES = ['anomaly', 'capacity', 'budget', 'cache', 'latency'];
@@ -240,7 +241,7 @@ export function SignalsPanel() {
           if (!notifying) return;
           const link = `${window.location.origin}${window.location.pathname.replace(/analytics\/?$/, '')}alerts/?alert=${encodeURIComponent(notifying.id)}`;
           const sent = await analyticsExtrasApi.notify(owner, notifying.summary, message, link);
-          notify('success', `Team ${owner} notified`, plural(sent.recipients, 'recipient'));
+          notify('success', translateNow('Team {0} notified', owner), plural(sent.recipients, 'recipient'));
           setNotifying(null);
         }}
       >

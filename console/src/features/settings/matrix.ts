@@ -1,6 +1,7 @@
 import type { RuleSpec, WebhookSpec } from '@/features/alerts/api';
 import { covers } from '@/features/alerts/events';
 import type { AlertChannelResource, AlertRuleResource } from '@/lib/api/types';
+import { translator } from '@/lib/i18n';
 
 /** A row of the notification matrix: alerts of a severity, or a category of events. */
 export type MatrixRow =
@@ -84,6 +85,7 @@ export function channelCell(
   row: MatrixRow,
   channel: AlertChannelResource,
   rules: AlertRuleResource[],
+  translate = translator('en'),
 ): CellState {
   if (row.kind === 'personal') return { kind: 'blocked', detail: '' };
   if (row.kind === 'severity') {
@@ -91,22 +93,27 @@ export function channelCell(
     if (SEVERITY_RANK[floor] > SEVERITY_RANK[row.severity])
       return {
         kind: 'blocked',
-        detail: `${channel.name} only takes ${floor} alerts; change that in the channel.`,
+        detail: translate(
+          '{0} only takes {1} alerts; change that in the channel.',
+          channel.name,
+          translate(floor),
+        ),
       };
     const of = rules.filter(
       (r) => (r.spec.kind ?? 'metric') === 'metric' && (r.spec.severity ?? 'warning') === row.severity,
     );
-    if (of.length === 0) return { kind: 'blocked', detail: `No ${row.severity} alert rules yet.` };
+    const severity = translate(row.severity);
+    if (of.length === 0) return { kind: 'blocked', detail: translate('No {0} alert rules yet.', severity) };
     const using = of.filter((r) => (r.spec.channels ?? []).includes(channel.name));
     const kind = using.length === 0 ? 'off' : using.length === of.length ? 'on' : 'mixed';
     return {
       kind,
       detail:
         kind === 'mixed'
-          ? `${using.length} of ${of.length} ${row.severity} rules send to ${channel.name}.`
+          ? translate('{0} of {1} {2} rules send to {3}.', using.length, of.length, severity, channel.name)
           : kind === 'on'
-            ? `Every ${row.severity} rule sends to ${channel.name}.`
-            : `No ${row.severity} rule sends to ${channel.name}.`,
+            ? translate('Every {0} rule sends to {1}.', severity, channel.name)
+            : translate('No {0} rule sends to {1}.', severity, channel.name),
       rules: of,
     };
   }
@@ -114,7 +121,9 @@ export function channelCell(
   const using = of.filter((r) => (r.spec.channels ?? []).includes(channel.name));
   return {
     kind: using.length ? 'on' : 'off',
-    detail: using.length ? `Sent by ${using.map((r) => r.name).join(', ')}.` : `Not sent to ${channel.name}.`,
+    detail: using.length
+      ? translate('Sent by {0}.', using.map((r) => r.name).join(', '))
+      : translate('Not sent to {0}.', channel.name),
     rules: of,
   };
 }
@@ -184,16 +193,17 @@ export function channelToggle(
 }
 
 /** Whether an event webhook receives the row's events: all, some or none of them. */
-export function webhookCell(row: MatrixRow, hook: WebhookSpec): CellState {
+export function webhookCell(row: MatrixRow, hook: WebhookSpec, translate = translator('en')): CellState {
   if (row.kind !== 'events')
     return {
       kind: 'blocked',
-      detail:
+      detail: translate(
         'Alerts reach a webhook through a channel of type webhook, or as alert events it subscribes to.',
+      ),
     };
   const got = row.events.filter((e) => hook.events.some((p) => covers(p, e)));
   const kind = got.length === 0 ? 'off' : got.length === row.events.length ? 'on' : 'mixed';
-  return { kind, detail: kind === 'off' ? 'Not subscribed.' : 'Subscribed.', rules: [] };
+  return { kind, detail: translate(kind === 'off' ? 'Not subscribed.' : 'Subscribed.'), rules: [] };
 }
 
 /**

@@ -10,6 +10,7 @@ import { Dot, type Tone } from './badge';
 import { FavouriteButton } from './favourite';
 import { Icon, type IconName } from './icon';
 import { Tooltip } from './tooltip';
+import { useTranslate } from '@/lib/i18n';
 
 export interface Crumb {
   label: string;
@@ -43,6 +44,7 @@ export interface PageHeaderProps {
  * takes its own line.
  */
 export function PageHeader({ title, description, context, meta, breadcrumb, actions }: PageHeaderProps) {
+  const translate = useTranslate();
   const facts = [description, meta, context].filter(
     (f) => f !== undefined && f !== null && f !== false && f !== '',
   );
@@ -50,7 +52,7 @@ export function PageHeader({ title, description, context, meta, breadcrumb, acti
     <header className="flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-raised px-gutter py-3 max-sm:px-gutter-sm">
       <div className="min-w-0 flex-[1_1_24rem] max-md:basis-full">
         {breadcrumb && breadcrumb.length > 0 ? (
-          <nav aria-label="Breadcrumb" className="mb-0.5">
+          <nav aria-label={translate('Breadcrumb')} className="mb-0.5">
             <ol className="flex flex-wrap items-center gap-1 text-caption text-muted">
               {breadcrumb.map((c, i) => (
                 <li key={`${c.label}-${i}`} className="flex items-center gap-1">
@@ -94,11 +96,17 @@ export function PageHeader({ title, description, context, meta, breadcrumb, acti
 
 /** The star that pins the current screen to the user's favourites. */
 function PageStar() {
+  const translate = useTranslate();
   const pathname = usePathname();
   const item = navItem(activeNav(pathname));
   if (!item) return null;
   return (
-    <FavouriteButton kind="page" name={item.href} label={`the ${item.label} page`} className="self-center" />
+    <FavouriteButton
+      kind="page"
+      name={item.href}
+      label={translate('the {0} page', item.label)}
+      className="self-center"
+    />
   );
 }
 

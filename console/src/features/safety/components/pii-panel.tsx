@@ -39,6 +39,7 @@ import {
 } from '../rules';
 import { defaultPiiSpec, useSafety } from '../store';
 import { blankKind, CustomKindFields, type EditorTarget, useAttachment } from './rule-editor';
+import { translateNow } from '@/lib/i18n';
 
 type Rule = GuardrailResource;
 
@@ -156,7 +157,7 @@ function Presets({ rule }: { rule: Rule }) {
         onConfirm={async () => {
           if (!pending) return;
           await updateRule(rule, applyStrictness(rule.spec, pending));
-          notify('success', `${rule.name} is ${STRICTNESS[pending].label.toLowerCase()}`);
+          notify('success', translateNow('{0} is {1}', rule.name, STRICTNESS[pending].label.toLowerCase()));
         }}
       />
     </div>
@@ -234,7 +235,7 @@ function AddKindDrawer({ rule, open, onClose }: { rule: Rule; open: boolean; onC
     setError(null);
     try {
       await addKind(rule.name, kind);
-      notify('success', `${rule.name} looks for ${kind.name}`);
+      notify('success', translateNow('{0} looks for {1}', rule.name, kind.name));
       close();
     } catch (e) {
       setError(e);

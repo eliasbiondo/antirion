@@ -34,6 +34,7 @@ import { usePlaygroundDraft } from '../draft';
 import { useSend } from '../use-send';
 import { ComposerForm, Parameters } from './composer';
 import { ResponsePanel } from './response-panel';
+import { useTranslate } from '@/lib/i18n';
 
 type Mode = 'form' | 'json';
 
@@ -58,11 +59,15 @@ function paramsSummary(c: Composer): string {
  * with the decision headers, the usage, cost and timing, and the request's record.
  */
 export function PlaygroundScreen() {
+  const translate = useTranslate();
   const allowed = usePermission('playground:send');
   if (!allowed)
     return (
       <>
-        <PageHeader title="Playground" description="Try a model through the gateway" />
+        <PageHeader
+          title={translate('Playground')}
+          description={translate('Try a model through the gateway')}
+        />
         <div className="flex min-h-[calc(100vh-48px-57px)] items-center justify-center bg-raised">
           <Forbidden what="the playground" />
         </div>
@@ -100,6 +105,7 @@ function editorFor(endpoint: Endpoint, body: Record<string, unknown>): Editor {
 const FROM_LOG = 'Opened from a logged request.';
 
 function Playground() {
+  const translate = useTranslate();
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -273,8 +279,10 @@ function Playground() {
   return (
     <>
       <PageHeader
-        title="Playground"
-        description="Send a request through the gateway, as your apps do, and see how it was handled"
+        title={translate('Playground')}
+        description={translate(
+          'Send a request through the gateway, as your apps do, and see how it was handled',
+        )}
         context={projectName ? `Project ${projectName}` : undefined}
         actions={
           <Button

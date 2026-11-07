@@ -11,6 +11,8 @@ self.addEventListener('push', function (event) {
   event.waitUntil(
     self.registration.showNotification(title, {
       body: typeof message.body === 'string' ? message.body : '',
+      lang: message.locale === 'fa' ? 'fa' : 'en',
+      dir: message.locale === 'fa' ? 'rtl' : 'auto',
       tag: typeof message.tag === 'string' ? message.tag : undefined,
       icon: self.registration.scope + 'icon.svg',
       data: { url: typeof message.url === 'string' ? message.url : null },

@@ -13,6 +13,7 @@ import { scopeOrganization, useScope } from '@/stores/scope';
 import { notify } from '@/stores/ui';
 
 import { useLogs } from '../store';
+import { translateNow } from '@/lib/i18n';
 
 /** Deletes every request record of one end user in the caller's scope; returns how many went. */
 export async function eraseEndUser(endUser: string, reason?: string): Promise<number> {
@@ -69,7 +70,9 @@ export function EraseEndUserDialog({
         notify(
           'success',
           deleted > 0 ? `${plural(deleted, 'record')} erased` : 'Nothing to erase',
-          deleted > 0 ? `The records of ${target} are gone.` : `No records of ${target} were found ${where}.`,
+          deleted > 0
+            ? translateNow('The records of {0} are gone.', target)
+            : translateNow('No records of {0} were found {1}.', target, where),
         );
         onErased?.(target);
       }}

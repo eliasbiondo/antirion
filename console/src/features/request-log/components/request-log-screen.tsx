@@ -53,6 +53,7 @@ import { LogDrawer } from './log-drawer';
 import { RequestLogMoreMenu } from './erase-end-user';
 import { LogTable } from './log-table';
 import { Tooltip } from '@/components/ui/tooltip';
+import { useTranslate } from '@/lib/i18n';
 
 /**
  * The figures over the table, for the whole filtered range (from usage analytics): hidden while
@@ -251,6 +252,7 @@ function NoRequests() {
  * chips, the table with live updates and paging, and the request drawer.
  */
 export function RequestLogScreen() {
+  const translate = useTranslate();
   useLogUrlSync();
   useLogViewLink();
   const query = useLogQuery();
@@ -357,8 +359,8 @@ export function RequestLogScreen() {
       ) : null}
       <div className="flex min-w-0 flex-1 flex-col">
         <PageHeader
-          title="Request log"
-          description="Every request through the gateway, newest first"
+          title={translate('Request log')}
+          description={translate('Every request through the gateway, newest first')}
           context={range.label}
           actions={
             <>

@@ -13,6 +13,7 @@ use serde_json::{Value, json};
 use super::config::Slo;
 use super::metrics::{in_scope, started_us};
 use crate::Runtime;
+use crate::operators::ConsoleLocale;
 
 const HOUR_US: i64 = 3_600_000_000;
 const DAY_US: i64 = 24 * HOUR_US;
@@ -282,11 +283,12 @@ pub(crate) async fn digests(rt: &Runtime, now: i64) {
             continue;
         }
         let since = now - period;
-        let body = digest_text(rt, u, since, now).await;
+        let locale = ConsoleLocale::from_preferences(&prefs);
+        let body = digest_text(rt, u, since, now, locale).await;
         let subject = if period == DAY_US {
-            "Antirion daily digest"
+            locale.pick("Antirion daily digest", "خلاصهٔ روزانهٔ Antirion")
         } else {
-            "Antirion weekly digest"
+            locale.pick("Antirion weekly digest", "خلاصهٔ هفتگی Antirion")
         };
         if let Some(to) = &u.email {
             rt.send_mail(to, subject, body);
@@ -294,7 +296,13 @@ pub(crate) async fn digests(rt: &Runtime, now: i64) {
     }
 }
 
-async fn digest_text(rt: &Runtime, u: &crate::identity::UserRt, since: i64, now: i64) -> String {
+async fn digest_text(
+    rt: &Runtime,
+    u: &crate::identity::UserRt,
+    since: i64,
+    now: i64,
+    locale: ConsoleLocale,
+) -> String {
     let principal = antirion_identity::rbac::AdminPrincipal {
         kind: antirion_core::audit::ActorKind::Operator,
         id: String::new(),
@@ -318,7 +326,10 @@ async fn digest_text(rt: &Runtime, u: &crate::identity::UserRt, since: i64, now:
         if lines.len() < 20 {
             lines.push(format!(
                 "- [{}] {} ({}, {})",
-                s.instance.severity, s.instance.summary, s.instance.status, s.instance.fired_at
+                locale.severity(&s.instance.severity),
+                s.instance.summary,
+                s.instance.status,
+                s.instance.fired_at
             ));
         }
     }
@@ -347,11 +358,12 @@ async fn digest_text(rt: &Runtime, u: &crate::identity::UserRt, since: i64, now:
     })
     .await;
     let mut text = format!(
-        "Alerts fired: {} ({})\n",
+        "{}: {} ({})\n",
+        locale.pick("Alerts fired", "هشدارهای فعال‌شده"),
         instances.len(),
         by_severity
             .iter()
-            .map(|(k, v)| format!("{k}: {v}"))
+            .map(|(k, v)| format!("{}: {v}", locale.severity(k)))
             .collect::<Vec<_>>()
             .join(", ")
     );
@@ -360,8 +372,10 @@ async fn digest_text(rt: &Runtime, u: &crate::identity::UserRt, since: i64, now:
         text.push('\n');
     }
     text.push_str(&format!(
-        "\nSpend in the period: {}\nSafety events: {safety}\n",
-        crate::wording::usd(spend)
+        "\n{}: {}\n{}: {safety}\n",
+        locale.pick("Spend in the period", "هزینه در این دوره"),
+        crate::wording::usd(spend),
+        locale.pick("Safety events", "رویدادهای ایمنی"),
     ));
     text
 }

@@ -64,6 +64,7 @@ import { KeyFormDrawer } from './key-form-drawer';
 import { KeySnippets } from './key-snippets';
 import { Tooltip } from '@/components/ui/tooltip';
 import { notify } from '@/stores/ui';
+import { useTranslate } from '@/lib/i18n';
 
 const STALE_MS = 60 * 86_400_000;
 
@@ -338,6 +339,7 @@ const ANOMALY_TEXT: Record<string, string> = {
 
 /** API keys: a summary, the filters, the key list and the selected key. */
 export function KeysScreen() {
+  const translate = useTranslate();
   useKeysScreenData();
   const status = useKeys((s) => s.status);
   const error = useKeys((s) => s.error);
@@ -394,8 +396,8 @@ export function KeysScreen() {
   return (
     <>
       <PageHeader
-        title="API keys"
-        description="Credentials your apps use to send requests through the gateway"
+        title={translate('API keys')}
+        description={translate('Credentials your apps use to send requests through the gateway')}
         actions={
           <>
             <UpdatedAt at={loadedAt} />

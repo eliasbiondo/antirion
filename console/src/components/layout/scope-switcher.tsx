@@ -10,9 +10,11 @@ import { cn } from '@/lib/cn';
 import type { OrganizationResource } from '@/lib/api/types';
 import { hasPermission, isGatewayPrincipal, useSession } from '@/stores/session';
 import { encodeScope, type Scope, scopeOrganization, useScope } from '@/stores/scope';
+import { useTranslate } from '@/lib/i18n';
 
 /** The organization switcher: "All organizations" for gateway principals, or one organization. */
 export function ScopeSwitcher({ onCreateOrganization }: { onCreateOrganization?: () => void }) {
+  const translate = useTranslate();
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -46,8 +48,8 @@ export function ScopeSwitcher({ onCreateOrganization }: { onCreateOrganization?:
     if (isGatewayPrincipal(me))
       list.push({
         scope: { kind: 'gateway' },
-        label: 'All organizations',
-        detail: 'Everything on this gateway',
+        label: translate('All organizations'),
+        detail: translate('Everything on this gateway'),
       });
     for (const org of orgs ?? []) {
       list.push({
@@ -58,9 +60,9 @@ export function ScopeSwitcher({ onCreateOrganization }: { onCreateOrganization?:
     }
     const q = query.trim().toLowerCase();
     return q ? list.filter((o) => o.label.toLowerCase().includes(q) || (o.detail ?? '').includes(q)) : list;
-  }, [orgs, me, query]);
+  }, [orgs, me, query, translate]);
 
-  const current = scope.kind === 'gateway' ? 'All organizations' : scope.name;
+  const current = scope.kind === 'gateway' ? translate('All organizations') : scope.name;
   const canCreate = hasPermission(me, 'organizations:create', scopeOrganization(scope));
 
   return (
@@ -70,7 +72,7 @@ export function ScopeSwitcher({ onCreateOrganization }: { onCreateOrganization?:
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`Scope: ${current}. Change scope`}
+        aria-label={translate('Scope: {0}. Change scope', current)}
         onClick={() => setOpen(!open)}
         className="inline-flex h-7 min-w-0 items-center gap-1.5 rounded-md border border-transparent px-2 text-ui font-semibold text-fg hover:bg-hover aria-expanded:border-line aria-expanded:bg-hover"
       >
@@ -82,7 +84,7 @@ export function ScopeSwitcher({ onCreateOrganization }: { onCreateOrganization?:
         open={open}
         onClose={() => setOpen(false)}
         anchor={anchor}
-        label="Change scope"
+        label={translate('Change scope')}
         className="w-[280px]"
       >
         <div className="flex items-center gap-2 border-b border-line px-2.5 py-2">
@@ -91,8 +93,8 @@ export function ScopeSwitcher({ onCreateOrganization }: { onCreateOrganization?:
           </span>
           <input
             autoFocus
-            aria-label="Find an organization"
-            placeholder="Find an organization"
+            aria-label={translate('Find an organization')}
+            placeholder={translate('Find an organization')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 bg-transparent text-ui text-fg outline-none placeholder:text-dim"
@@ -100,16 +102,16 @@ export function ScopeSwitcher({ onCreateOrganization }: { onCreateOrganization?:
         </div>
         <ul
           role="listbox"
-          aria-label="Scopes"
+          aria-label={translate('Scopes')}
           className="max-h-64 overflow-y-auto p-1"
           onKeyDown={menuKeyHandler}
         >
           {orgs === null && !isGatewayPrincipal(me) ? (
-            <li className="px-2 py-3 text-caption text-muted">Loading…</li>
+            <li className="px-2 py-3 text-caption text-muted">{translate('Loading…')}</li>
           ) : null}
           {options.length === 0 && orgs !== null ? (
             <li className="flex justify-center px-2 py-3">
-              <EmptyPill>No organizations match</EmptyPill>
+              <EmptyPill>{translate('No organizations match')}</EmptyPill>
             </li>
           ) : null}
           {options.map((o) => {
@@ -125,7 +127,7 @@ export function ScopeSwitcher({ onCreateOrganization }: { onCreateOrganization?:
                     setOpen(false);
                   }}
                   className={cn(
-                    'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left',
+                    'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-start',
                     on ? 'bg-hover' : 'hover:bg-hover',
                   )}
                 >
@@ -155,7 +157,8 @@ export function ScopeSwitcher({ onCreateOrganization }: { onCreateOrganization?:
               }}
               className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-ui text-muted hover:bg-hover hover:text-fg"
             >
-              <Icon name="plus" size={14} /> Create organization
+              <Icon name="plus" size={14} />
+              {' ' + translate('Create organization')}
             </button>
           </div>
         ) : null}
@@ -166,6 +169,7 @@ export function ScopeSwitcher({ onCreateOrganization }: { onCreateOrganization?:
 
 /** Environment scope: "All environments" or a value of the environment tag. */
 export function EnvironmentSelect() {
+  const translate = useTranslate();
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const environment = useScope((s) => s.environment);
@@ -206,7 +210,7 @@ export function EnvironmentSelect() {
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`Environment: ${environment ?? 'all environments'}`}
+        aria-label={translate('Environment: {0}', environment ?? 'all environments')}
         onClick={() => setOpen(!open)}
         className="inline-flex h-7 items-center gap-1.5 rounded-control border border-line bg-canvas px-2 text-ui text-fg hover:border-line-strong hover:bg-hover"
       >
@@ -214,7 +218,7 @@ export function EnvironmentSelect() {
           aria-hidden="true"
           className={cn('h-1.5 w-1.5 rounded-full', environment ? 'bg-success' : 'bg-dim')}
         />
-        <span className="whitespace-nowrap">{environment ?? 'All environments'}</span>
+        <span className="whitespace-nowrap">{environment ?? translate('All environments')}</span>
         <Icon name="chevronDown" size={12} className="text-dim" />
       </button>
       <Popover
@@ -222,11 +226,13 @@ export function EnvironmentSelect() {
         onClose={() => setOpen(false)}
         anchor={anchor}
         align="right"
-        label="Environment"
+        label={translate('Environment')}
         className="w-[260px]"
       >
-        <div className="border-b border-line px-3 py-2 text-caption font-medium text-muted">Environment</div>
-        <ul className="p-1" role="listbox" aria-label="Environments" onKeyDown={menuKeyHandler}>
+        <div className="border-b border-line px-3 py-2 text-caption font-medium text-muted">
+          {translate('Environment')}
+        </div>
+        <ul className="p-1" role="listbox" aria-label={translate('Environments')} onKeyDown={menuKeyHandler}>
           {all.map((v) => {
             const on = (environment ?? '') === v.name;
             return (
@@ -240,13 +246,13 @@ export function EnvironmentSelect() {
                     setOpen(false);
                   }}
                   className={cn(
-                    'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left',
+                    'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-start',
                     on ? 'bg-hover' : 'hover:bg-hover',
                   )}
                 >
-                  <span className="flex-1 text-body text-fg">{v.name || 'All environments'}</span>
+                  <span className="flex-1 text-body text-fg">{v.name || translate('All environments')}</span>
                   <span className="mono text-caption text-muted tabular-nums">
-                    {values ? `${Math.round(v.rpm)}/min` : ''}
+                    {values ? translate('{0}/min', Math.round(v.rpm)) : ''}
                   </span>
                   {on ? (
                     <span className="text-accent">
@@ -259,7 +265,7 @@ export function EnvironmentSelect() {
           })}
           {values !== null && values.length === 0 ? (
             <li className="px-2 py-2 text-caption text-muted">
-              No requests tagged with an environment in the last 5 minutes.
+              {translate('No requests tagged with an environment in the last 5 minutes.')}
             </li>
           ) : null}
         </ul>

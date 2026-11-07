@@ -5,9 +5,11 @@ import { forwardRef, useState, type ButtonHTMLAttributes, type ReactNode } from 
 import { Input, type InputProps } from '@/components/ui/form';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { cn } from '@/lib/cn';
+import { useTranslate } from '@/lib/i18n';
 
 /** One message for a failed step, in plain words, announced to assistive technology. */
 export function ErrorStrip({ message, detail }: { message: string | null; detail?: string }) {
+  const translate = useTranslate();
   if (!message) return null;
   return (
     <p
@@ -18,8 +20,8 @@ export function ErrorStrip({ message, detail }: { message: string | null; detail
         <Icon name="alert" size={14} />
       </span>
       <span>
-        {message}
-        {detail ? <span className="mt-0.5 block text-caption text-muted">{detail}</span> : null}
+        {translate(message)}
+        {detail ? <span className="mt-0.5 block text-caption text-muted">{translate(detail)}</span> : null}
       </span>
     </p>
   );
@@ -47,15 +49,23 @@ export function StepHeader({
   subtitle?: ReactNode;
   step?: { current: number; total: number } | null;
 }) {
+  const translate = useTranslate();
   return (
     <div className="mb-6 flex flex-col gap-1.5">
       {step ? (
         <p className="text-caption font-medium text-accent">
-          Step {step.current} of {step.total}
+          {translate('Step') + ' '}
+          {step.current}
+          {' ' + translate('of') + ' '}
+          {step.total}
         </p>
       ) : null}
-      <h1 className="text-heading leading-tight font-semibold tracking-tight text-fg">{title}</h1>
-      {subtitle ? <div className="text-body leading-relaxed text-muted">{subtitle}</div> : null}
+      <h1 className="text-heading leading-tight font-semibold tracking-tight text-fg">{translate(title)}</h1>
+      {subtitle ? (
+        <div className="text-body leading-relaxed text-muted">
+          {typeof subtitle === 'string' ? translate(subtitle) : subtitle}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -87,6 +97,7 @@ export const SecretInput = forwardRef<
   HTMLInputElement,
   Omit<InputProps, 'type'> & { what?: string; compact?: boolean }
 >(function SecretInput({ what = 'password', compact, className, ...rest }, ref) {
+  const translate = useTranslate();
   const [show, setShow] = useState(false);
   return (
     <div className="relative">
@@ -100,7 +111,7 @@ export const SecretInput = forwardRef<
       />
       <button
         type="button"
-        aria-label={show ? `Hide ${what}` : `Show ${what}`}
+        aria-label={translate(show ? 'Hide {0}' : 'Show {0}', translate(what))}
         aria-pressed={show}
         onClick={() => setShow(!show)}
         className="absolute top-1/2 right-1.5 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-xs text-muted hover:bg-hover hover:text-fg"

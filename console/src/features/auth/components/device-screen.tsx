@@ -14,6 +14,7 @@ import { useSession } from '@/stores/session';
 
 import { Frame } from './login-screen';
 import { ErrorStrip, MoreOptions, Note, StepHeader } from './parts';
+import { useTranslate } from '@/lib/i18n';
 
 type DeviceState = components['schemas']['DeviceAuthorizationState'];
 
@@ -40,6 +41,7 @@ function message(error: unknown): string {
  * only once it is approved here.
  */
 export function DeviceScreen() {
+  const translate = useTranslate();
   const params = useSearchParams();
   const status = useSession((s) => s.status);
   const me = useSession((s) => s.me);
@@ -79,21 +81,22 @@ export function DeviceScreen() {
   if (status === 'unknown' || status === 'loading') {
     body = (
       <p className="flex min-h-40 items-center justify-center gap-2 text-ui text-muted" role="status">
-        <Spinner /> Loading…
+        <Spinner />
+        {' ' + translate('Loading…')}
       </p>
     );
   } else if (status !== 'authenticated') {
     body = (
       <>
         <StepHeader
-          title="Approve a terminal sign-in"
+          title={translate('Approve a terminal sign-in')}
           subtitle="Sign in first, then approve the code your terminal shows."
         />
         <Link
           href={`/login/?next=${encodeURIComponent(next)}`}
           className={cn(buttonClass('primary'), 'h-10 w-full text-base')}
         >
-          Sign in to continue
+          {translate('Sign in to continue')}
         </Link>
       </>
     );
@@ -101,7 +104,7 @@ export function DeviceScreen() {
     body = (
       <>
         <StepHeader
-          title={request.status === 'approved' ? 'Sign-in approved' : 'Sign-in denied'}
+          title={request.status === 'approved' ? translate('Sign-in approved') : translate('Sign-in denied')}
           subtitle={
             request.status === 'approved'
               ? 'Return to your terminal: it now has an admin token for you.'
@@ -110,8 +113,9 @@ export function DeviceScreen() {
         />
         <Note icon={request.status === 'approved' ? 'checkCircle' : 'info'}>
           <p>
-            Code <span className="mono text-fg">{request.user_code}</span>
-            {request.client_ip ? ` from ${request.client_ip}` : ''}.
+            {translate('Code') + ' '}
+            <span className="mono text-fg">{request.user_code}</span>
+            {request.client_ip ? translate(' from {0}', request.client_ip) : ''}.
           </p>
         </Note>
       </>
@@ -120,43 +124,44 @@ export function DeviceScreen() {
     body = (
       <>
         <StepHeader
-          title="Approve this sign-in?"
+          title={translate('Approve this sign-in?')}
           subtitle={
             <span>
-              A terminal asks for an admin token as <span className="font-medium text-fg">{user}</span>, with
-              your permissions.
+              {translate('A terminal asks for an admin token as') + ' '}
+              <span className="font-medium text-fg">{user}</span>
+              {translate(', with your permissions.')}
             </span>
           }
         />
         <div className="flex flex-col gap-4">
           <ErrorStrip message={error} />
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-ui">
-            <dt className="text-muted">Code</dt>
+            <dt className="text-muted">{translate('Code')}</dt>
             <dd className="mono text-fg">{request.user_code}</dd>
-            <dt className="text-muted">Client</dt>
-            <dd className="text-fg">{request.client_id ?? 'Unnamed client'}</dd>
-            <dt className="text-muted">From</dt>
-            <dd className="mono text-fg">{request.client_ip ?? 'Unknown address'}</dd>
-            <dt className="text-muted">Requested</dt>
+            <dt className="text-muted">{translate('Client')}</dt>
+            <dd className="text-fg">{request.client_id ?? translate('Unnamed client')}</dd>
+            <dt className="text-muted">{translate('From')}</dt>
+            <dd className="mono text-fg">{request.client_ip ?? translate('Unknown address')}</dd>
+            <dt className="text-muted">{translate('Requested')}</dt>
             <dd className="text-fg">{formatRelative(request.requested_at)}</dd>
-            <dt className="text-muted">Expires</dt>
+            <dt className="text-muted">{translate('Expires')}</dt>
             <dd className="text-fg">{formatRelative(request.expires_at)}</dd>
             {request.organization ? (
               <>
-                <dt className="text-muted">Organization</dt>
+                <dt className="text-muted">{translate('Organization')}</dt>
                 <dd className="text-fg">{request.organization}</dd>
               </>
             ) : null}
           </dl>
           <Note icon="alert">
-            <p>Approve only a code you started yourself, in a terminal you trust.</p>
+            <p>{translate('Approve only a code you started yourself, in a terminal you trust.')}</p>
           </Note>
           <div className="flex gap-2">
             <Button variant="primary" busy={busy} className="h-10 flex-1" onClick={() => void run('approve')}>
-              Approve
+              {translate('Approve')}
             </Button>
             <Button className="h-10 flex-1" disabled={busy} onClick={() => void run('deny')}>
-              Deny
+              {translate('Deny')}
             </Button>
           </div>
         </div>
@@ -166,7 +171,7 @@ export function DeviceScreen() {
     body = (
       <>
         <StepHeader
-          title="Approve a terminal sign-in"
+          title={translate('Approve a terminal sign-in')}
           subtitle="Enter the code your terminal shows after antirion auth login."
         />
         <form
@@ -182,7 +187,7 @@ export function DeviceScreen() {
           }}
         >
           <ErrorStrip message={error} />
-          <Field label="Code">
+          <Field label={translate('Code')}>
             <Input
               mono
               autoComplete="off"
@@ -197,7 +202,7 @@ export function DeviceScreen() {
             />
           </Field>
           <Button type="submit" variant="primary" busy={busy} className="h-10 w-full text-base">
-            Continue
+            {translate('Continue')}
           </Button>
         </form>
       </>
@@ -213,7 +218,7 @@ export function DeviceScreen() {
             href="/"
             className="self-start text-ui text-muted underline-offset-4 hover:text-fg hover:underline"
           >
-            Go to the console
+            {translate('Go to the console')}
           </Link>
         </MoreOptions>
       ) : null}

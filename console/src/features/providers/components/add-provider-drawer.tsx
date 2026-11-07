@@ -26,6 +26,7 @@ import { providersApi } from '../api';
 import { useProviderModels } from '../models';
 import { useProviders } from '../store';
 import { passed, TestConnection, testGateReason, type TestState } from './test-connection';
+import { translateNow } from '@/lib/i18n';
 
 const SECRET_HINT = 'Stored encrypted and never shown again. A reference such as ${env:NAME} also works.';
 
@@ -155,7 +156,11 @@ export function AddProviderDrawer({
         useProviders.setState((s) => ({ tests: { ...s.tests, [name]: tested } }));
         if (tested.models) useProviderModels.getState().remember(name, tested.models, tested.tested_at);
       }
-      notify('success', 'Provider added', `${name} is ready. Add the models you want to offer from it.`);
+      notify(
+        'success',
+        'Provider added',
+        translateNow('{0} is ready. Add the models you want to offer from it.', name),
+      );
       onAdded?.(name);
       close();
     } catch (e) {

@@ -10,6 +10,7 @@ import { notify } from '@/stores/ui';
 
 import type { InvalidateLevel } from '../api';
 import { useCache } from '../store';
+import { translateNow } from '@/lib/i18n';
 
 const LEVELS: { value: InvalidateLevel; label: string }[] = [
   { value: 'gateway', label: 'The whole gateway' },
@@ -65,7 +66,11 @@ export function ClearDialog({
       }
       onConfirm={async (reason) => {
         await invalidate(level, whole ? undefined : name, reason);
-        notify('success', 'Cache cleared', whole ? 'For the whole gateway.' : `For ${level} ${name}.`);
+        notify(
+          'success',
+          'Cache cleared',
+          whole ? 'For the whole gateway.' : translateNow('For {0} {1}.', level, name),
+        );
       }}
     >
       {fixed ? null : (

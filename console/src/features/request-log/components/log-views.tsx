@@ -24,6 +24,7 @@ import {
   sameFilters,
   viewFilters,
 } from '../types';
+import { translateNow } from '@/lib/i18n';
 
 export interface BuiltInView {
   id: string;
@@ -237,7 +238,7 @@ export function LogViews({ className }: { className?: string }) {
       await updateView(view.id, body);
       notify('success', done);
     } catch {
-      notify('error', `Couldn't change ${view.name}`);
+      notify('error', translateNow("Couldn't change {0}", view.name));
     }
   }
 
@@ -272,7 +273,7 @@ export function LogViews({ className }: { className?: string }) {
             icon: 'link' as const,
             onSelect: () =>
               void navigator.clipboard.writeText(viewLink(view.id)).then(
-                () => notify('success', `Copied the link to ${view.name}`),
+                () => notify('success', translateNow('Copied the link to {0}', view.name)),
                 () => notify('error', "Couldn't copy the link"),
               ),
           };
@@ -327,7 +328,7 @@ export function LogViews({ className }: { className?: string }) {
           onClose={() => setEditing(null)}
           onSubmit={async (name, shared) => {
             await createView({ name, shared, starred: true, ...current(columns) });
-            notify('success', `Saved ${name}`);
+            notify('success', translateNow('Saved {0}', name));
           }}
         />
       ) : null}
@@ -360,7 +361,7 @@ export function LogViews({ className }: { className?: string }) {
           withReason={false}
           onConfirm={async () => {
             await deleteView(editing.view.id);
-            notify('success', `Deleted ${editing.view.name}`);
+            notify('success', translateNow('Deleted {0}', editing.view.name));
           }}
         />
       ) : null}

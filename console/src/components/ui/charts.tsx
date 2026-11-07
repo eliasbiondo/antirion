@@ -6,6 +6,7 @@ import { cn } from '@/lib/cn';
 
 import { noteCountFits, noteTitle } from './chart-notes';
 import { EmptyPill } from './states';
+import { useTranslate } from '@/lib/i18n';
 
 export type ChartTone = 'accent' | 'success' | 'warn' | 'error' | 'info' | 'muted';
 
@@ -303,6 +304,7 @@ export function TimeChart({
   ticks: valueTicks,
   className,
 }: TimeChartProps) {
+  const translate = useTranslate();
   const tip = useRef<HTMLDivElement>(null);
   const [width, wrap] = useWidth(600);
   const gid = useId().replace(/[^a-zA-Z0-9]/g, '');
@@ -477,7 +479,7 @@ export function TimeChart({
           if (el) el.style.height = `${height}px`;
         }}
       >
-        <EmptyPill>{emptyLabel ?? 'No data in this range'}</EmptyPill>
+        <EmptyPill>{emptyLabel ?? translate('No data in this range')}</EmptyPill>
       </div>
     );
   }
@@ -722,7 +724,9 @@ export function TimeChart({
             ))}
             {(noteMap.get(hover)?.length ?? 0) > 3 ? (
               <div className="mt-1 text-caption text-muted">
-                and {(noteMap.get(hover)?.length ?? 0) - 3} more
+                {translate('and') + ' '}
+                {(noteMap.get(hover)?.length ?? 0) - 3}
+                {' ' + translate('more')}
               </div>
             ) : null}
           </div>
@@ -733,14 +737,14 @@ export function TimeChart({
           <caption>{title}</caption>
           <thead>
             <tr>
-              <th scope="col">Time</th>
+              <th scope="col">{translate('Time')}</th>
               {series.map((s) => (
                 <th key={s.name} scope="col">
                   {s.name}
                 </th>
               ))}
               {overlay ? <th scope="col">{overlay.name}</th> : null}
-              {noteMap.size > 0 ? <th scope="col">Events</th> : null}
+              {noteMap.size > 0 ? <th scope="col">{translate('Events')}</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -748,7 +752,9 @@ export function TimeChart({
               <tr key={i}>
                 <th scope="row">{l}</th>
                 {cleaned.map((s) => (
-                  <td key={s.name}>{gapped && !s.present[i] ? 'No data' : formatValue(s.data[i] ?? 0)}</td>
+                  <td key={s.name}>
+                    {gapped && !s.present[i] ? translate('No data') : formatValue(s.data[i] ?? 0)}
+                  </td>
                 ))}
                 {over && overlay ? <td>{overlay.format(over[i] ?? 0)}</td> : null}
                 {noteMap.size > 0 ? <td>{(noteMap.get(i) ?? []).map((a) => a.label).join('; ')}</td> : null}

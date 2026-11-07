@@ -16,6 +16,7 @@ use super::payloads::{self, Phase};
 use super::{ChannelJob, Job, uuid};
 use crate::Runtime;
 use crate::identity::IdentitySnapshot;
+use crate::operators::ConsoleLocale;
 
 /// How many times a conflicting update is retried.
 const CAS_TRIES: usize = 8;
@@ -387,11 +388,13 @@ pub(crate) async fn to_subscribers(rt: &Runtime, i: &Instance) {
         let Ok(prefs) = rt.preferences(name).await else {
             continue;
         };
-        let (subject, body) = payloads::email(i, Phase::Fired, link.as_deref(), w);
+        let locale = ConsoleLocale::from_preferences(&prefs);
+        let (subject, body) = payloads::personal_email(i, link.as_deref(), w, locale);
         if crate::push::wanted(&prefs, &i.severity, &i.category) {
             let message = crate::push::PushMessage {
                 title: subject.clone(),
                 body: i.summary.clone(),
+                locale: locale.tag(),
                 url: link.clone(),
                 tag: Some(i.id.clone()),
                 urgency: crate::push::urgency_of(&i.severity),

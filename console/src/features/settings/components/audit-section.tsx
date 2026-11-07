@@ -32,6 +32,7 @@ import type { AuditQuery } from '../api';
 import { AUDIT_RANGES, type AuditRange, auditBounds, type CustomRange } from '../audit-range';
 import { AUDIT_EXPORT_MAX, useAudit, useGatewaySettings } from '../store';
 import { useTokenNames } from '@/stores/actors';
+import { translateNow } from '@/lib/i18n';
 
 function downloadAudit(entries: AuditEntry[]) {
   downloadCsv(
@@ -168,7 +169,10 @@ export function AuditSection() {
         `Exported ${formatCount(all.length)} ${all.length === 1 ? 'entry' : 'entries'}`,
         complete
           ? undefined
-          : `The newest ${formatCount(AUDIT_EXPORT_MAX)} only: narrow the time range for the rest.`,
+          : translateNow(
+              'The newest {0} only: narrow the time range for the rest.',
+              formatCount(AUDIT_EXPORT_MAX),
+            ),
       );
     } catch (e) {
       notify('error', "The audit log couldn't be exported", e instanceof Error ? e.message : undefined);

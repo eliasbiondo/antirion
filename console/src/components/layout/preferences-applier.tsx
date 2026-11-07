@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 
+import { useLocale } from '@/lib/locale';
 import { resolveTheme, usePreferences } from '@/stores/preferences';
 
 /** Applies theme, density, sidebar, motion and accent to the document whenever they change. */
@@ -11,7 +12,7 @@ export function PreferencesApplier() {
   const sidebarCollapsed = usePreferences((s) => s.sidebarCollapsed);
   const reducedMotion = usePreferences((s) => s.reducedMotion);
   const accentHue = usePreferences((s) => s.accentHue);
-  const locale = usePreferences((s) => s.locale);
+  const { tag, direction } = useLocale();
 
   useEffect(() => {
     const root = document.documentElement;
@@ -33,9 +34,9 @@ export function PreferencesApplier() {
   }, [density, sidebarCollapsed, reducedMotion, accentHue]);
 
   useEffect(() => {
-    // English is the only translation so far, so a language without one keeps the page in English.
-    document.documentElement.lang = locale?.toLowerCase().startsWith('en') ? locale : 'en';
-  }, [locale]);
+    document.documentElement.lang = tag;
+    document.documentElement.dir = direction;
+  }, [tag, direction]);
 
   return null;
 }

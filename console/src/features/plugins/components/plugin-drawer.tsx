@@ -41,6 +41,7 @@ import { usePlugins } from '../store';
 import { AttachedTo } from './attached-to';
 import { describeError } from '@/lib/api/client';
 import { useEdited } from '@/lib/hooks';
+import { translateNow } from '@/lib/i18n';
 
 const NONE: never[] = [];
 
@@ -107,8 +108,14 @@ function PluginView({ plugin }: { plugin: PluginResource }) {
             onChange={(on) =>
               void setAttached(plugin.name, on).then(
                 () =>
-                  notify('success', on ? `${plugin.name} runs on every request` : `${plugin.name} detached`),
-                (e: unknown) => notify('error', `Couldn't change ${plugin.name}`, describeError(e)),
+                  notify(
+                    'success',
+                    on
+                      ? translateNow('{0} runs on every request', plugin.name)
+                      : translateNow('{0} detached', plugin.name),
+                  ),
+                (e: unknown) =>
+                  notify('error', translateNow("Couldn't change {0}", plugin.name), describeError(e)),
               )
             }
           />
@@ -244,8 +251,8 @@ export function PluginDrawer({
         creating ? 'Plugin added' : 'Plugin saved',
         creating
           ? values.enabled
-            ? `${target} runs once a level attaches it.`
-            : `${target} is off: it runs nowhere until you turn it on.`
+            ? translateNow('{0} runs once a level attaches it.', target)
+            : translateNow('{0} is off: it runs nowhere until you turn it on.', target)
           : target,
       );
       setEditing(false);

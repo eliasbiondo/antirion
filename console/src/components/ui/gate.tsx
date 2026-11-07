@@ -8,6 +8,7 @@ import { scopeOrganization, useScope } from '@/stores/scope';
 import { hasPermission, useSession } from '@/stores/session';
 
 import { EmptyState, midSentence } from './states';
+import { useTranslate } from '@/lib/i18n';
 
 /** Whether the principal may call an operation of the contract, from its declared permission. */
 export function useCan(operation: OperationId): boolean {
@@ -47,10 +48,11 @@ export function Gate({ operation, mode = 'disable', children }: GateProps) {
 
 /** A whole view the principal may not read. */
 export function Forbidden({ what, children }: { what: string; children?: ReactNode }) {
+  const translate = useTranslate();
   return (
     <EmptyState
-      title={`You don't have access to ${midSentence(what)}`}
-      description="Ask a gateway admin for access."
+      title={translate("You don't have access to {0}", midSentence(what))}
+      description={translate('Ask a gateway admin for access.')}
       action={children}
     />
   );

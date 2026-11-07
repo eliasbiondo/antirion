@@ -12,6 +12,7 @@ import { useSession } from '@/stores/session';
 import { authApi } from '../api';
 import { Frame } from './login-screen';
 import { ErrorStrip, Note, StepHeader } from './parts';
+import { useTranslate } from '@/lib/i18n';
 
 type Outcome =
   | { kind: 'checking' }
@@ -29,6 +30,7 @@ const PRIMARY = cn(buttonClass('primary'), 'h-10 w-full text-base');
  * signed-in user that asked for it, or asks them to sign in first and comes back here.
  */
 export function ConfirmEmailScreen() {
+  const translate = useTranslate();
   const params = useSearchParams();
   const token = params.get('token') ?? '';
   const status = useSession((s) => s.status);
@@ -79,73 +81,77 @@ export function ConfirmEmailScreen() {
     <Frame footer={null}>
       {outcome.kind === 'checking' ? (
         <>
-          <StepHeader title="Confirm your new email" />
+          <StepHeader title={translate('Confirm your new email')} />
           <p className="flex items-center gap-2 text-ui text-muted" role="status">
-            <Spinner /> Confirming…
+            <Spinner />
+            {' ' + translate('Confirming…')}
           </p>
         </>
       ) : outcome.kind === 'missing' ? (
         <>
-          <StepHeader title="This link is incomplete" />
+          <StepHeader title={translate('This link is incomplete')} />
           <div className="flex flex-col gap-4">
             <p className="text-body leading-relaxed text-fg">
-              Part of the link is missing. Open it again from the email, or copy the whole address into your
-              browser.
+              {translate(
+                'Part of the link is missing. Open it again from the email, or copy the whole address into your browser.',
+              )}
             </p>
             <Link href="/" className={PRIMARY}>
-              Go to Antirion
+              {translate('Go to Antirion')}
             </Link>
           </div>
         </>
       ) : outcome.kind === 'sign-in' ? (
         <>
           <StepHeader
-            title="Sign in to confirm your new email"
+            title={translate('Sign in to confirm your new email')}
             subtitle="Sign in to the account that asked for the change; you'll come back here to finish."
           />
           <Link href={`/login/?next=${encodeURIComponent(here)}`} className={PRIMARY}>
-            Sign in
+            {translate('Sign in')}
           </Link>
         </>
       ) : outcome.kind === 'not-a-user' ? (
         <>
-          <StepHeader title="Sign in with your own account" />
+          <StepHeader title={translate('Sign in with your own account')} />
           <div className="flex flex-col gap-4">
             <p className="text-body leading-relaxed text-fg">
               You&apos;re signed in with an admin token, which has no email. Sign out, then sign in to the
               account that asked for the change and open the link again.
             </p>
             <Link href="/" className={PRIMARY}>
-              Go to Antirion
+              {translate('Go to Antirion')}
             </Link>
           </div>
         </>
       ) : outcome.kind === 'done' ? (
         <>
-          <StepHeader title="Your email is confirmed" />
+          <StepHeader title={translate('Your email is confirmed')} />
           <div className="flex flex-col gap-4">
             <p role="status" className="text-body leading-relaxed text-fg">
               {outcome.email ? (
                 <>
-                  Your account now uses <span className="font-medium">{outcome.email}</span>. Sign in with it
-                  from now on.
+                  {translate('Your account now uses') + ' '}
+                  <span className="font-medium">{outcome.email}</span>
+                  {translate('. Sign in with it from now on.')}
                 </>
               ) : (
-                'Your account uses the new address. Sign in with it from now on.'
+                translate('Your account uses the new address. Sign in with it from now on.')
               )}
             </p>
             <Link href="/" className={PRIMARY}>
-              Continue to Antirion
+              {translate('Continue to Antirion')}
             </Link>
           </div>
         </>
       ) : outcome.kind === 'dead' ? (
         <>
-          <StepHeader title="This link no longer works" />
+          <StepHeader title={translate('This link no longer works')} />
           <div className="flex flex-col gap-4">
             <p className="text-body leading-relaxed text-fg">
-              A confirmation link works once, for a short time, and only for the account that asked for the
-              change. Change your email again from your profile to get a new link.
+              {translate(
+                'A confirmation link works once, for a short time, and only for the account that asked for the change. Change your email again from your profile to get a new link.',
+              )}
             </p>
             {me?.user?.email ? (
               <Note>
@@ -153,13 +159,13 @@ export function ConfirmEmailScreen() {
               </Note>
             ) : null}
             <Link href="/?account=profile" className={PRIMARY}>
-              Open your profile
+              {translate('Open your profile')}
             </Link>
           </div>
         </>
       ) : (
         <>
-          <StepHeader title="Confirm your new email" />
+          <StepHeader title={translate('Confirm your new email')} />
           <ErrorStrip message={outcome.message} />
         </>
       )}

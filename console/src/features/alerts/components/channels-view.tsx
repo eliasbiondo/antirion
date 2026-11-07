@@ -24,6 +24,7 @@ import { useAlertEditors } from '../editors';
 import { categoryForEvents, covers, EVENT_SOURCES } from '../events';
 import { suggestName } from '../form';
 import { useAlerts } from '../store';
+import { translateNow } from '@/lib/i18n';
 
 export const CHANNEL_ICON: Record<AlertChannelResource['spec']['type'], IconName> = {
   slack: 'messages',
@@ -552,7 +553,12 @@ function EventSourcesPanel() {
                           icon: 'webhook' as const,
                           onSelect: () =>
                             void saveWebhook(n, { events: [...w.events, e.type] }).then(
-                              () => notify('success', 'Subscribed', `${n} now receives ${e.type}`),
+                              () =>
+                                notify(
+                                  'success',
+                                  'Subscribed',
+                                  translateNow('{0} now receives {1}', n, e.type),
+                                ),
                               (err: unknown) => notify('error', "Couldn't subscribe", describeError(err)),
                             ),
                         })),

@@ -13,6 +13,7 @@ import { notify } from '@/stores/ui';
 
 import { useBudgets } from '../store';
 import { formatAmount } from '../types';
+import { translateNow } from '@/lib/i18n';
 
 const DAY = 86_400_000;
 
@@ -89,7 +90,11 @@ export function OverageDialog({
         const expires = grantExpiry(day, periodEnd);
         if (new Date(expires).getTime() <= Date.now()) throw new Error('Choose a day from today on');
         await grant(counter, trimmed, expires, reason.trim());
-        notify('success', 'Overage approved', `${label}: ${formatAmount(trimmed, counter.unit)} more`);
+        notify(
+          'success',
+          'Overage approved',
+          translateNow('{0}: {1} more', label, formatAmount(trimmed, counter.unit)),
+        );
       }}
     >
       <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">

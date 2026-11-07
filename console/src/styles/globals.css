@@ -24,7 +24,7 @@
   --color-grid: var(--ant-grid-line);
   --color-overlay: var(--ant-overlay);
 
-  --font-sans: var(--font-hanken), -apple-system, system-ui, sans-serif;
+  --font-sans: var(--ant-font-sans, var(--font-hanken)), -apple-system, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, Menlo, monospace;
 
   /*
@@ -116,6 +116,13 @@
     line-height: 20px;
     -webkit-font-smoothing: antialiased;
     font-feature-settings: 'cv11', 'ss01', 'ss03';
+  }
+  html[lang='fa'] {
+    --ant-font-sans: var(--font-vazir), var(--font-hanken);
+  }
+  html[dir='rtl'] :is(pre, input[type='email'], input[type='url'], input[type='password']) {
+    direction: ltr;
+    text-align: start;
   }
   :focus-visible {
     outline: 2px solid var(--ant-accent);

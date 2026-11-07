@@ -85,22 +85,27 @@ fn bindings(call: &Call, user: &str, given: Option<&Value>) -> Result<Vec<Value>
 }
 
 /// The link of an invitation, and whether it was mailed.
-fn deliver(call: &Call, inv: &Invitation, token: &str) -> Option<String> {
+async fn deliver(call: &Call, inv: &Invitation, token: &str) -> Option<String> {
     let base = format!(
         "{}{}",
         crate::oidc::own_origin(&call.rt, &call.headers),
         call.rt.statics.ui.path
     );
     let link = format!("{base}/accept-invitation?token={token}");
-    let body = format!(
-        "{} invited you to the gateway console.\n\nAccept the invitation here (the link works once, until {}):\n{link}\n",
-        inv.invited_by,
-        inv.expires_at.to_rfc3339_seconds()
-    );
-    if call
-        .rt
-        .send_mail(&inv.email, "You are invited to the console", body)
-    {
+    let locale = call.rt.console_locale(&inv.user).await;
+    let inviter = &inv.invited_by;
+    let expires = inv.expires_at.to_rfc3339_seconds();
+    let subject = locale.pick("You are invited to the console", "دعوت به پنل Antirion");
+    let body = if locale.tag() == "fa" {
+        format!(
+            "{inviter} شما را به پنل درگاه دعوت کرده است.\n\nبرای پذیرش دعوت، پیوند زیر را باز کنید. پیوند یک‌بار مصرف است و تا {expires} اعتبار دارد.\n{link}\n"
+        )
+    } else {
+        format!(
+            "{inviter} invited you to the gateway console.\n\nAccept the invitation here (the link works once, until {expires}):\n{link}\n"
+        )
+    };
+    if call.rt.send_mail(&inv.email, subject, body) {
         None
     } else {
         Some(link)
@@ -209,7 +214,7 @@ async fn create(call: &Call) -> Result<Response, AdminError> {
         .put_invitation(inv.clone())
         .await
         .map_err(AdminError::identity)?;
-    let link = deliver(call, &inv, &token);
+    let link = deliver(call, &inv, &token).await;
     let resp = call.json(StatusCode::CREATED, &created(&inv, link, call.rt.now()));
     Ok(call.created(resp, &format!("/admin/v1/invitations/{}", inv.id)))
 }
@@ -278,7 +283,7 @@ pub(crate) async fn one(call: &Call, segment: &str) -> Result<Response, AdminErr
                 .put_invitation(inv.clone())
                 .await
                 .map_err(AdminError::identity)?;
-            let link = deliver(call, &inv, &token);
+            let link = deliver(call, &inv, &token).await;
             call.audit("invitations.resend", &resource, Outcome::Success, StatusCode::OK)
                 .await;
             Ok(call.json(StatusCode::OK, &created(&inv, link, call.rt.now())))

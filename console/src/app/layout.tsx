@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 
 import { DevMocks } from '@/components/layout/dev-mocks';
-import { hankenGrotesk, jetbrainsMono } from '@/styles/fonts';
+import { PreferencesApplier } from '@/components/layout/preferences-applier';
+import { hankenGrotesk, jetbrainsMono, vazir } from '@/styles/fonts';
 
 import '@/styles/globals.css';
 
@@ -23,7 +24,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
-      className={`${hankenGrotesk.variable} ${jetbrainsMono.variable}`}
+      dir="ltr"
+      className={`${hankenGrotesk.variable} ${jetbrainsMono.variable} ${vazir.variable}`}
       suppressHydrationWarning
     >
       <head>
@@ -31,6 +33,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script src={`${UI_PATH}/theme-init.js`} />
       </head>
       <body>
+        <PreferencesApplier />
         <DevMocks>{children}</DevMocks>
       </body>
     </html>

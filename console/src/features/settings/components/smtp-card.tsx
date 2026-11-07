@@ -20,6 +20,7 @@ import { detailErrors, str, mergePatch, same } from '../form-errors';
 import { useLinks } from '../store';
 import { REDACTED } from './connection-drawers';
 import { Card, SaveBar } from './parts';
+import { translateNow } from '@/lib/i18n';
 
 interface SmtpForm {
   enabled: boolean;
@@ -290,7 +291,7 @@ function SmtpForm({ spec }: { spec: Record<string, unknown> }) {
               .then(
                 (r) => {
                   const res = r as { ok?: boolean; error?: string | null };
-                  if (res.ok) notify('success', 'Test message sent', `Check ${to.trim()}.`);
+                  if (res.ok) notify('success', 'Test message sent', translateNow('Check {0}.', to.trim()));
                   else
                     notify(
                       'error',

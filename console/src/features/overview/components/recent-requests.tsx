@@ -27,6 +27,7 @@ import {
   type LogFilters,
   toUrlState,
 } from '@/features/request-log/types';
+import { useTranslate } from '@/lib/i18n';
 
 interface Quick {
   q: string;
@@ -56,6 +57,7 @@ const SHOWN = 50;
  * search, provider chips, errors only, cache hits, flagged, clear all, export.
  */
 export function RecentRequests({ providers, firstRun }: { providers: string[]; firstRun: boolean }) {
+  const translate = useTranslate();
   const typeOf = useProviderType();
   const [quick, setQuick] = useState<Quick>(NONE);
   const [search, setSearch] = useState('');
@@ -97,7 +99,7 @@ export function RecentRequests({ providers, firstRun }: { providers: string[]; f
     <section aria-labelledby="recent-title" className="flex min-h-[320px] flex-1 flex-col bg-raised">
       <div className="flex min-h-11 shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-line px-gutter py-2 max-sm:px-gutter-sm">
         <h2 id="recent-title" className="text-ui font-semibold text-fg">
-          Recent requests
+          {translate('Recent requests')}
         </h2>
         <form
           role="search"
@@ -109,18 +111,18 @@ export function RecentRequests({ providers, firstRun }: { providers: string[]; f
           }}
         >
           <Input
-            aria-label="Search recent requests"
+            aria-label={translate('Search recent requests')}
             icon="search"
             value={search}
             onChange={(e) => searchFor(e.target.value)}
-            placeholder="Search requests"
+            placeholder={translate('Search requests')}
             className="h-7 w-48 max-sm:w-full"
           />
         </form>
         {providers.length > 0 ? (
           <div
             role="group"
-            aria-label="Provider"
+            aria-label={translate('Provider')}
             className="flex flex-wrap items-center gap-1.5 max-md:hidden"
           >
             {providers.slice(0, 4).map((p) => (
@@ -135,15 +137,19 @@ export function RecentRequests({ providers, firstRun }: { providers: string[]; f
             ))}
           </div>
         ) : null}
-        <div role="group" aria-label="Quick filters" className="flex flex-wrap items-center gap-1.5">
+        <div
+          role="group"
+          aria-label={translate('Quick filters')}
+          className="flex flex-wrap items-center gap-1.5"
+        >
           <ChipToggle pressed={quick.errors} onChange={(errors) => set({ errors })} tone="error">
-            Errors only
+            {translate('Errors only')}
           </ChipToggle>
           <ChipToggle pressed={quick.cacheHits} onChange={(cacheHits) => set({ cacheHits })} tone="info">
-            Cache hits
+            {translate('Cache hits')}
           </ChipToggle>
           <ChipToggle pressed={quick.flagged} onChange={(flagged) => set({ flagged })} tone="warn">
-            Flagged
+            {translate('Flagged')}
           </ChipToggle>
           {active ? (
             <button
@@ -155,11 +161,11 @@ export function RecentRequests({ providers, firstRun }: { providers: string[]; f
               }}
               className="h-6 rounded-xs px-1 text-caption text-muted hover:text-fg"
             >
-              Clear all
+              {translate('Clear all')}
             </button>
           ) : null}
         </div>
-        <span className="ml-auto flex items-center gap-3">
+        <span className="ms-auto flex items-center gap-3">
           <Tooltip
             content={
               live === 'stream'
@@ -173,36 +179,38 @@ export function RecentRequests({ providers, firstRun }: { providers: string[]; f
               {live !== 'off' ? (
                 <span aria-hidden="true" className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
               ) : null}
-              {logs.data ? `${formatCount(rows.length)} shown${live !== 'off' ? ' · live' : ''}` : 'Live'}
+              {logs.data
+                ? translate('{0} shown{1}', formatCount(rows.length), live !== 'off' ? ' · live' : '')
+                : translate('Live')}
             </span>
           </Tooltip>
           <Tooltip content="Download the requests these filters select as CSV">
             <a href={logsApi.exportUrl(query)} className={buttonClass('ghost', 'sm')} download>
               <Icon name="download" size={14} />
-              <span className="max-sm:sr-only">Export</span>
+              <span className="max-sm:sr-only">{translate('Export')}</span>
             </a>
           </Tooltip>
           <Link href={filteredHref} className="flex items-center gap-1 text-caption text-muted hover:text-fg">
-            View all
+            {translate('View all')}
             <Icon name="arrowRight" size={14} />
           </Link>
         </span>
       </div>
       <LoadError
         of={logs.data ? logs : null}
-        subject="The request log"
+        subject={translate('The request log')}
         size="sm"
         onRetry={() => void loadLogs(query)}
       />
       {loadFailure(logs).failed ? (
         <ErrorState
           error={logs.error}
-          subject="The request log"
+          subject={translate('The request log')}
           size="sm"
           onRetry={() => void loadLogs(query)}
         />
       ) : !logs.data ? (
-        <LoadingRows rows={4} label="Loading requests" />
+        <LoadingRows rows={4} label={translate('Loading requests')} />
       ) : rows.length === 0 ? (
         <>
           <div className="overflow-hidden" aria-hidden="true">
@@ -219,17 +227,17 @@ export function RecentRequests({ providers, firstRun }: { providers: string[]; f
           ) : firstRun ? (
             <EmptyState
               size="sm"
-              title="No requests yet"
-              description="Send a request through the gateway to see it here."
+              title={translate('No requests yet')}
+              description={translate('Send a request through the gateway to see it here.')}
             />
           ) : (
             <EmptyState
               size="sm"
-              title={`No requests in the ${(window ?? 'selected range').toLowerCase()}`}
+              title={translate('No requests in the {0}', (window ?? 'selected range').toLowerCase())}
               action={
                 range.seconds < 7 * 86_400 ? (
                   <EmptyAction onClick={() => setRange({ kind: 'preset', preset: '7d' })}>
-                    Show last 7 days
+                    {translate('Show last 7 days')}
                   </EmptyAction>
                 ) : undefined
               }

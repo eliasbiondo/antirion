@@ -25,6 +25,7 @@ import {
   TextButton,
 } from './parts';
 import { QrCode } from './qr-code';
+import { useTranslate } from '@/lib/i18n';
 
 /** Where the second-factor setup and the recovery codes sit in the flow that led to them. */
 function stepOf(flow: Flow, kind: 'enroll' | 'codes'): { current: number; total: number } {
@@ -47,6 +48,7 @@ function useAutoSubmit(code: string, enabled: boolean) {
 
 /** The account the second factor is for, with a way back if it is the wrong one. */
 function AccountLine() {
+  const translate = useTranslate();
   const email = useLogin((s) => s.email);
   const go = useLogin((s) => s.go);
   if (!email) return null;
@@ -55,7 +57,7 @@ function AccountLine() {
       <span className="font-medium text-fg">{email}</span>
       <span aria-hidden="true">·</span>
       <TextButton tone="accent" onClick={() => go({ kind: 'start' })}>
-        Not you?
+        {translate('Not you?')}
       </TextButton>
     </span>
   );
@@ -65,6 +67,7 @@ type MfaMode = 'key' | 'code' | 'recovery';
 
 /** Second factor: the security key when the account has one, an authenticator code, or a recovery code. */
 export function MfaStep() {
+  const translate = useTranslate();
   const verify = useLogin((s) => s.verifyMfa);
   const busy = useLogin((s) => s.busy);
   const error = useLogin((s) => s.error);
@@ -132,17 +135,23 @@ export function MfaStep() {
         <ErrorStrip message={error} />
         {mode === 'key' ? (
           <p className="text-body leading-relaxed text-fg">
-            Connect or touch your security key when your browser asks. You can also use a passkey saved on
-            this device.
+            {translate(
+              'Connect or touch your security key when your browser asks. You can also use a passkey saved on this device.',
+            )}
           </p>
         ) : (
           <>
             <p className="text-body leading-relaxed text-fg">
               {mode === 'recovery'
-                ? 'Enter one of the recovery codes you saved when you set up two-step verification.'
-                : 'Open your authenticator app and enter the 6-digit code for Antirion.'}
+                ? translate(
+                    'Enter one of the recovery codes you saved when you set up two-step verification.',
+                  )
+                : translate('Open your authenticator app and enter the 6-digit code for Antirion.')}
             </p>
-            <Field label={mode === 'recovery' ? 'Recovery code' : 'Verification code'} error={fieldError}>
+            <Field
+              label={mode === 'recovery' ? translate('Recovery code') : translate('Verification code')}
+              error={fieldError}
+            >
               <CodeInput
                 ref={inputRef}
                 recovery={mode === 'recovery'}
@@ -158,8 +167,8 @@ export function MfaStep() {
         )}
         {trustDays ? (
           <Checkbox
-            label={`Trust this browser for ${plural(trustDays, 'day')}`}
-            description="You won't be asked for a second step on this browser until then."
+            label={translate('Trust this browser for {0}', plural(trustDays, 'day'))}
+            description={translate("You won't be asked for a second step on this browser until then.")}
             checked={trust}
             onChange={(v) => setTrust(v)}
           />
@@ -171,23 +180,25 @@ export function MfaStep() {
           busy={busy}
           className="h-10 w-full text-base"
         >
-          {mode === 'key' ? 'Use security key' : 'Verify'}
+          {mode === 'key' ? translate('Use security key') : translate('Verify')}
         </Button>
       </form>
       <MoreOptions>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
           {mode !== 'code' ? (
-            <TextButton onClick={() => switchTo('code')}>Use your authenticator app</TextButton>
+            <TextButton onClick={() => switchTo('code')}>
+              {translate('Use your authenticator app')}
+            </TextButton>
           ) : null}
           {mode !== 'key' && securityKey ? (
-            <TextButton onClick={() => switchTo('key')}>Use your security key</TextButton>
+            <TextButton onClick={() => switchTo('key')}>{translate('Use your security key')}</TextButton>
           ) : null}
           {mode !== 'recovery' ? (
-            <TextButton onClick={() => switchTo('recovery')}>Use a recovery code</TextButton>
+            <TextButton onClick={() => switchTo('recovery')}>{translate('Use a recovery code')}</TextButton>
           ) : null}
         </div>
         <TextButton className="self-start" onClick={() => go({ kind: 'start' })}>
-          Back to sign in
+          {translate('Back to sign in')}
         </TextButton>
       </MoreOptions>
     </>
@@ -196,10 +207,11 @@ export function MfaStep() {
 
 /** "JBSWY3DP EHPK3PXP": easier to type, and the text still copies without spaces. */
 function GroupedSecret({ value }: { value: string }) {
+  const translate = useTranslate();
   const groups = value.match(/.{1,4}/g) ?? [];
   return (
     <output
-      aria-label="Setup key"
+      aria-label={translate('Setup key')}
       data-secret
       className="mono block text-body leading-relaxed break-all text-fg select-all"
     >
@@ -213,6 +225,7 @@ function GroupedSecret({ value }: { value: string }) {
 }
 
 function CopySecret({ value }: { value: string }) {
+  const translate = useTranslate();
   const [copied, setCopied] = useState(false);
   return (
     <Button
@@ -225,13 +238,14 @@ function CopySecret({ value }: { value: string }) {
         );
       }}
     >
-      {copied ? 'Copied' : 'Copy key'}
+      {copied ? translate('Copied') : translate('Copy key')}
     </Button>
   );
 }
 
 /** First sign-in of a password account: scan the QR code, confirm one code; a security key instead. */
 export function EnrollStep() {
+  const translate = useTranslate();
   const step = useLogin((s) => s.step);
   const flow = useLogin((s) => s.flow);
   const start = useLogin((s) => s.startEnrollment);
@@ -256,7 +270,7 @@ export function EnrollStep() {
   return (
     <>
       <StepHeader
-        title="Set up two-step verification"
+        title={translate('Set up two-step verification')}
         step={stepOf(flow, 'enroll')}
         subtitle="Password sign-in needs a second step: a code from an authenticator app on your phone."
       />
@@ -283,11 +297,15 @@ export function EnrollStep() {
         {enrolment.secret ? (
           <div className="flex flex-col gap-4">
             <p className="text-body leading-relaxed text-fg">
-              <span className="font-medium">1.</span> Scan this QR code with your authenticator app.
+              <span className="font-medium">1.</span>
+              {' ' + translate('Scan this QR code with your authenticator app.')}
             </p>
             <div className="flex justify-center">
               {enrolment.uri ? (
-                <QrCode value={enrolment.uri} label="QR code to add Antirion to your authenticator app" />
+                <QrCode
+                  value={enrolment.uri}
+                  label={translate('QR code to add Antirion to your authenticator app')}
+                />
               ) : null}
             </div>
             <div className="rounded-sm border border-line bg-sunken p-3">
@@ -301,20 +319,22 @@ export function EnrollStep() {
                   href={enrolment.uri}
                   className="mt-2 inline-block text-caption text-accent underline-offset-4 hover:underline"
                 >
-                  Open in an authenticator app on this device
+                  {translate('Open in an authenticator app on this device')}
                 </a>
               ) : null}
             </div>
             <p className="text-body leading-relaxed text-fg">
-              <span className="font-medium">2.</span> Enter the 6-digit code the app shows.
+              <span className="font-medium">2.</span>
+              {' ' + translate('Enter the 6-digit code the app shows.')}
             </p>
           </div>
         ) : error ? null : (
           <p className="flex items-center gap-2 text-ui text-muted" role="status">
-            <Spinner /> Setting up…
+            <Spinner />
+            {' ' + translate('Setting up…')}
           </p>
         )}
-        <Field label="Verification code" error={fieldError}>
+        <Field label={translate('Verification code')} error={fieldError}>
           <CodeInput
             ref={inputRef}
             value={code}
@@ -332,17 +352,17 @@ export function EnrollStep() {
           disabled={!enrolment.factorId}
           className="h-10 w-full text-base"
         >
-          Verify and continue
+          {translate('Verify and continue')}
         </Button>
       </form>
       <MoreOptions>
         {webauthnAvailable() ? (
           <TextButton icon="key" className="self-start" disabled={busy} onClick={() => void enrollKey()}>
-            Use a security key instead
+            {translate('Use a security key instead')}
           </TextButton>
         ) : null}
         <TextButton className="self-start" onClick={() => go({ kind: 'start' })}>
-          Back to sign in
+          {translate('Back to sign in')}
         </TextButton>
       </MoreOptions>
     </>
@@ -362,6 +382,7 @@ function downloadText(name: string, text: string) {
 
 /** After the first factor: the recovery codes, shown once, with ways to keep them. */
 export function RecoveryCodesStep() {
+  const translate = useTranslate();
   const step = useLogin((s) => s.step);
   const flow = useLogin((s) => s.flow);
   const email = useLogin((s) => s.email);
@@ -383,13 +404,13 @@ export function RecoveryCodesStep() {
   return (
     <>
       <StepHeader
-        title="Save your recovery codes"
+        title={translate('Save your recovery codes')}
         step={stepOf(flow, 'codes')}
         subtitle="If you lose your phone, each code signs you in once. Keep them somewhere safe, like your password manager. You won't see them again."
       />
       <div className="flex flex-col gap-4">
         <ol
-          aria-label="Recovery codes"
+          aria-label={translate('Recovery codes')}
           data-secret
           className="mono grid grid-cols-2 gap-x-6 gap-y-1.5 rounded-sm border border-line bg-sunken px-4 py-3 text-body text-fg select-all"
         >
@@ -405,7 +426,7 @@ export function RecoveryCodesStep() {
               setSaved('downloaded');
             }}
           >
-            Download
+            {translate('Download')}
           </Button>
           <Button
             icon={saved === 'copied' ? 'check' : 'copy'}
@@ -416,7 +437,7 @@ export function RecoveryCodesStep() {
               );
             }}
           >
-            {saved === 'copied' ? 'Copied' : 'Copy'}
+            {saved === 'copied' ? translate('Copied') : translate('Copy')}
           </Button>
           <Button
             icon={saved === 'printed' ? 'check' : 'printer'}
@@ -425,12 +446,12 @@ export function RecoveryCodesStep() {
               window.print();
             }}
           >
-            Print
+            {translate('Print')}
           </Button>
         </div>
         <div className="print:hidden">
           <Checkbox
-            label="I've saved my recovery codes"
+            label={translate("I've saved my recovery codes")}
             checked={acknowledged}
             onChange={(v) => setAcknowledged(v)}
           />
@@ -442,7 +463,7 @@ export function RecoveryCodesStep() {
           disabledReason="Tick “I've saved my recovery codes” to continue"
           onClick={finish}
         >
-          Continue to Antirion
+          {translate('Continue to Antirion')}
         </Button>
       </div>
     </>
@@ -457,6 +478,7 @@ const emailSchema = z
 
 /** "Forgot password?": always answers the same way, whether or not the address has an account. */
 export function ForgotStep() {
+  const translate = useTranslate();
   const step = useLogin((s) => s.step);
   const request = useLogin((s) => s.requestReset);
   const busy = useLogin((s) => s.busy);
@@ -469,26 +491,28 @@ export function ForgotStep() {
   if (step.kind === 'forgot-sent') {
     return (
       <>
-        <StepHeader title="Check your email" />
+        <StepHeader title={translate('Check your email')} />
         <div className="flex flex-col gap-4">
           <p role="status" className="text-body leading-relaxed text-fg">
-            If <span className="font-medium">{stored}</span> has an account, we&apos;ve sent it a link to
-            reset the password.{' '}
+            {translate('If') + ' '}
+            <span className="font-medium">{stored}</span> has an account, we&apos;ve sent it a link to reset
+            the password.{' '}
             {resetTtl
-              ? `The link works once, for ${spanInWords(resetTtl)}.`
-              : 'The link works once and expires soon.'}
+              ? translate('The link works once, for {0}.', spanInWords(resetTtl))
+              : translate('The link works once and expires soon.')}
           </p>
           <Note icon="mail">
-            Nothing after a few minutes? Check your spam folder, or ask your gateway admin to confirm the
-            address on your account.
+            {translate(
+              'Nothing after a few minutes? Check your spam folder, or ask your gateway admin to confirm the address on your account.',
+            )}
           </Note>
           <Button variant="primary" className="h-10 w-full text-base" onClick={() => go({ kind: 'start' })}>
-            Back to sign in
+            {translate('Back to sign in')}
           </Button>
         </div>
         <MoreOptions>
           <TextButton className="self-start" onClick={() => go({ kind: 'forgot' })}>
-            Use a different email
+            {translate('Use a different email')}
           </TextButton>
         </MoreOptions>
       </>
@@ -497,7 +521,7 @@ export function ForgotStep() {
   return (
     <>
       <StepHeader
-        title="Reset your password"
+        title={translate('Reset your password')}
         subtitle="Enter the email you sign in with and we'll send you a link to choose a new password."
       />
       <form
@@ -514,7 +538,7 @@ export function ForgotStep() {
           void request(result.data);
         }}
       >
-        <Field label="Email" error={fieldError}>
+        <Field label={translate('Email')} error={fieldError}>
           <Input
             type="email"
             autoComplete="username"
@@ -532,12 +556,12 @@ export function ForgotStep() {
           />
         </Field>
         <Button type="submit" variant="primary" busy={busy} className="mt-1 h-10 w-full text-base">
-          Send reset link
+          {translate('Send reset link')}
         </Button>
       </form>
       <MoreOptions>
         <TextButton className="self-start" onClick={() => go({ kind: 'start' })}>
-          Back to sign in
+          {translate('Back to sign in')}
         </TextButton>
       </MoreOptions>
     </>
@@ -565,15 +589,17 @@ function resetSchema({ min, max }: { min: number; max: number }) {
 
 /** The rule a browser can check as you type; the gateway checks the rest when you submit. */
 function PasswordRules({ password, min }: { password: string; min: number }) {
+  const translate = useTranslate();
   const long = password.length >= min;
   return (
-    <ul className="flex flex-col gap-1 text-caption" aria-label="Password rules">
+    <ul className="flex flex-col gap-1 text-caption" aria-label={translate('Password rules')}>
       <li className={cn('flex items-center gap-1.5', long ? 'text-success' : 'text-muted')}>
         <span aria-hidden="true" className="flex h-3.5 w-3.5 items-center justify-center">
           {long ? <Icon name="check" size={12} /> : <span className="h-1 w-1 rounded-full bg-current" />}
         </span>
-        {min} or more characters
-        <span className="sr-only">{long ? '(done)' : '(not yet)'}</span>
+        {min}
+        {' ' + translate('or more characters')}
+        <span className="sr-only">{long ? translate('(done)') : translate('(not yet)')}</span>
       </li>
       <li className="flex items-center gap-1.5 text-muted">
         <span aria-hidden="true" className="flex h-3.5 w-3.5 items-center justify-center">
@@ -628,6 +654,7 @@ const DEAD: Record<'reset' | 'invitation', Record<DeadState, { title: string; bo
 
 /** An emailed link that no longer works, or never did: what happened and what to do instead. */
 function DeadLink({ purpose, state }: { purpose: 'reset' | 'invitation'; state: DeadState }) {
+  const translate = useTranslate();
   const go = useLogin((s) => s.go);
   const passwordReset = useLogin((s) => s.options?.password_reset ?? false);
   const invitation = purpose === 'invitation';
@@ -642,24 +669,24 @@ function DeadLink({ purpose, state }: { purpose: 'reset' | 'invitation'; state: 
     <>
       <StepHeader title={title} />
       <div className="flex flex-col gap-4">
-        <p className="text-body leading-relaxed text-fg">{body}</p>
+        <p className="text-body leading-relaxed text-fg">{translate(body)}</p>
         {invitation && state !== 'used' ? (
-          <Note>Already accepted it? Sign in with your email and the password you chose.</Note>
+          <Note>{translate('Already accepted it? Sign in with your email and the password you chose.')}</Note>
         ) : null}
         {offerReset ? (
           <Button variant="primary" className="h-10 w-full text-base" onClick={() => go({ kind: 'forgot' })}>
-            Send a new reset link
+            {translate('Send a new reset link')}
           </Button>
         ) : (
           <Button variant="primary" className="h-10 w-full text-base" onClick={() => go({ kind: 'start' })}>
-            Go to sign in
+            {translate('Go to sign in')}
           </Button>
         )}
       </div>
       {offerReset ? (
         <MoreOptions>
           <TextButton className="self-start" onClick={() => go({ kind: 'start' })}>
-            Back to sign in
+            {translate('Back to sign in')}
           </TextButton>
         </MoreOptions>
       ) : null}
@@ -669,6 +696,7 @@ function DeadLink({ purpose, state }: { purpose: 'reset' | 'invitation'; state: 
 
 /** Setting a password from an emailed link: accepting an invitation, or a reset. */
 export function ResetStep() {
+  const translate = useTranslate();
   const step = useLogin((s) => s.step);
   const confirm = useLogin((s) => s.confirmReset);
   const checkLink = useLogin((s) => s.checkLink);
@@ -690,9 +718,12 @@ export function ResetStep() {
   if (reset.link === 'checking') {
     return (
       <>
-        <StepHeader title={invitation ? 'Accept your invitation' : 'Choose a new password'} />
+        <StepHeader
+          title={invitation ? translate('Accept your invitation') : translate('Choose a new password')}
+        />
         <p className="flex items-center gap-2 text-ui text-muted" role="status">
-          <Spinner /> Checking your link…
+          <Spinner />
+          {' ' + translate('Checking your link…')}
         </p>
       </>
     );
@@ -713,7 +744,11 @@ export function ResetStep() {
     <>
       <StepHeader
         title={
-          invitation ? (joining ? `Join ${joining}` : 'Accept your invitation') : 'Choose a new password'
+          invitation
+            ? joining
+              ? translate('Join {0}', joining)
+              : translate('Accept your invitation')
+            : translate('Choose a new password')
         }
         step={invitation ? { current: 1, total: 3 } : null}
         subtitle={
@@ -727,7 +762,8 @@ export function ResetStep() {
               ) : null}
               {invitedAs ? (
                 <>
-                  You were invited as <span className="font-medium text-fg">{invitedAs}</span>.{' '}
+                  {translate('You were invited as') + ' '}
+                  <span className="font-medium text-fg">{invitedAs}</span>.{' '}
                 </>
               ) : null}
               Choose a password for your account. Next, you&apos;ll set up two-step verification.
@@ -752,7 +788,7 @@ export function ResetStep() {
         }}
       >
         <ErrorStrip message={error} />
-        <Field label="New password" error={passwordMessage}>
+        <Field label={translate('New password')} error={passwordMessage}>
           <SecretInput
             autoComplete="new-password"
             value={values.password}
@@ -765,7 +801,7 @@ export function ResetStep() {
           />
         </Field>
         <PasswordRules password={values.password} min={policy.min} />
-        <Field label="Confirm password" error={errors.confirm}>
+        <Field label={translate('Confirm password')} error={errors.confirm}>
           <SecretInput
             autoComplete="new-password"
             value={values.confirm}
@@ -776,10 +812,13 @@ export function ResetStep() {
           />
         </Field>
         <Button type="submit" variant="primary" busy={busy} className="mt-1 h-10 w-full text-base">
-          {invitation ? 'Set password and continue' : 'Reset password'}
+          {invitation ? translate('Set password and continue') : translate('Reset password')}
         </Button>
         {left ? (
-          <p className="text-center text-caption text-dim">This link works once, for another {left}.</p>
+          <p className="text-center text-caption text-dim">
+            {translate('This link works once, for another') + ' '}
+            {left}.
+          </p>
         ) : null}
       </form>
     </>

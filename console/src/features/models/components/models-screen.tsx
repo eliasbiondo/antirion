@@ -61,6 +61,7 @@ import { ModelDetail } from './model-detail';
 import { ModelsHero } from './models-hero';
 import { PolicyTab } from './policy-tab';
 import { RoutingTab } from './routing-tab';
+import { useTranslate } from '@/lib/i18n';
 
 /** The lowest rate of a field across a Model's leaves, per 1M tokens, or null. */
 export function lowestRate(prices: (EffectivePrice | null | undefined)[], field: string): number | null {
@@ -200,6 +201,7 @@ const STATE_CHIPS: {
 
 /** The model catalog: key figures, the list with filters, the selected model, aliases, routing, policy and activity. */
 export function ModelsScreen() {
+  const translate = useTranslate();
   useModelsScreenData();
   const status = useModels((s) => s.status);
   const error = useModels((s) => s.error);
@@ -293,8 +295,8 @@ export function ModelsScreen() {
   return (
     <>
       <PageHeader
-        title="Models"
-        description="The model names your apps call, and the providers behind them"
+        title={translate('Models')}
+        description={translate('The model names your apps call, and the providers behind them')}
         actions={
           <div className="flex flex-wrap items-center gap-2 max-sm:min-w-[calc(100vw-32px)]">
             <UpdatedAt at={loadedAt} />

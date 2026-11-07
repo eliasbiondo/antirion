@@ -24,6 +24,7 @@ import { type AccessRequest, parseScope, SCOPE_NOUN } from '../catalog';
 import { decideAccess, patchModelSpec, requestAccess, useCatalog } from '../store';
 import type { ModelView } from '../types';
 import { useEdited } from '@/lib/hooks';
+import { translateNow } from '@/lib/i18n';
 
 type Access = NonNullable<ModelSpec['access']>;
 type AccessKind = 'organizations' | 'teams' | 'projects' | 'keys';
@@ -207,7 +208,7 @@ export function RequestAccessDialog({ model, onClose }: { model: string; onClose
     setError(null);
     try {
       await requestAccess(model, scope, reason.trim() || undefined);
-      notify('success', 'Access requested', `${scope}: an admin will approve or deny it`);
+      notify('success', 'Access requested', translateNow('{0}: an admin will approve or deny it', scope));
       onClose();
     } catch (e) {
       if (isChangeControl(e)) onClose();
