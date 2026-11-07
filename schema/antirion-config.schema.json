@@ -6206,7 +6206,7 @@
             },
             "retry_on_response": {
               "type": "array",
-              "description": "Predicates over a 2xx answer; one that matches makes the attempt a `server_error` whose only action is the next deployment, never counted toward health. `header`/`equals` is read from the response head; `finish_reason` and `empty_content` need the whole answer, so they apply to complete (non-streaming) responses.",
+              "description": "Predicates over a 2xx answer. A match moves to the next deployment without counting toward health. `header`/`equals` reads the response head. `finish_reason`, `empty_content`, and `path`/`below` apply to complete (non-streaming) JSON answers. A numeric threshold match is recorded as `low_confidence`. Other matches are recorded as `server_error`.",
               "items": {
                 "type": "object",
                 "properties": {
@@ -6227,6 +6227,15 @@
                   },
                   "empty_content": {
                     "const": true
+                  },
+                  "path": {
+                    "type": "string",
+                    "pattern": "^/(?:[^~]|~[01])*$",
+                    "description": "JSON Pointer into the upstream answer, for example `/answers/triage/confidence`."
+                  },
+                  "below": {
+                    "type": "number",
+                    "description": "Matches a number strictly below this value. Missing or non-numeric values do not match."
                   }
                 },
                 "additionalProperties": false,
@@ -6238,7 +6247,9 @@
                     ],
                     "properties": {
                       "finish_reason": false,
-                      "empty_content": false
+                      "empty_content": false,
+                      "path": false,
+                      "below": false
                     }
                   },
                   {
@@ -6248,7 +6259,9 @@
                     "properties": {
                       "header": false,
                       "equals": false,
-                      "empty_content": false
+                      "empty_content": false,
+                      "path": false,
+                      "below": false
                     }
                   },
                   {
@@ -6258,7 +6271,21 @@
                     "properties": {
                       "header": false,
                       "equals": false,
-                      "finish_reason": false
+                      "finish_reason": false,
+                      "path": false,
+                      "below": false
+                    }
+                  },
+                  {
+                    "required": [
+                      "path",
+                      "below"
+                    ],
+                    "properties": {
+                      "header": false,
+                      "equals": false,
+                      "finish_reason": false,
+                      "empty_content": false
                     }
                   }
                 ]

@@ -843,9 +843,12 @@ eligibility filters and the planner the attempt loop reads) and `decide.rs`.
   a lost one is awaited for a second on `rt.tasks` so its usage is charged on its own ledger line
   (status `cancelled`); the record settles after those tails. Admission multiplies output
   reservations by `1 + max_extra` (`account::hedge_factor`).
-- **Response predicates** (`antirion-resilience/src/predicate.rs`): checked on complete 2xx answers;
-  a match fails the attempt as `upstream_bad_response` (reason `response_predicate_matched`) without
-  counting against health, and its usage is still charged.
+- **Response predicates** (`antirion-resilience/src/predicate.rs`): a match fails the attempt as
+  `upstream_bad_response` (reason `response_predicate_matched`) without counting against health.
+  A complete JSON answer's usage is still charged. For example, a predicate with
+  `path: /answers/triage/confidence` and `below: 0.6` moves to the next deployment when the number at
+  that JSON Pointer is strictly below 0.6, logging `failure_class: low_confidence`. Missing or
+  non-numeric values pass this predicate.
 - **Probe lease** (`antirion-resilience/src/lease.rs`, `antirion-runtime/src/cluster/probe_lease.rs`,
   `antirion-limits/src/store/valkey/probe_lease.rs`): with `probe_scope: cluster`, a half-open probe
   also takes one of the deployment's leases in the counter store; a candidate whose leases are all

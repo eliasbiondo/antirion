@@ -281,15 +281,20 @@ impl Attempt<'_> {
         )
     }
 
-    /// A 2xx answer that matched a response predicate: a `server_error` the loop moves on from
-    /// without counting it toward health.
-    pub(crate) fn predicate_matched(&self, status: u16) -> Failure {
+    /// A 2xx answer that matched a response predicate the loop moves on from without counting
+    /// it toward health.
+    pub(crate) fn predicate_matched(&self, status: u16, class: Class) -> Failure {
+        let message = if class == Class::LowConfidence {
+            "The upstream answer fell below the route's confidence threshold."
+        } else {
+            "The upstream answer matched a response predicate of the route."
+        };
         self.fail(
-            Class::ServerError,
+            class,
             Code::UpstreamBadResponse,
             Some(antirion_resilience::reasons::RESPONSE_PREDICATE_MATCHED),
             Some(status),
-            Message::Fixed("The upstream answer matched a response predicate of the route."),
+            Message::Fixed(message),
         )
     }
 
@@ -412,7 +417,7 @@ pub(crate) async fn handle(a: &Attempt<'_>, up: InboundResponse) -> Result<(Done
         return Err(error_response(a, up, class, true).await);
     }
     if antirion_resilience::predicate::head_matches(a.predicates, &up.headers) {
-        let f = a.predicate_matched(status);
+        let f = a.predicate_matched(status, Class::ServerError);
         if let Some(abort) = up.abort {
             drop(up.body);
             Box::pin(abort.abort()).await;
