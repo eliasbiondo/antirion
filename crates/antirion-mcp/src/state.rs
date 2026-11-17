@@ -155,6 +155,28 @@ impl McpState {
         self.cards.lock().clear();
     }
 
+    /// Every approval this node holds: the server, when it was recorded and the fingerprint of each
+    /// approved tool, in server order.
+    #[must_use]
+    pub fn approvals(&self) -> Vec<(String, UtcMicros, BTreeMap<String, String>)> {
+        let mut out: Vec<_> = self
+            .approvals
+            .lock()
+            .iter()
+            .map(|(server, a)| (server.clone(), a.approved_at, a.tools.clone()))
+            .collect();
+        out.sort_by(|a, b| a.0.cmp(&b.0));
+        out
+    }
+
+    /// Restores the approval of `server` read from the store, unless this node already has one.
+    pub fn restore_approval(&self, server: &str, approved_at: UtcMicros, tools: BTreeMap<String, String>) {
+        self.approvals
+            .lock()
+            .entry(server.to_owned())
+            .or_insert(Approval { tools, approved_at });
+    }
+
     /// Closes held HTTP+SSE upstream sessions and forgets revocations and session counters.
     pub fn clear_sessions(&self) {
         for conn in self.sse.lock().drain().map(|(_, c)| c) {

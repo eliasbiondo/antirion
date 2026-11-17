@@ -73,6 +73,7 @@ async fn restore_and_apply(
     read_ledger: bool,
 ) -> Result<(), Unfinished> {
     rt.restore_disables().await;
+    rt.restore_mcp_approvals().await;
     if read_ledger {
         rt.restore_cache_epochs().await;
         if let Err(e) = rt.check_ledger().await {

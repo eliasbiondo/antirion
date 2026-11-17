@@ -690,9 +690,9 @@ names one that accepts TLS, with its `sslmode` and `sslrootcert`.
 
 - MCP state that must outlive a request but not a node lives in `antirion_mcp::McpState`
   (`RuntimeState::mcp`): list, discovery and card caches, the revocation set, held HTTP+SSE upstream
-  streams, requests in flight (for `notifications/cancelled`), tool fingerprints and approvals.
-  Nothing in it is needed to resume a session elsewhere: the session token carries every upstream
-  session id.
+  streams, requests in flight (for `notifications/cancelled`), tool fingerprints and approvals
+  (which are also kept in the store and restored at start). Nothing in it is needed to resume a
+  session elsewhere: the session token carries every upstream session id.
 - The session key is `mcp.session.keys` when configured, else the key the node reads or creates in
   the store at startup (`mcp_session_key`). Without one, MCP endpoints answer 503.
 - Caches are keyed by the server's generation fingerprint (transport, URL, credentials), so a changed
@@ -735,8 +735,9 @@ names one that accepts TLS, with its `sslmode` and `sslrootcert`.
   in `Env::log` (`CallLog`). Content logging follows the key's `policies.observability` like a
   model request (`observe::content`): the call is recorded from the body, a JSON answer from the
   response (`mcp::json_content`), both scrubbed by `content.redact_pii` when it is on.
-- `POST /test/reset` scope `cache` drops the list, discovery and card caches; `sessions` closes held
-  HTTP+SSE upstream streams and forgets revocations and session counters.
+- `POST /test/reset` scope `cache` drops the list, discovery and card caches and forgets the stored
+  tool approvals; `sessions` closes held HTTP+SSE upstream streams and forgets revocations and
+  session counters.
 
 ## Resilience
 
@@ -1725,8 +1726,9 @@ What the Cache screen reads and changes beyond the cache's own rules.
 - HTTP+SSE upstream sessions are held by the node that opened them; a request for such a session on
   another node gets `upstream_session_not_found`, and the client re-initializes.
 - Not implemented: `subscriptions/listen`, the agent directory, the A2A REST binding.
-- Tool-definition approvals do not survive a restart, and each node reports the changes it sees, so
-  a cluster may send one alert event per node.
+- Tool-definition approvals are stored and restored at each node's start; another node picks an
+  approval up at its next start. Each node still reports the definition changes it sees, so a
+  cluster may send one alert event per node.
 - The tool loop's model calls do not stream: a streaming client gets the final answer synthesized
   once the final call answered, without heartbeats in between. The request is admitted once.
 - Bridged elicitation replays the call: the legacy server must ask the same questions in the same

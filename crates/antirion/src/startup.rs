@@ -598,6 +598,7 @@ pub async fn start(opts: ServeOptions) -> anyhow::Result<Node> {
         }
         (None, None) => {
             rt.restore_disables().await;
+            rt.restore_mcp_approvals().await;
             rt.restore_cache_epochs().await;
             rt.check_ledger()
                 .await

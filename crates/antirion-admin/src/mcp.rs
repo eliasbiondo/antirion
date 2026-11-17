@@ -55,6 +55,7 @@ pub(crate) async fn approve_tools(call: &Call, name: &str) -> Result<Response, A
     };
     match antirion_mcp::approve_tools(&env, name).await {
         Ok(approval) => {
+            call.rt.persist_mcp_approvals().await;
             let tools: BTreeMap<_, _> = approval.tools.iter().cloned().collect();
             call.audit_with(
                 "mcp.servers.approve_tools",

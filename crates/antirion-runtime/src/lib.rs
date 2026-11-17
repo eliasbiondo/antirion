@@ -31,6 +31,7 @@ pub mod jwt;
 pub mod keypolicy;
 mod ledger;
 mod logins;
+mod mcpapprovals;
 pub mod operations;
 pub mod operators;
 mod otlp_metrics;
@@ -631,6 +632,7 @@ impl Runtime {
             self.state.cache_console.clear();
             self.store.clear_cache_console().await?;
             self.persist_cache_epochs().await;
+            self.forget_mcp_approvals().await;
             self.state.mcp.clear_caches();
         }
         if has("sessions") {
