@@ -117,6 +117,10 @@ async fn job_done(admin: SocketAddr, id: &str) {
 
 /// Runs the audited actions and returns the audit log as `GET /audit` serves it.
 async fn audited_actions(dir: &ScratchDir) -> Vec<Value> {
+    let spec = json!({"openapi": "3.1.0", "info": {"title": "crm", "version": "1"},
+        "paths": {"/customers": {"get": {"operationId": "search_customers", "summary": "Find customers.",
+            "responses": {"200": {"description": "ok"}}}}}})
+    .to_string();
     let config = json!({
         "version": 1,
         "server": {"listen": "127.0.0.1:0"},
@@ -127,6 +131,8 @@ async fn audited_actions(dir: &ScratchDir) -> Vec<Value> {
         "deployments": {"d": {"provider": "p", "model": "up-model"}},
         "models": {"m": {"target": {"deployment": "d"}}},
         "organizations": {"acme": {}},
+        "mcp": {"servers": {"crm": {"transport": "openapi", "url": "http://127.0.0.1:9",
+            "openapi": {"spec": spec}}}},
         "observability": {"alerts": {"webhooks": {"hook": {
             "url": "http://127.0.0.1:9/hook", "events": ["*"],
             "signing_secret": "literal-signing-secret-0123456789"
@@ -148,7 +154,7 @@ async fn audited_actions(dir: &ScratchDir) -> Vec<Value> {
 
     const JSON: &str = "application/json";
     const MERGE: &str = "application/merge-patch+json";
-    let actions: [(&str, &str, &str, &str); 14] = [
+    let actions: [(&str, &str, &str, &str); 15] = [
         // The danger zone.
         (
             "POST",
@@ -192,6 +198,7 @@ async fn audited_actions(dir: &ScratchDir) -> Vec<Value> {
             r#"{"spec":{"enabled":false}}"#,
         ),
         ("DELETE", "/admin/v1/routes/r/affinity", JSON, ""),
+        ("POST", "/admin/v1/mcp/servers/crm:approve_tools", JSON, "{}"),
         ("POST", "/admin/v1/keys", JSON, r#"{"name":"k","spec":{}}"#),
         ("POST", "/admin/v1/keys/k:rotate", JSON, "{}"),
         ("GET", "/admin/v1/logs:export?format=ndjson", JSON, ""),
@@ -246,6 +253,7 @@ fn check(schema: &UserSchema, entries: &[Value], form: &str) {
         "settings.security.secrets_revealed",
         "routes.update",
         "routes.affinity.delete",
+        "mcp.servers.approve_tools",
         "keys.rotate",
         "logs.export",
     ] {

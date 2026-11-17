@@ -1,8 +1,10 @@
 //! MCP runtime resources: a server's discovery status, approval of its tool definitions, and the
 //! per-gateway session counters.
 
+use std::collections::BTreeMap;
 use std::sync::Arc;
 
+use antirion_core::audit::Outcome;
 use antirion_identity::rbac::Scope;
 use antirion_mcp::{ApproveError, Env, Hooks};
 use axum::response::Response;
@@ -52,7 +54,19 @@ pub(crate) async fn approve_tools(call: &Call, name: &str) -> Result<Response, A
         log: Arc::default(),
     };
     match antirion_mcp::approve_tools(&env, name).await {
-        Ok(approval) => Ok(call.json(StatusCode::OK, &approval.to_json())),
+        Ok(approval) => {
+            call.rt.persist_mcp_approvals().await;
+            let tools: BTreeMap<_, _> = approval.tools.iter().cloned().collect();
+            call.audit_with(
+                "mcp.servers.approve_tools",
+                &format!("mcp/servers/{name}"),
+                Outcome::Success,
+                StatusCode::OK,
+                json!({"tools": tools}),
+            )
+            .await;
+            Ok(call.json(StatusCode::OK, &approval.to_json()))
+        }
         Err(ApproveError::UnknownServer) => Err(AdminError::not_found()),
         Err(ApproveError::Unreachable) => Err(AdminError::new(
             StatusCode::BAD_GATEWAY,
